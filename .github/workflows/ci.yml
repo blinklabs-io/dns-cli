@@ -6,17 +6,31 @@ on:
     pull_request:
         branches: [main]
 
+# Layout must match go.mod: replace apollo => ../apollo
+#   $GITHUB_WORKSPACE/dns-cli
+#   $GITHUB_WORKSPACE/apollo
+env:
+    APOLLO_REF: b2f56d0c6e9d22316b6938feeb325bdbab3846d2
+
 jobs:
     test-linux:
         runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: dns-cli
         steps:
             - uses: actions/checkout@v4
+              with:
+                  path: dns-cli
+            - uses: actions/checkout@v4
+              with:
+                  repository: Salvionied/apollo
+                  ref: ${{ env.APOLLO_REF }}
+                  path: apollo
             - uses: actions/setup-go@v5
               with:
                   go-version: "1.25.x"
-            - name: Checkout apollo dependency
-              run: |
-                  git clone --depth 1 https://github.com/Salvionied/apollo.git ../apollo || true
+                  cache-dependency-path: dns-cli/go.sum
             - run: go mod download
             - run: go vet ./...
             - run: go test -race ./...
@@ -33,10 +47,21 @@ jobs:
 
     test-windows:
         runs-on: windows-latest
+        defaults:
+            run:
+                working-directory: dns-cli
         steps:
             - uses: actions/checkout@v4
+              with:
+                  path: dns-cli
+            - uses: actions/checkout@v4
+              with:
+                  repository: Salvionied/apollo
+                  ref: ${{ env.APOLLO_REF }}
+                  path: apollo
             - uses: actions/setup-go@v5
               with:
                   go-version: "1.25.x"
+                  cache-dependency-path: dns-cli/go.sum
             - run: go test ./...
             - run: go build -o dns-cli.exe ./cmd/dns-cli

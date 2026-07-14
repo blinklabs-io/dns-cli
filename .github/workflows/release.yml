@@ -5,6 +5,10 @@ on:
         tags:
             - "v*"
 
+# Layout must match go.mod: replace apollo => ../apollo
+env:
+    APOLLO_REF: b2f56d0c6e9d22316b6938feeb325bdbab3846d2
+
 jobs:
     release:
         strategy:
@@ -23,11 +27,20 @@ jobs:
         defaults:
             run:
                 shell: bash
+                working-directory: dns-cli
         steps:
             - uses: actions/checkout@v4
+              with:
+                  path: dns-cli
+            - uses: actions/checkout@v4
+              with:
+                  repository: Salvionied/apollo
+                  ref: ${{ env.APOLLO_REF }}
+                  path: apollo
             - uses: actions/setup-go@v5
               with:
                   go-version: "1.25.x"
+                  cache-dependency-path: dns-cli/go.sum
             - name: Build
               env:
                   GOOS: ${{ matrix.os == 'windows-latest' && 'windows' || 'linux' }}
@@ -38,4 +51,4 @@ jobs:
             - uses: actions/upload-artifact@v4
               with:
                   name: dns-cli-${{ matrix.os }}-${{ matrix.arch }}
-                  path: dns-cli-*
+                  path: dns-cli/dns-cli-*
