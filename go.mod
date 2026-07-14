@@ -1,6 +1,6 @@
 module github.com/blinklabs-io/dns-cli
 
-go 1.25.7
+go 1.25.10
 
 toolchain go1.25.12
 

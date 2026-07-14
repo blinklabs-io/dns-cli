@@ -30,7 +30,7 @@ demo/
 
 ## Prerequisites
 
-- Go 1.25.7+ and local Apollo checkout at `../apollo` (see `go.mod` replace)
+- Go 1.25.10+ and local Apollo checkout at `../apollo` (see `go.mod` replace)
 - Built `dns-cli` binary (`dns-cli.exe` on Windows)
 - Aiken CLI on `PATH` (fresh mode)
 - `jq` (Bash runner only)

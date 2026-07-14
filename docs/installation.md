@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Go **1.25.7+** (module pins toolchain `go1.25.12`)
+- Go **1.25.10+** (module pins toolchain `go1.25.12`; required by Apollo)
 - Local Apollo v2 checkout at `../apollo` (required by `go.mod` `replace`)
 - Access to Cardano **preview** or **preprod** via UTxO RPC or Blockfrost
 - Bursa-compatible signing keys or mnemonics for actors (never stored inline in config)
