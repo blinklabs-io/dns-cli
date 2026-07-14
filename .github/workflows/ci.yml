@@ -18,15 +18,18 @@ jobs:
               run: |
                   git clone --depth 1 https://github.com/Salvionied/apollo.git ../apollo || true
             - run: go mod download
-              working-directory: dns-cli
             - run: go vet ./...
-              working-directory: dns-cli
             - run: go test -race ./...
-              working-directory: dns-cli
             - run: go build -o dns-cli ./cmd/dns-cli
-              working-directory: dns-cli
             - name: Reject Apollo v1 imports
-              run: '! rg "github.com/Salvionied/apollo[^/]" dns-cli --glob "!dns-cli/docs/**"'
+              run: |
+                  if grep -RInE --exclude-dir=docs --exclude-dir=.git \
+                    'github.com/Salvionied/apollo([^/]|$)' \
+                    --include='*.go' .; then
+                    echo "Forbidden Apollo v1 import found" >&2
+                    exit 1
+                  fi
+                  exit 0
 
     test-windows:
         runs-on: windows-latest
@@ -36,6 +39,4 @@ jobs:
               with:
                   go-version: "1.25.x"
             - run: go test ./...
-              working-directory: dns-cli
             - run: go build -o dns-cli.exe ./cmd/dns-cli
-              working-directory: dns-cli
