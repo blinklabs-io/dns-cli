@@ -1,79 +1,90 @@
 # dns-cli
 
-`dns-cli` is the Go-native command-line interface for the Cardano-based decentralized DNS system implemented in [`blinklabs-io/dns-contracts`](https://github.com/blinklabs-io/dns-contracts).
+Go-native CLI for Handshake DNS on Cardano. Builds unsigned Conway-era transactions
+for TLD registration, activation, SLD minting, and DNS record updates using
+[Apollo v2](https://github.com/Salvionied/apollo) — no `cardano-cli` at runtime.
 
-The purpose of this repository is to provide an operator CLI for the real on-chain domain flows without depending on `cardano-cli`.
+## Quick start
 
-## What This CLI Is For
+```bash
+go build -o dns-cli ./cmd/dns-cli
+./dns-cli config init --network preprod --provider blockfrost
+./dns-cli config validate
+./dns-cli version --output json
+```
 
-This CLI is intended to support the Milestone 4 contract integration flows for decentralized DNS on Cardano:
+Windows:
 
-- registrar registers a TLD on Cardano
-- TLD owner activates that TLD on Cardano
-- TLD owner mints an SLD under that TLD
-- SLD owner updates DNS records for that SLD
+```powershell
+go build -o dns-cli.exe ./cmd/dns-cli
+.\dns-cli.exe version
+```
 
-These flows are based on the on-chain contracts and reference shell scripts in `dns-contracts`, but the implementation in this repository is intended to be fully Go-native.
+Requires a local Apollo checkout at `../apollo` (see `go.mod` replace).
+
+## Protocol flow
+
+1. `registrar register-tld` — mint registration NFT (`minted = 0`)
+2. `owner activate-tld` — separate activation (`minted = 1`, TLD token pair)
+3. `owner mint-sld` — atomic parent list update + SLD token pair
+4. `owner update-sld` — replace full DNS record set
+
+Each domain command writes an unsigned text envelope and manifest. Use `tx sign`,
+`tx submit`, and `tx status` for the offline lifecycle.
+
+Bootstrap helpers:
+
+- `wallet create|fund|balance`
+- `proof generate`
+- `system prepare|init|bind` (Aiken for parameterization only)
+
+## Preprod demo
+
+Self-contained fresh/existing runners live in [`demo/`](demo/README.md):
+
+```powershell
+cd demo
+$env:DNS_CLI_BLOCKFROST_PROJECT_ID = '...'
+.\run-demo.ps1 -Mode fresh -Provider blockfrost
+```
+
+Keys under `demo/fixtures/preprod/wallets/` are **public Preprod-only fixtures** — never use on mainnet.
+
+## Documentation
+
+- [Installation](docs/installation.md)
+- [Configuration](docs/configuration.md)
+- [Commands](docs/commands.md)
+- [Offline transactions](docs/offline-transactions.md)
+- [Operator guide](docs/operator-guide.md)
+- [Protocol crosswalk](docs/protocol-crosswalk.md)
+- [Security](docs/security.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [ADR: Apollo v2 only](docs/adr/001-no-cardano-cli-apollo-v2.md)
+- [Preprod demo](demo/README.md)
 
 ## Stack
 
-The intended implementation stack for this repository is:
+- **Apollo v2** — transaction construction (local `../apollo` replace)
+- **Bursa** — wallet and signing
+- **UTxO RPC / Blockfrost** — selectable chain providers
+- **Aiken** — validator build/parameter apply for `system prepare`
+- **dns-contracts** — on-chain source of truth
 
-- [`bursa`](https://github.com/blinklabs-io/bursa) for wallet, key, and signing concerns
-- [`apollo`](https://github.com/Salvionied/apollo) for Cardano transaction construction and Plutus transaction handling
-- [`dingo`](https://github.com/blinklabs-io/dingo) / `utxorpc` for chain query, transaction submission, and confirmation
+## Examples
 
-## Relationship to `dns-contracts`
+See `examples/` for starter config, proof bundle, and records JSON.
 
-This repository does not define the on-chain protocol.
+## Tests
 
-The source of truth for the protocol lives in:
-
-- [`blinklabs-io/dns-contracts`](https://github.com/blinklabs-io/dns-contracts)
-
-This CLI is expected to reproduce the behavior of the reference flows there, especially:
-
-- [`scripts/02-register-tld.sh`](https://github.com/blinklabs-io/dns-contracts/blob/main/scripts/02-register-tld.sh)
-- [`scripts/03-mint-tld.sh`](https://github.com/blinklabs-io/dns-contracts/blob/main/scripts/03-mint-tld.sh)
-- [`scripts/04-mint-sld.sh`](https://github.com/blinklabs-io/dns-contracts/blob/main/scripts/04-mint-sld.sh)
-
-And the corresponding validators:
-
-- [`tld_registrar.ak`](https://github.com/blinklabs-io/dns-contracts/blob/main/onchain/validators/tld_registration/tld_registrar.ak)
-- [`tld_reference.ak`](https://github.com/blinklabs-io/dns-contracts/blob/main/onchain/validators/tld_registration/tld_reference.ak)
-- [`sld_reference.ak`](https://github.com/blinklabs-io/dns-contracts/blob/main/onchain/validators/tld_registration/sld_reference.ak)
-
-## Expected Command Surface
-
-The planned CLI shape is:
-
-```text
-dns-cli config init
-dns-cli config show
-dns-cli config validate
-
-dns-cli registrar register-tld
-
-dns-cli owner activate-tld
-dns-cli owner mint-sld
-dns-cli owner update-sld
+```bash
+go test ./...
+go test -fuzz ./internal/domain -fuzztime 5s
+go test -tags integration ./...   # requires DNS_CLI_RUN_LIVE=1
 ```
 
-These commands reflect the real protocol flow:
+## Status
 
-- `register-tld` is a registrar action
-- `activate-tld` is an owner action required before SLD minting
-- `mint-sld` creates a subdomain under an activated TLD
-- `update-sld` updates DNS records for an existing SLD
-
-## Milestone 4 Planning
-
-The current Milestone 4 work breakdown and acceptance criteria are documented in:
-
-- [MILESTONE4_PLAN.md](./MILESTONE4_PLAN.md)
-
-## Current Status
-
-This repository is in the early implementation stage.
-
-The immediate goal is to build the CLI foundation and then implement the TLD and SLD flows described above.
+CLI, config, providers, wallet, proof generation, system bootstrap, protocol encoding,
+chain query, transaction builders, offline artifacts, Preprod demo runners, docs, and CI
+are in place. Live Preprod acceptance requires provider credentials and faucet funding.

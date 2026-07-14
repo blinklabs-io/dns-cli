@@ -1,5 +1,9 @@
 # Milestone 4 Plan
 
+> **Detailed implementation:** See [MILESTONE4_DETAILED_PLAN.md](./MILESTONE4_DETAILED_PLAN.md) for the extensive multi-phase implementation specification.
+
+> **Implementation status (2026-07):** Milestone 4 CLI foundation is implemented in this repository — Cobra command tree, Apollo v2 transaction builders, config/providers, offline artifacts, documentation, examples, and CI workflows. Live preview/preprod runs require operator config, funded actors, and `DNS_CLI_RUN_LIVE=1` for integration tests.
+
 This document outlines the proposed work breakdown for Milestone 4 of the decentralized DNS project.
 
 The goal of this milestone is to build a Go-native CLI in this repository that reproduces the required on-chain flows already demonstrated in the reference contracts repository:

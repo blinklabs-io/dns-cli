@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "defaultProfile": "preprod",
+  "profiles": {
+    "preprod": {
+      "network": {
+        "name": "preprod",
+        "id": 0,
+        "magic": 1,
+        "explorerTxURL": "https://preprod.cexplorer.io/tx/{txId}"
+      },
+      "provider": {
+        "type": "blockfrost",
+        "baseURL": "https://cardano-preprod.blockfrost.io/api/v0",
+        "projectIdEnv": "DNS_CLI_BLOCKFROST_PROJECT_ID"
+      },
+      "contracts": {
+        "blueprintPath": "../runtime/contracts/plutus.json",
+        "tldRegistrarAddress": "GENERATED_BY_SYSTEM_BIND",
+        "tldReferenceAddress": "GENERATED_BY_SYSTEM_BIND",
+        "sldReferenceAddress": "GENERATED_BY_SYSTEM_BIND",
+        "tldRegistrarPolicyId": "GENERATED_BY_SYSTEM_BIND",
+        "tldReferencePolicyId": "GENERATED_BY_SYSTEM_BIND",
+        "sldReferencePolicyId": "GENERATED_BY_SYSTEM_BIND",
+        "referenceUtxos": {
+          "tldRegistrar": "GENERATED_BY_SYSTEM_BIND#0",
+          "tldReference": "GENERATED_BY_SYSTEM_BIND#1",
+          "sldReference": "GENERATED_BY_SYSTEM_BIND#2"
+        }
+      },
+      "actors": {
+        "bootstrap": {
+          "address": "GENERATED_BY_WALLET_CREATE",
+          "signingKeyFile": "../runtime/wallets/bootstrap/payment.skey"
+        },
+        "registrar": {
+          "address": "GENERATED_BY_WALLET_CREATE",
+          "signingKeyFile": "../runtime/wallets/registrar/payment.skey"
+        },
+        "tldOwner": {
+          "address": "GENERATED_BY_WALLET_CREATE",
+          "signingKeyFile": "../runtime/wallets/tld-owner/payment.skey"
+        },
+        "sldOwner": {
+          "address": "GENERATED_BY_WALLET_CREATE",
+          "signingKeyFile": "../runtime/wallets/sld-owner/payment.skey"
+        }
+      },
+      "transaction": {
+        "ttlSlots": 300,
+        "confirmationTimeout": "10m",
+        "pollInterval": "5s",
+        "artifactDir": "../runtime/artifacts",
+        "maxDatumBytes": 4000
+      }
+    }
+  }
+}

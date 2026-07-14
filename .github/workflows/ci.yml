@@ -1,0 +1,41 @@
+name: CI
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+jobs:
+    test-linux:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-go@v5
+              with:
+                  go-version: "1.25.x"
+            - name: Checkout apollo dependency
+              run: |
+                  git clone --depth 1 https://github.com/Salvionied/apollo.git ../apollo || true
+            - run: go mod download
+              working-directory: dns-cli
+            - run: go vet ./...
+              working-directory: dns-cli
+            - run: go test -race ./...
+              working-directory: dns-cli
+            - run: go build -o dns-cli ./cmd/dns-cli
+              working-directory: dns-cli
+            - name: Reject Apollo v1 imports
+              run: '! rg "github.com/Salvionied/apollo[^/]" dns-cli --glob "!dns-cli/docs/**"'
+
+    test-windows:
+        runs-on: windows-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-go@v5
+              with:
+                  go-version: "1.25.x"
+            - run: go test ./...
+              working-directory: dns-cli
+            - run: go build -o dns-cli.exe ./cmd/dns-cli
+              working-directory: dns-cli

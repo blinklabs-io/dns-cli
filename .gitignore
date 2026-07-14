@@ -27,6 +27,10 @@ go.work.sum
 # env file
 .env
 
+# Demo generated runtime (wallets, proofs, artifacts, state)
+demo/runtime/**
+!demo/runtime/.gitkeep
+
 # Editor/IDE
 # .idea/
 # .vscode/
