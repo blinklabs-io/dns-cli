@@ -38,6 +38,17 @@ demo/
   - Blockfrost: `DNS_CLI_BLOCKFROST_PROJECT_ID`
   - UTxO RPC: `DNS_CLI_UTXORPC_URL` and optional `DNS_CLI_UTXORPC_HEADERS`
 
+Both runners **check these at startup**. If something is missing they print a short guide, ask whether to install/set it, and when possible:
+
+| Missing | Interactive offer |
+|---|---|
+| `dns-cli` | `go build` from the parent module (needs Go + Apollo) |
+| `jq` (Bash) | brew / apt / dnf, or download into `runtime/tools/` |
+| `aiken` (fresh) | official installer / aikup / `cargo install aiken` |
+| provider env | prompt for value and save to `runtime/.env` (gitignored) |
+
+Flags: `-Yes` / `--yes` (auto-approve), `-SkipInstall` / `--skip-install` (guides only). Env: `DEMO_ASSUME_YES=1`.
+
 ## Historical deployment (existing mode)
 
 Reference UTxOs from init tx `ef635b55fce6abc39cd4c843722d9d574cb719114e224f2cd1c8747d5abfc19e`:
@@ -87,9 +98,13 @@ export DNS_CLI_UTXORPC_URL=https://...
 
 # Historical read-only
 ./run-demo.sh --mode existing --provider blockfrost
+
+# Extensive runner + dns-cli logging (also: -E, -v, DEMO_EXTENSIVE_LOGGING=1)
+./run-demo.sh --mode existing --provider blockfrost --extensive-logging
+./run-demo.sh --log-level extensive --mode fresh --provider blockfrost
 ```
 
-Optional env overrides: `CLI` (path to binary), `DEMO_MODE`, `DEMO_PROVIDER`.
+Optional env overrides: `CLI` (path to binary), `DEMO_MODE`, `DEMO_PROVIDER`, `DEMO_LOG_LEVEL` (`quiet|normal|extensive`), `DEMO_EXTENSIVE_LOGGING`.
 
 ### PowerShell
 
@@ -109,9 +124,13 @@ $env:DNS_CLI_UTXORPC_URL = 'https://...'
 
 # Historical read-only
 .\run-demo.ps1 -Mode existing -Provider blockfrost
+
+# Extensive runner + dns-cli logging (also: -LogLevel Extensive, DEMO_EXTENSIVE_LOGGING=1)
+.\run-demo.ps1 -Mode existing -Provider blockfrost -ExtensiveLogging
+.\run-demo.ps1 -LogLevel Extensive -Mode fresh -Provider blockfrost
 ```
 
-Optional env overrides: `CLI`, `DEMO_MODE`, `DEMO_PROVIDER`.
+Optional env overrides: `CLI`, `DEMO_MODE`, `DEMO_PROVIDER`, `DEMO_LOG_LEVEL` (`quiet|normal|extensive`), `DEMO_EXTENSIVE_LOGGING`.
 
 ### Fresh flow (both shells)
 
