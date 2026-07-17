@@ -14,7 +14,7 @@ Requires **Go 1.25.10+** (module pins toolchain `go1.25.12`). Apollo resolves vi
 `go.mod` `replace` — no local sibling checkout needed for a normal build.
 
 ```bash
-go build -o bin/dns-cli ./cmd/dns-cli
+./scripts/setup.sh
 ./bin/dns-cli version
 ./bin/dns-cli config init --network preprod --provider blockfrost
 ./bin/dns-cli config validate
@@ -24,12 +24,12 @@ go build -o bin/dns-cli ./cmd/dns-cli
 Windows:
 
 ```powershell
-go build -o bin/dns-cli.exe ./cmd/dns-cli
+.\scripts\setup.ps1
 .\bin\dns-cli.exe version
 .\bin\dns-cli.exe dashboard --config dns-cli.json
 ```
 
-Interactive dashboard: [docs/tui.md](docs/tui.md).
+`scripts/setup.*` checks Go, creates `bin/`, and builds the binary. Interactive dashboard: [docs/tui.md](docs/tui.md).
 
 ## Command tree
 
@@ -66,30 +66,14 @@ Bootstrap helpers:
 
 ## Preprod demo
 
-End-to-end Preprod orchestration is a first-class CLI command. Prefer that over the
-shell wrappers. Quickstart: [`demo/README.md`](demo/README.md). Full guide:
-[`docs/demo.md`](docs/demo.md).
+End-to-end Preprod orchestration is `dns-cli demo run`. Quickstart: [`demo/README.md`](demo/README.md). Full guide: [`docs/demo.md`](docs/demo.md).
 
 ```bash
+./scripts/setup.sh
 export DNS_CLI_BLOCKFROST_PROJECT_ID=preprod...
-go build -o bin/dns-cli ./cmd/dns-cli
-./bin/dns-cli demo run --demo-root demo --mode fresh --provider blockfrost
-./bin/dns-cli demo history          # auto-finds demo/runs
-./bin/dns-cli demo run --demo-root demo --mode existing
-```
-
-Thin wrappers (prompt for unset options; can build into `bin/`):
-
-```powershell
-cd demo
-$env:DNS_CLI_BLOCKFROST_PROJECT_ID = 'preprod...'
-.\scripts\run-demo.ps1 -Mode fresh -Provider blockfrost
-```
-
-```bash
-cd demo
-export DNS_CLI_BLOCKFROST_PROJECT_ID=preprod...
-./scripts/run-demo.sh --mode fresh --provider blockfrost
+./bin/dns-cli demo run                    # auto-finds demo/; prompts for unset options
+./bin/dns-cli demo history                # auto-finds demo/runs
+./bin/dns-cli demo run --mode existing
 ```
 
 Starter DNS records live in `demo/config/records.json`. Run history and shared

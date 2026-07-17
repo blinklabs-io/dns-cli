@@ -11,28 +11,23 @@
 
 ## Preparation (manual)
 
-1. Deploy contract reference scripts:
-   - Prefer `dns-cli system prepare` + `system init` + `system bind`, or
-   - Historical path: `01-init-system.sh` in dns-contracts
+1. Deploy contract reference scripts with `dns-cli system prepare` + `system init` + `system bind`
 2. Fill `dns-cli.json` with policy IDs, addresses, and reference UTxOs
 3. Fund actors with ADA for fees and collateral (≥ 5 ADA ADA-only collateral each)
 4. Prepare Handshake proof JSON (`dns-cli proof generate` or a hand-built bundle)
 
 ## Preparation (automated Preprod demo)
 
-Prefer the Go orchestrator:
-
 ```bash
+./scripts/setup.sh
 export DNS_CLI_BLOCKFROST_PROJECT_ID=preprod...
-dns-cli demo run --demo-root demo --mode fresh --provider blockfrost
+./bin/dns-cli demo run --mode fresh --provider blockfrost
 ```
 
-Or the thin wrappers from `demo/`:
-
 ```powershell
-cd demo
+.\scripts\setup.ps1
 $env:DNS_CLI_BLOCKFROST_PROJECT_ID = 'preprod...'
-.\scripts\run-demo.ps1 -Mode fresh -Provider blockfrost
+.\bin\dns-cli.exe demo run --mode fresh --provider blockfrost
 ```
 
 See [`demo/README.md`](../demo/README.md) and [`demo.md`](demo.md). The runner waits for faucet funding of the bootstrap wallet (≥ 150 ADA), prompts before submissions, and resumes from `demo/runs/<tld>/state.json` (and nested SLD run state). Inspect prior runs with `dns-cli demo history`.

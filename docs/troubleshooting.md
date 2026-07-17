@@ -70,7 +70,7 @@ no suitable collateral utxo
 ## Reference script mismatch
 
 - Run `config validate --online`
-- Confirm `referenceUtxos` match the latest `system init` deployment (or historical `01-init-system.sh` in dns-contracts)
+- Confirm `referenceUtxos` match the latest `system init` deployment
 
 ## Demo history empty
 

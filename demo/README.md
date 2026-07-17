@@ -2,7 +2,7 @@
 
 Self-contained Cardano **Preprod** demonstration for Handshake DNS lifecycle flows.
 
-Orchestration lives in Go (`dns-cli demo run`). The scripts under `scripts/` are thin wrappers that map flags and call the CLI.
+Orchestration lives in Go (`dns-cli demo run`). Build the binary from the repo root with [`scripts/setup.sh`](../scripts/setup.sh) / [`scripts/setup.ps1`](../scripts/setup.ps1) first.
 
 Detailed documentation: [docs/demo.md](../docs/demo.md).
 
@@ -22,8 +22,6 @@ Generated wallets under `runs/shared/wallets/` and any generated HNS private key
 ```text
 demo/
   README.md                   # this quickstart
-  scripts/
-    run-demo.ps1 / run-demo.sh
   config/
     blockfrost.template.json  # system bind base (fresh)
     utxorpc.template.json
@@ -40,45 +38,38 @@ demo/
 
 ## Quick start
 
-From the `dns-cli/` module root (or any cwd with an absolute `--demo-root`):
+From the `dns-cli/` module root (after setup):
 
 ```bash
+# from repo root:
+./scripts/setup.sh
 export DNS_CLI_BLOCKFROST_PROJECT_ID=preprod...
-dns-cli demo run --demo-root demo --mode fresh --provider blockfrost
-dns-cli demo run --demo-root demo                    # resume
-dns-cli demo run --demo-root demo --mode existing    # history
+./bin/dns-cli demo run                              # auto-finds demo/
+./bin/dns-cli demo run --mode fresh --provider blockfrost
+./bin/dns-cli demo run                              # resume
+./bin/dns-cli demo history                          # auto-finds demo/runs
+./bin/dns-cli demo run --mode existing
 ```
-
-From the `demo/` directory via wrappers (prompts for unset options, asks to build into `../bin/` if needed):
 
 ```powershell
+# from repo root:
+.\scripts\setup.ps1
 $env:DNS_CLI_BLOCKFROST_PROJECT_ID = 'preprod...'
-.\scripts\run-demo.ps1
-.\scripts\run-demo.ps1 -Mode fresh -Provider blockfrost -LogLevel Normal -Yes
-.\scripts\run-demo.ps1 -Mode existing
+.\bin\dns-cli.exe demo run
+.\bin\dns-cli.exe demo history
 ```
 
-```bash
-chmod +x scripts/run-demo.sh
-export DNS_CLI_BLOCKFROST_PROJECT_ID=preprod...
-./scripts/run-demo.sh
-./scripts/run-demo.sh --mode fresh --provider blockfrost --log-level normal -y
-./scripts/run-demo.sh --mode existing
-```
+Unset mode / provider / TLD / SLD / log level use numbered menus (or yes-no) in the CLI. Pass flags or `DEMO_MODE` / `DEMO_PROVIDER` / `DEMO_LOG_LEVEL` to skip prompts. `--yes` / `DEMO_ASSUME_YES=1` auto-approves defaults (not the Preprod submission confirm).
 
-Wrappers resolve `CLI` → `dns-cli/bin/dns-cli(.exe)` → tree root → `PATH`. Interactive prompts (skipped with `-Yes` / `--yes`): mode, provider, TLD/SLD, **log level**, skip-install, clipboard. Missing/outdated binaries ask to compile into `bin/`.
 ## Prerequisites (fresh mode)
 
-- Go 1.25.10+ (Apollo resolves via `go.mod` replace; no local sibling checkout)
-- Built `dns-cli` binary (`bin/dns-cli.exe` on Windows, or wrappers will ask to build it)
+- Go 1.25.10+ and a built `dns-cli` (`./scripts/setup.sh` or `.\scripts\setup.ps1`)
 - Aiken CLI on `PATH`, **version ≥ 1.1.19** (matches `fixtures/contracts/aiken.toml`)
 - Provider credentials:
   - Blockfrost: `DNS_CLI_BLOCKFROST_PROJECT_ID`
   - UTxO RPC: `DNS_CLI_UTXORPC_URL`, optional `DMTR_API_KEY` / `DNS_CLI_UTXORPC_HEADERS`
 
 The Go runner verifies the demo tree and contracts **before any run mode**. If `demo/` assets or `dns-contracts` are missing, it asks to create/pull them (or prints guides with `--skip-install`). Fresh mode also requires Aiken ≥ 1.1.19. Bootstrap faucet address is copied to the clipboard when possible (`--no-clipboard` to disable).
-
-Flags: `-Yes` / `--yes`, `-SkipInstall` / `--skip-install`. Env: `DEMO_ASSUME_YES=1`.
 
 Bootstrap needs **≥ 150 ADA** from the [Preprod faucet](https://docs.cardano.org/cardano-testnets/tools/faucet/) before fund/deploy.
 
@@ -92,6 +83,5 @@ Bootstrap needs **≥ 150 ADA** from the [Preprod faucet](https://docs.cardano.o
 | Source | Destination |
 |---|---|
 | `dns-contracts/onchain/{aiken.toml,aiken.lock,plutus.json,validators,lib}` | `demo/fixtures/contracts/**` |
-| Historical `examples/records.json` (removed) | `demo/config/records.json` (canonical starter) |
 
-`fixtures/` must not be written by runners. See [docs/demo.md](../docs/demo.md) for full operator guidance (requirements, expected results, what you can change).
+DNS record samples for fresh runs come from `demo/config/records.json`. `fixtures/` must not be written by runners. See [docs/demo.md](../docs/demo.md) for full operator guidance.

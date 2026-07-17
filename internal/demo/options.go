@@ -28,10 +28,17 @@ type Options struct {
 	SLD         string
 	Yes         bool
 	SkipInstall bool
-	NoClipboard bool
-	NoColor     bool
-	LogLevel    string // quiet|normal|extensive
-	ContractRev string
+	// SkipInstallSet is true when --skip-install was explicitly passed on the CLI.
+	SkipInstallSet bool
+	NoClipboard    bool
+	// NoClipboardSet is true when --no-clipboard was explicitly passed on the CLI.
+	NoClipboardSet bool
+	NoColor        bool
+	LogLevel       string // quiet|normal|extensive
+	ContractRev    string
+	// ApplyVerbose, when set, is called after log level is resolved (prompt or flag).
+	// Used by the CLI to reconfigure slog when -v was not explicitly set.
+	ApplyVerbose func(verbose int) error
 
 	Stdin  io.Reader
 	Stdout io.Writer

@@ -26,6 +26,6 @@ func migrateLegacyRuntime(paths Paths) error {
 	}
 	slog.Warn("legacy demo/runtime detected; automatic migration is not performed by the Go runner",
 		"runtime", paths.LegacyRuntime,
-		"hint", "use a previous run-demo script version to migrate, or start fresh under runs/")
+		"hint", "start fresh under runs/ or restore a prior demo/runs tree from git")
 	return nil
 }

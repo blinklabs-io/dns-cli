@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"os"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -306,13 +307,23 @@ func TestDemoRunHelp(t *testing.T) {
 	}
 }
 
-func TestDemoRunRequiresDemoRoot(t *testing.T) {
+func TestDemoRunErrorsWhenDemoRootMissing(t *testing.T) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	empty := t.TempDir()
+	if err := os.Chdir(empty); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(cwd) })
+
 	root := NewRoot()
 	root.SetErr(&bytes.Buffer{})
-	root.SetArgs([]string{"demo", "run"})
-	err := root.Execute()
+	root.SetArgs([]string{"demo", "run", "--yes"})
+	err = root.Execute()
 	if err == nil {
-		t.Fatal("expected error")
+		t.Fatal("expected error when demo/ cannot be found")
 	}
 	if ExitCode(err) != ExitUsage {
 		t.Fatalf("got exit %d want %d (%v)", ExitCode(err), ExitUsage, err)

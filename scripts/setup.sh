@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+# =============================================================================
+# setup.sh — Bootstrap dns-cli (requirements + bin/ + build)
+# =============================================================================
+# Repo-root helper for any dns-cli use. Does not scaffold demo/ (that is handled
+# by `dns-cli demo run` via EnsureDemoLayout).
+# From repo root: ./scripts/setup.sh
+# =============================================================================
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+BIN_DIR="${ROOT}/bin"
+BIN_OUT="${BIN_DIR}/dns-cli"
+MIN_GO="1.25.10"
+
+YES=0
+SKIP_BUILD=0
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -y|--yes) YES=1; shift ;;
+    --skip-build) SKIP_BUILD=1; shift ;;
+    -h|--help)
+      cat <<'EOF'
+Usage: setup.sh [-y|--yes] [--skip-build]
+
+Checks Go (>= 1.25.10), creates bin/, builds dns-cli.
+Does not prepare demo/ — use: bin/dns-cli demo run
+EOF
+      exit 0
+      ;;
+    *)
+      echo "unknown argument: $1" >&2
+      exit 2
+      ;;
+  esac
+done
+
+assume_yes() {
+  if [[ "${YES}" -eq 1 ]]; then
+    return 0
+  fi
+  if [[ "${ASSUME_YES:-}" =~ ^(1|true|yes|on)$ ]]; then
+    return 0
+  fi
+  if [[ "${DEMO_ASSUME_YES:-}" =~ ^(1|true|yes|on)$ ]]; then
+    return 0
+  fi
+  return 1
+}
+
+version_ge() {
+  # return 0 if $1 >= $2 (semver-ish major.minor.patch)
+  printf '%s\n%s\n' "$2" "$1" | sort -V | head -n1 | grep -qx "$2"
+}
+
+echo "dns-cli setup (root: ${ROOT})"
+
+if ! command -v go >/dev/null 2>&1; then
+  cat <<EOF >&2
+Go is not on PATH (need >= ${MIN_GO}).
+
+Install: https://go.dev/dl/
+Then re-run: ./scripts/setup.sh
+EOF
+  exit 1
+fi
+
+GO_VER="$(go version | sed -n 's/.*go\([0-9][0-9]*\.[0-9][0-9]*\(\.[0-9][0-9]*\)*\).*/\1/p')"
+if [[ -z "${GO_VER}" ]] || ! version_ge "${GO_VER}" "${MIN_GO}"; then
+  echo "Go ${GO_VER:-unknown} is below required ${MIN_GO}. Upgrade: https://go.dev/dl/" >&2
+  exit 1
+fi
+echo "Go ${GO_VER} OK"
+
+if command -v aiken >/dev/null 2>&1; then
+  echo "aiken found: $(command -v aiken)"
+else
+  echo "Note: aiken not on PATH (needed for system prepare / demo fresh). See https://aiken-lang.org/installation-instructions"
+fi
+
+mkdir -p "${BIN_DIR}"
+echo "bin/ ready: ${BIN_DIR}"
+
+if [[ "${SKIP_BUILD}" -eq 1 ]]; then
+  echo "SkipBuild set; not compiling."
+  exit 0
+fi
+
+echo "Building -> ${BIN_OUT}"
+COMMIT="$(git -C "${ROOT}" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+BUILT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+PKG="github.com/blinklabs-io/dns-cli/internal/cli"
+LDFLAGS="-X ${PKG}.GitCommit=${COMMIT} -X ${PKG}.BuildDate=${BUILT}"
+echo "ldflags: commit=${COMMIT} built=${BUILT}"
+(cd "${ROOT}" && go build -ldflags "${LDFLAGS}" -o "${BIN_OUT}" ./cmd/dns-cli)
+
+"${BIN_OUT}" version
+
+cat <<EOF
+
+Next:
+  ${BIN_OUT} version
+  ${BIN_OUT} dashboard --config dns-cli.json
+  ${BIN_OUT} demo run
+EOF

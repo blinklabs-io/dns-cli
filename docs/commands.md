@@ -125,18 +125,18 @@ dns-cli demo history --output json
 # optional override:
 dns-cli demo history --runs-root demo/runs
 
-dns-cli demo run --demo-root demo \
+dns-cli demo run \
   --mode fresh --provider blockfrost --tld mytld --sld www
-dns-cli demo run --demo-root demo --mode existing
+dns-cli demo run --mode existing
 ```
 
 `demo history` auto-detects `demo/runs` by walking upward from the current directory (override with `--runs-root`). It is a read-only scan of `runs/<tld>/state.json` and nested SLD run state (skips `shared/` and `states/`).
 
-`demo run` owns the full Preprod orchestration (prereq checks for demo layout + dns-contracts + Aiken, wallets, faucet wait, prepare/deploy, register → update, resume). `--yes` auto-approves install/default prompts but **never** skips `Proceed with Preprod submissions?`. Missing contracts are cloned from `https://github.com/blinklabs-io/dns-contracts.git` when the operator agrees.
+`demo run` auto-detects `demo/` (`--demo-root` optional) and owns the full Preprod orchestration (prereq checks for demo layout + dns-contracts + Aiken, wallets, faucet wait, prepare/deploy, register → update, resume). Unset `--mode` / `--provider` / `--log-level` use numbered menus; skip-install and clipboard use yes-no when those flags were not passed. `--yes` auto-approves install/default prompts but **never** skips `Proceed with Preprod submissions?`. Missing contracts are cloned from `https://github.com/blinklabs-io/dns-contracts.git` when the operator agrees.
 
 ## End-to-end demo
 
-See [`demo/README.md`](../demo/README.md) and [`demo.md`](demo.md). Prefer `dns-cli demo run`; `demo/scripts/run-demo.ps1` / `run-demo.sh` are thin flag-mapping wrappers.
+See [`demo/README.md`](../demo/README.md) and [`demo.md`](demo.md). Build with [`scripts/setup.sh`](../scripts/setup.sh) / [`scripts/setup.ps1`](../scripts/setup.ps1), then `dns-cli demo run`.
 
 ## JSON result envelope
 

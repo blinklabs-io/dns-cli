@@ -78,6 +78,11 @@ func Run(ctx context.Context, opts Options) error {
 	if err := r.resolveSettings(); err != nil {
 		return err
 	}
+	if r.opts.ApplyVerbose != nil && strings.TrimSpace(r.opts.LogLevel) != "" {
+		if err := r.opts.ApplyVerbose(VerboseFromLogLevel(r.opts.LogLevel)); err != nil {
+			return err
+		}
+	}
 
 	if r.mode == "existing" {
 		history, err := ReadHistory(paths.RunsRoot)

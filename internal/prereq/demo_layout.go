@@ -71,7 +71,7 @@ func EnsureDemoLayout(opts Options) error {
 	if err := os.MkdirAll(abs, 0o755); err != nil {
 		return err
 	}
-	for _, d := range []string{"config", "fixtures/contracts", "runs", "scripts"} {
+	for _, d := range []string{"config", "fixtures/contracts", "runs"} {
 		if err := os.MkdirAll(filepath.Join(abs, filepath.FromSlash(d)), 0o755); err != nil {
 			return err
 		}

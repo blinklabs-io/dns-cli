@@ -17,7 +17,7 @@ The demo is a resumable, operator-driven end-to-end walkthrough of the Handshake
 7. Mint an SLD under that TLD (`owner mint-sld`)
 8. Publish DNS records for the SLD (`owner update-sld`)
 
-Orchestration is implemented in Go as `dns-cli demo run` (package `internal/demo`). Shell scripts under `demo/scripts/` are thin wrappers that map flags and invoke the CLI. Each on-chain step is built via ops helpers, then confirmed with `tx apply` (sign → submit → wait). Faucet waiting uses `wallet wait-funds`. Progress is stored under `demo/runs/` so an interrupted run can resume without re-submitting confirmed transactions.
+Orchestration is implemented in Go as `dns-cli demo run` (package `internal/demo`). Build the binary with repo-root [`scripts/setup.sh`](../scripts/setup.sh) / [`scripts/setup.ps1`](../scripts/setup.ps1). Each on-chain step is built via ops helpers, then confirmed with `tx apply` (sign → submit → wait). Faucet waiting uses `wallet wait-funds`. Progress is stored under `demo/runs/` so an interrupted run can resume without re-submitting confirmed transactions.
 
 ```mermaid
 flowchart TB
@@ -44,9 +44,6 @@ flowchart TB
 ```text
 demo/
   README.md
-  scripts/
-    run-demo.ps1
-    run-demo.sh
   config/
     blockfrost.template.json   # input to system bind
     utxorpc.template.json
@@ -65,7 +62,7 @@ demo/
 
 | Path | Role |
 |---|---|
-| `scripts/`, `config/`, `fixtures/contracts/`, `runs/states/` | Source / templates — commit these |
+| `config/`, `fixtures/contracts/`, `runs/states/` | Source / templates — commit these |
 | `runs/<tld>/` (state, artifacts, configs, contracts, records) | Demo history — committed (Preprod) |
 | `runs/shared/` (wallets, `.env`, tools) | Preprod demo material — committed intentionally (revocable test keys) |
 
@@ -73,19 +70,18 @@ Schemas live under `runs/states/` and are versioned with the rest of `demo/runs/
 
 ## Requirements
 
-### Always (to run the scripts)
+### Always
 
 | Item | Notes |
 |---|---|
-| PowerShell 7+ **or** Bash | Prefer `pwsh` on Windows; Bash runner needs `jq` |
 | Network access | Preprod provider + faucet |
+| Built `dns-cli` | Prefer `./scripts/setup.sh` / `.\scripts\setup.ps1` from repo root |
 
 ### Fresh mode only
 
 | Item | Notes |
 |---|---|
-| Go **1.25.10+** | To build `dns-cli` if the binary is missing (Apollo via `go.mod` replace; no local sibling checkout) |
-| `dns-cli` binary | Prefer `bin/dns-cli(.exe)`; wrappers ask before building there. Also: tree root, `PATH`, or `CLI=` |
+| Go **1.25.10+** | Required by setup / build (Apollo via `go.mod` replace) |
 | Aiken CLI **≥ 1.1.19** | Must match `fixtures/contracts/aiken.toml` compiler |
 | Provider credentials | See below |
 | ≥ **150 ADA** on bootstrap | Preprod faucet; runner polls until funded |
@@ -108,49 +104,34 @@ Credentials can be saved interactively to `demo/runs/shared/.env` (tracked as Pr
 
 | Flag / env | Effect |
 |---|---|
-| `-Yes` / `--yes` / `DEMO_ASSUME_YES=1` | Auto-approve prereq installs, default setting prompts, wallet reuse |
-| `-SkipInstall` / `--skip-install` | Print guides only; do not install tools or write `.env` |
-| `-LogLevel` / `--log-level` / `DEMO_LOG_LEVEL` | `quiet` \| `normal` \| `extensive` |
-| `-ExtensiveLogging` / `-E` / `DEMO_EXTENSIVE_LOGGING=1` | Extensive runner + raised dns-cli `-v` |
+| `--yes` / `DEMO_ASSUME_YES=1` | Auto-approve prereq installs, default setting prompts, wallet reuse |
+| `--skip-install` | Print guides only; do not install tools or write `.env` |
+| `--log-level` / `DEMO_LOG_LEVEL` | `quiet` \| `normal` \| `extensive` (applied to slog unless `-v` was set) |
+| `DEMO_EXTENSIVE_LOGGING=1` | Defaults log level to extensive when unset |
 | `DEMO_MODE` / `DEMO_PROVIDER` | Defaults when flags omitted |
-| `CLI` | Path to dns-cli binary |
+| `--demo-root` | Optional; auto-detects `demo/` by walking upward |
+| `--no-clipboard` | Do not copy bootstrap faucet address |
 
 ## How to run
 
-Prefer `dns-cli demo run` from the **module root** (or any cwd with an absolute `--demo-root`). Wrappers under `demo/scripts/` are optional.
-
-### Fresh (Blockfrost)
+Build once from the **repo root**, then run `dns-cli demo run` (auto-finds `demo/` from cwd).
 
 ```bash
+./scripts/setup.sh
 export DNS_CLI_BLOCKFROST_PROJECT_ID=preprod...
-dns-cli demo run --demo-root demo --mode fresh --provider blockfrost
+./bin/dns-cli demo run --mode fresh --provider blockfrost
 ```
 
 ```powershell
+.\scripts\setup.ps1
 $env:DNS_CLI_BLOCKFROST_PROJECT_ID = 'preprod...'
-dns-cli demo run --demo-root demo --mode fresh --provider blockfrost
-# or from demo/:
-.\scripts\run-demo.ps1 -Mode fresh -Provider blockfrost
-```
-
-```bash
-# from demo/ via wrapper:
-export DNS_CLI_BLOCKFROST_PROJECT_ID=preprod...
-./scripts/run-demo.sh --mode fresh --provider blockfrost
+.\bin\dns-cli.exe demo run --mode fresh --provider blockfrost
 ```
 
 Optional labels:
 
 ```bash
-dns-cli demo run --demo-root demo --mode fresh --provider blockfrost --tld mytld --sld www
-```
-
-```powershell
-.\scripts\run-demo.ps1 -Mode fresh -Provider blockfrost -Tld mytld -Sld www
-```
-
-```bash
-./scripts/run-demo.sh --mode fresh --provider blockfrost --tld mytld --sld www
+./bin/dns-cli demo run --mode fresh --provider blockfrost --tld mytld --sld www
 ```
 
 ### Resume after interruption
@@ -158,56 +139,21 @@ dns-cli demo run --demo-root demo --mode fresh --provider blockfrost --tld mytld
 Re-run without flags (or with the same mode/provider/tld/sld). Confirmed steps are skipped.
 
 ```bash
-dns-cli demo run --demo-root demo
-```
-
-```powershell
-.\scripts\run-demo.ps1
-```
-
-```bash
-./scripts/run-demo.sh
+./bin/dns-cli demo run
 ```
 
 ### Existing (history viewer)
 
 ```bash
-dns-cli demo history
-dns-cli demo run --demo-root demo --mode existing
-```
-
-```powershell
-.\scripts\run-demo.ps1 -Mode existing
-```
-
-```bash
-./scripts/run-demo.sh --mode existing
+./bin/dns-cli demo history
+./bin/dns-cli demo run --mode existing
 ```
 
 If no TLD folders exist under `runs/` yet, the viewer prints:
 
 `no demo history yet (run a fresh demo first)`
 
-`demo history` auto-finds `demo/runs` by walking upward from the current directory:
-
-```bash
-dns-cli demo history
-```
-
-Optional override:
-
-```bash
-dns-cli demo history --runs-root /path/to/demo/runs
-```
-
-### Primary entrypoints
-
-```bash
-dns-cli demo run --demo-root demo --mode fresh --provider blockfrost
-dns-cli demo run --demo-root demo --mode existing
-# or wrappers from demo/:
-./scripts/run-demo.sh --mode fresh --provider blockfrost
-```
+`demo history` auto-finds `demo/runs` by walking upward from the current directory. Optional override: `--runs-root /path/to/demo/runs`.
 
 ### CLI primitives (also usable standalone)
 
@@ -219,9 +165,16 @@ dns-cli demo run --demo-root demo --mode existing
 
 ### Interactive prompts (fresh)
 
-When a flag is omitted, the runner shows a default (from prior `runs/<tld>/state.json`, `DEMO_*` env, or built-in) and asks whether to keep it:
+When `--mode` / `--provider` / `--tld` / `--sld` / `--log-level` are omitted (and matching `DEMO_*` env is unset), `dns-cli demo run` prompts with **numbered menus** for fixed choices:
 
-- `mode`, `provider`, `tld`, `sld`
+```
+Mode
+  1) fresh (default)
+  2) existing
+Enter number [1]:
+```
+
+Provider and log level use the same pattern. TLD and SLD are free-text with a default. Skip-install and clipboard use yes-no prompts when those flags were not passed.
 
 Existing wallets under `runs/shared/wallets/{bootstrap,registrar,tld-owner,sld-owner}`:
 
@@ -239,7 +192,7 @@ During the run, colored **human reports** on stdout (not slog) narrate the flow:
 - Live **roadmap** checklist in preflight and history (done / current / pending)
 - Step banners, wallet/funding panels, and the completion report with explorer links
 
-The same styling is used for other `dns-cli` human stdout (`--output human`), including `version` and command success panels. PowerShell and Bash wrappers share this look because both call the Go binary. Disable ANSI with `--no-color` or `NO_COLOR=1`.
+The same styling is used for other `dns-cli` human stdout (`--output human`), including `version` and command success panels. Disable ANSI with `--no-color` or `NO_COLOR=1`.
 
 Technical logs stay on stderr and are unchanged by these banners.
 
@@ -313,7 +266,7 @@ Safe operator customizations:
 | DNS records content | Edit `demo/config/records.json` **before** a new SLD run (or edit the run’s copy before `update-sld` if still incomplete) |
 | TLD / SLD labels | `-Tld` / `-Sld` or `--tld` / `--sld` |
 | Provider | `-Provider blockfrost\|utxorpc` |
-| Logging detail | `-LogLevel Extensive` / `--log-level extensive` |
+| Logging detail | `--log-level extensive` / `DEMO_LOG_LEVEL=extensive` |
 | Auto-approve prompts | `-Yes` / `DEMO_ASSUME_YES=1` |
 | Which wallets to use | Reuse vs archive+regenerate when prompted |
 | Credentials location | Process env or `runs/shared/.env` |

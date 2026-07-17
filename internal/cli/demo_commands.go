@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/blinklabs-io/dns-cli/internal/demo"
+	"github.com/blinklabs-io/dns-cli/internal/logging"
 	"github.com/spf13/cobra"
 )
 
@@ -26,33 +27,47 @@ func newDemoRunCmd(g *GlobalFlags) *cobra.Command {
 		Use:   "run",
 		Short: "Run the resumable Preprod demo lifecycle (fresh|existing)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			if demoRoot == "" {
-				return WrapExit(ExitUsage, fmt.Errorf("--demo-root is required"))
-			}
-			err := demo.Run(cmd.Context(), demo.Options{
-				DemoRoot:    demoRoot,
-				RunsRoot:    runsRoot,
-				Mode:        mode,
-				Provider:    provider,
-				TLD:         tld,
-				SLD:         sld,
-				Yes:         yes,
-				SkipInstall: skipInstall,
-				NoClipboard: noClipboard,
-				NoColor:     g.NoColor || os.Getenv("NO_COLOR") != "",
-				LogLevel:    logLevel,
-				ContractRev: ContractRevision,
-				Stdin:       cmd.InOrStdin(),
-				Stdout:      cmd.OutOrStdout(),
-				Stderr:      cmd.ErrOrStderr(),
-			})
+			resolvedRoot, err := demo.ResolveDemoRoot(demoRoot)
 			if err != nil {
+				return WrapExit(ExitUsage, err)
+			}
+			opts := demo.Options{
+				DemoRoot:       resolvedRoot,
+				RunsRoot:       runsRoot,
+				Mode:           mode,
+				Provider:       provider,
+				TLD:            tld,
+				SLD:            sld,
+				Yes:            yes,
+				SkipInstall:    skipInstall,
+				SkipInstallSet: cmd.Flags().Changed("skip-install"),
+				NoClipboard:    noClipboard,
+				NoClipboardSet: cmd.Flags().Changed("no-clipboard"),
+				NoColor:        g.NoColor || os.Getenv("NO_COLOR") != "",
+				LogLevel:       logLevel,
+				ContractRev:    ContractRevision,
+				Stdin:          cmd.InOrStdin(),
+				Stdout:         cmd.OutOrStdout(),
+				Stderr:         cmd.ErrOrStderr(),
+			}
+			// Prefer explicit -v over --log-level when the user set verbosity.
+			if !cmd.Root().PersistentFlags().Changed("verbose") {
+				opts.ApplyVerbose = func(verbose int) error {
+					return logging.Configure(logging.Options{
+						Verbose: verbose,
+						NoColor: opts.NoColor,
+						Output:  g.Output,
+						Writer:  cmd.ErrOrStderr(),
+					})
+				}
+			}
+			if err := demo.Run(cmd.Context(), opts); err != nil {
 				return mapDemoRunErr(err)
 			}
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&demoRoot, "demo-root", "", "demo directory containing config/, fixtures/, runs/ (required)")
+	cmd.Flags().StringVar(&demoRoot, "demo-root", "", "demo directory (default: auto-detect upward from cwd)")
 	cmd.Flags().StringVar(&runsRoot, "runs-root", "", "override runs directory (default <demo-root>/runs)")
 	cmd.Flags().StringVar(&mode, "mode", "", "fresh|existing (default fresh)")
 	cmd.Flags().StringVar(&provider, "provider", "", "blockfrost|utxorpc (default blockfrost)")
@@ -68,7 +83,7 @@ func newDemoRunCmd(g *GlobalFlags) *cobra.Command {
 func mapDemoRunErr(err error) error {
 	msg := err.Error()
 	switch {
-	case contains(msg, "--demo-root", "required", "invalid mode", "invalid provider"):
+	case contains(msg, "--demo-root", "demo root", "could not find demo", "required", "invalid mode", "invalid provider", "invalid log level"):
 		return WrapExit(ExitUsage, err)
 	case contains(msg, "config", "template", "credential", "PROJECT_ID", "UTXORPC"):
 		return WrapExit(ExitConfig, err)

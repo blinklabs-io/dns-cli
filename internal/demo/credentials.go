@@ -79,29 +79,82 @@ func (r *Runner) ensureCredentials() error {
 func (r *Runner) resolveSettings() error {
 	priorTLD, priorSLD := runsDefaults(r.paths.RunsRoot)
 
-	mode := firstNonEmpty(r.opts.Mode, os.Getenv("DEMO_MODE"), "fresh")
-	provider := firstNonEmpty(r.opts.Provider, os.Getenv("DEMO_PROVIDER"), "blockfrost")
-	sld := firstNonEmpty(r.opts.SLD, priorSLD, "www")
-	tld := firstNonEmpty(r.opts.TLD, priorTLD, defaultTLDName())
+	modeFlag := strings.TrimSpace(r.opts.Mode)
+	providerFlag := strings.TrimSpace(r.opts.Provider)
+	tldFlag := strings.TrimSpace(r.opts.TLD)
+	sldFlag := strings.TrimSpace(r.opts.SLD)
+	modeEnv := strings.TrimSpace(os.Getenv("DEMO_MODE"))
+	providerEnv := strings.TrimSpace(os.Getenv("DEMO_PROVIDER"))
 
-	if r.opts.Mode == "" {
-		mode = r.askSetting("mode", mode, []string{"fresh", "existing"})
+	mode := firstNonEmpty(modeFlag, modeEnv, "fresh")
+	provider := firstNonEmpty(providerFlag, providerEnv, "blockfrost")
+	sld := firstNonEmpty(sldFlag, priorSLD, "www")
+	tld := firstNonEmpty(tldFlag, priorTLD, defaultTLDName())
+
+	logLevel := strings.TrimSpace(r.opts.LogLevel)
+	if logLevel == "" && envTruthy("DEMO_EXTENSIVE_LOGGING") {
+		logLevel = "extensive"
 	}
-	if r.opts.Provider == "" && mode != "existing" {
-		provider = r.askSetting("provider", provider, []string{"blockfrost", "utxorpc"})
+	if logLevel == "" {
+		logLevel = strings.TrimSpace(os.Getenv("DEMO_LOG_LEVEL"))
+	}
+
+	needAsk := modeFlag == "" && modeEnv == ""
+	if mode != "existing" {
+		if providerFlag == "" && providerEnv == "" {
+			needAsk = true
+		}
+		if tldFlag == "" {
+			needAsk = true
+		}
+		if sldFlag == "" {
+			needAsk = true
+		}
+	}
+	if logLevel == "" {
+		needAsk = true
+	}
+	if !r.opts.SkipInstallSet {
+		needAsk = true
+	}
+	if !r.opts.NoClipboardSet && mode != "existing" {
+		needAsk = true
+	}
+	assumeYes := r.opts.Yes || envTruthy("DEMO_ASSUME_YES")
+	if needAsk && !assumeYes {
+		fmt.Fprintln(r.stdout, "══ Demo run options ══")
+	}
+
+	if modeFlag == "" && modeEnv == "" {
+		mode = r.askSetting("Mode", mode, []string{"fresh", "existing"})
+	}
+	if mode != "existing" && providerFlag == "" && providerEnv == "" {
+		provider = r.askSetting("Provider", provider, []string{"blockfrost", "utxorpc"})
 	}
 	if mode == "existing" {
 		r.mode = "existing"
 		r.provider = provider
 		r.tld = tld
 		r.sld = sld
+		if err := r.resolveAuxOptions(logLevel, true); err != nil {
+			return err
+		}
+		if needAsk && !assumeYes {
+			fmt.Fprintln(r.stdout, "════════════════════════")
+		}
 		return nil
 	}
-	if r.opts.TLD == "" {
-		tld = r.askSetting("tld", tld, nil)
+	if tldFlag == "" {
+		tld = r.askSetting("TLD (blank keeps default)", tld, nil)
 	}
-	if r.opts.SLD == "" {
-		sld = r.askSetting("sld", sld, nil)
+	if sldFlag == "" {
+		sld = r.askSetting("SLD", sld, nil)
+	}
+	if err := r.resolveAuxOptions(logLevel, false); err != nil {
+		return err
+	}
+	if needAsk && !assumeYes {
+		fmt.Fprintln(r.stdout, "════════════════════════")
 	}
 
 	mode = strings.ToLower(strings.TrimSpace(mode))
@@ -119,28 +172,41 @@ func (r *Runner) resolveSettings() error {
 	r.provider = provider
 	r.tld = strings.TrimSpace(tld)
 	r.sld = strings.TrimSpace(sld)
-	slog.Info("Demo settings", "mode", r.mode, "provider", r.provider, "tld", r.tld, "sld", r.sld)
+	slog.Info("Demo settings", "mode", r.mode, "provider", r.provider, "tld", r.tld, "sld", r.sld,
+		"logLevel", r.opts.LogLevel, "skipInstall", r.opts.SkipInstall, "noClipboard", r.opts.NoClipboard)
+	return nil
+}
+
+func (r *Runner) resolveAuxOptions(logLevel string, existingMode bool) error {
+	assumeYes := r.opts.Yes || envTruthy("DEMO_ASSUME_YES")
+	if logLevel == "" {
+		logLevel = r.askSetting("Log level", "normal", []string{"quiet", "normal", "extensive"})
+	}
+	logLevel = strings.ToLower(strings.TrimSpace(logLevel))
+	switch logLevel {
+	case "quiet", "normal", "extensive":
+		r.opts.LogLevel = logLevel
+	default:
+		return fmt.Errorf("invalid log level %q (want quiet|normal|extensive)", logLevel)
+	}
+
+	if !r.opts.SkipInstallSet {
+		// Default No; --yes keeps that default (does not enable skip-install).
+		if assumeYes {
+			r.opts.SkipInstall = false
+		} else {
+			r.opts.SkipInstall = r.prompt.ConfirmYes("Skip tool installs / credential writes (guides only)?")
+		}
+		r.opts.SkipInstallSet = true
+	}
+	if !existingMode && !r.opts.NoClipboardSet {
+		copyClip := r.prompt.ConfirmDefault("Copy bootstrap faucet address to clipboard?")
+		r.opts.NoClipboard = !copyClip
+		r.opts.NoClipboardSet = true
+	}
 	return nil
 }
 
 func (r *Runner) askSetting(name, def string, allowed []string) string {
-	if r.prompt.ConfirmDefault(fmt.Sprintf("Use this %s? (%s)", name, def)) {
-		return def
-	}
-	val := r.prompt.AskString(fmt.Sprintf("Enter %s", name), def)
-	if len(allowed) > 0 {
-		ok := false
-		for _, a := range allowed {
-			if strings.EqualFold(val, a) {
-				ok = true
-				val = a
-				break
-			}
-		}
-		if !ok {
-			slog.Warn("invalid value; keeping default", "name", name, "got", val, "default", def)
-			return def
-		}
-	}
-	return val
+	return r.prompt.AskChoice(name, def, allowed)
 }

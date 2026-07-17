@@ -45,8 +45,15 @@ func ResolveVersion() VersionInfo {
 			}
 		}
 		for _, s := range bi.Settings {
-			if s.Key == "vcs.revision" && info.GitCommit == "unknown" {
-				info.GitCommit = s.Value
+			switch s.Key {
+			case "vcs.revision":
+				if info.GitCommit == "unknown" || info.GitCommit == "" {
+					info.GitCommit = s.Value
+				}
+			case "vcs.time":
+				if info.BuildDate == "unknown" || info.BuildDate == "" {
+					info.BuildDate = s.Value
+				}
 			}
 		}
 	}

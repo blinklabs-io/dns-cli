@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -14,6 +15,8 @@ type Prompter interface {
 	ConfirmDefault(prompt string) bool // default Yes [Y/n]; AssumeYes → true
 	ConfirmProceed(prompt string) bool // default No; NEVER auto-yes
 	AskString(prompt, def string) string
+	// AskChoice shows a numbered menu when allowed is non-empty; otherwise AskString.
+	AskChoice(prompt, def string, allowed []string) string
 }
 
 type stdPrompter struct {
@@ -75,6 +78,56 @@ func (p *stdPrompter) AskString(prompt, def string) string {
 		return def
 	}
 	return line
+}
+
+func (p *stdPrompter) AskChoice(prompt, def string, allowed []string) string {
+	if len(allowed) == 0 {
+		return p.AskString(prompt, def)
+	}
+	if p.assumeYes {
+		pick := resolveChoiceDefault(def, allowed)
+		fmt.Fprintf(p.out, "%s [%s]: %s (assume-yes)\n", prompt, pick, pick)
+		return pick
+	}
+
+	defaultIndex := choiceDefaultIndex(def, allowed)
+	fmt.Fprintf(p.out, "%s\n", prompt)
+	for i, opt := range allowed {
+		mark := ""
+		if i+1 == defaultIndex {
+			mark = " (default)"
+		}
+		fmt.Fprintf(p.out, "  %d) %s%s\n", i+1, opt, mark)
+	}
+	fmt.Fprintf(p.out, "Enter number [%d]: ", defaultIndex)
+	line, _ := p.in.ReadString('\n')
+	line = strings.TrimSpace(line)
+	if line == "" {
+		return allowed[defaultIndex-1]
+	}
+	if n, err := strconv.Atoi(line); err == nil && n >= 1 && n <= len(allowed) {
+		return allowed[n-1]
+	}
+	for _, opt := range allowed {
+		if strings.EqualFold(line, opt) {
+			return opt
+		}
+	}
+	fmt.Fprintf(p.out, "Invalid choice %q; keeping default %q.\n", line, allowed[defaultIndex-1])
+	return allowed[defaultIndex-1]
+}
+
+func choiceDefaultIndex(def string, allowed []string) int {
+	for i, opt := range allowed {
+		if strings.EqualFold(def, opt) {
+			return i + 1
+		}
+	}
+	return 1
+}
+
+func resolveChoiceDefault(def string, allowed []string) string {
+	return allowed[choiceDefaultIndex(def, allowed)-1]
 }
 
 // ReadSecret reads a line without echo when possible; falls back to plain ReadString.

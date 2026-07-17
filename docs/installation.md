@@ -8,13 +8,30 @@
 - Bursa-compatible signing keys or mnemonics for actors (never stored inline in config)
 - For the Preprod demo (`demo/`):
   - [Aiken](https://aiken-lang.org/) on `PATH`, version **≥ 1.1.19** (`aiken --version`)
-  - `jq` for the Bash wrapper (`demo/scripts/run-demo.sh`)
   - Provider credentials (see Configuration)
 
-## Build from source
+## Bootstrap (recommended)
+
+From the repo root, `scripts/setup.*` checks Go, creates `bin/`, and builds dns-cli.
+It does **not** scaffold `demo/` — `dns-cli demo run` repairs the demo tree when needed.
+
+```bash
+./scripts/setup.sh
+./bin/dns-cli version
+```
+
+```powershell
+.\scripts\setup.ps1
+.\bin\dns-cli.exe version
+```
+
+Flags: `-y` / `-Yes`, `--skip-build` / `-SkipBuild`. Env: `ASSUME_YES=1`.
+
+## Build from source (manual)
 
 ```bash
 cd dns-cli
+mkdir -p bin
 go build -o bin/dns-cli ./cmd/dns-cli
 ```
 
@@ -34,11 +51,11 @@ make build
 ## Windows
 
 ```powershell
-go build -o bin/dns-cli.exe ./cmd/dns-cli
+.\scripts\setup.ps1
 .\bin\dns-cli.exe version
 ```
 
-Add `bin/` (or another install location) to your `PATH` for convenience. Demo wrappers prefer `bin/dns-cli(.exe)` and can offer to build there.
+Add `bin/` (or another install location) to your `PATH` for convenience.
 
 ## Provider credentials
 
