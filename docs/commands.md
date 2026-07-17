@@ -13,7 +13,7 @@
 | `--artifact-dir` | Override artifact output directory |
 | `--no-color` | Disable ANSI colors in human output and logs |
 
-Diagnostic logs always go to **stderr**. With `--output json`, command results stay on stdout and logs use JSON on stderr (no ANSI).
+Diagnostic logs always go to **stderr**. With `--output json`, command results stay on stdout and logs use JSON on stderr (no ANSI). Human (`--output human`) results use colored panels by default; disable with `--no-color` or `NO_COLOR=1`.
 
 Missing required flags (including Cobra `MarkFlagRequired`) exit with code **2** (`usage`), not `1` (`internal`).
 

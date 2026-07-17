@@ -69,7 +69,7 @@ demo/
 | `runs/<tld>/` (state, artifacts, configs, contracts, records) | Demo history — committed (Preprod) |
 | `runs/shared/` (wallets, `.env`, tools) | Preprod demo material — committed intentionally (revocable test keys) |
 
-Schemas live under `runs/states/` and are explicitly un-ignored in `.gitignore` so they remain versioned alongside generated run data.
+Schemas live under `runs/states/` and are versioned with the rest of `demo/runs/` (Preprod demo history is tracked intentionally).
 
 ## Requirements
 
@@ -84,8 +84,7 @@ Schemas live under `runs/states/` and are explicitly un-ignored in `.gitignore` 
 
 | Item | Notes |
 |---|---|
-| Go **1.25.10+** | To build `dns-cli` if the binary is missing |
-| Local Apollo checkout | Repo expects `../apollo` relative to `dns-cli` (`go.mod` replace) |
+| Go **1.25.10+** | To build `dns-cli` if the binary is missing (Apollo via `go.mod` replace; no local sibling checkout) |
 | `dns-cli` binary | Prefer `bin/dns-cli(.exe)`; wrappers ask before building there. Also: tree root, `PATH`, or `CLI=` |
 | Aiken CLI **≥ 1.1.19** | Must match `fixtures/contracts/aiken.toml` compiler |
 | Provider credentials | See below |
@@ -103,7 +102,7 @@ Schemas live under `runs/states/` and are explicitly un-ignored in `.gitignore` 
 - Env: `DNS_CLI_UTXORPC_URL` (required)
 - Optional: `DMTR_API_KEY` (Demeter), `DNS_CLI_UTXORPC_HEADERS` (`Key=Value,...`)
 
-Credentials can be saved interactively to `demo/runs/shared/.env` (gitignored). Process env always wins over `.env`.
+Credentials can be saved interactively to `demo/runs/shared/.env` (tracked as Preprod demo material — treat as test-only). Process env always wins over `.env`.
 
 ### Flags and env helpers
 
@@ -118,21 +117,33 @@ Credentials can be saved interactively to `demo/runs/shared/.env` (gitignored). 
 
 ## How to run
 
-Working directory: **`demo/`**.
+Prefer `dns-cli demo run` from the **module root** (or any cwd with an absolute `--demo-root`). Wrappers under `demo/scripts/` are optional.
 
 ### Fresh (Blockfrost)
 
+```bash
+export DNS_CLI_BLOCKFROST_PROJECT_ID=preprod...
+dns-cli demo run --demo-root demo --mode fresh --provider blockfrost
+```
+
 ```powershell
 $env:DNS_CLI_BLOCKFROST_PROJECT_ID = 'preprod...'
+dns-cli demo run --demo-root demo --mode fresh --provider blockfrost
+# or from demo/:
 .\scripts\run-demo.ps1 -Mode fresh -Provider blockfrost
 ```
 
 ```bash
+# from demo/ via wrapper:
 export DNS_CLI_BLOCKFROST_PROJECT_ID=preprod...
 ./scripts/run-demo.sh --mode fresh --provider blockfrost
 ```
 
 Optional labels:
+
+```bash
+dns-cli demo run --demo-root demo --mode fresh --provider blockfrost --tld mytld --sld www
+```
 
 ```powershell
 .\scripts\run-demo.ps1 -Mode fresh -Provider blockfrost -Tld mytld -Sld www
@@ -146,6 +157,10 @@ Optional labels:
 
 Re-run without flags (or with the same mode/provider/tld/sld). Confirmed steps are skipped.
 
+```bash
+dns-cli demo run --demo-root demo
+```
+
 ```powershell
 .\scripts\run-demo.ps1
 ```
@@ -155,6 +170,11 @@ Re-run without flags (or with the same mode/provider/tld/sld). Confirmed steps a
 ```
 
 ### Existing (history viewer)
+
+```bash
+dns-cli demo history
+dns-cli demo run --demo-root demo --mode existing
+```
 
 ```powershell
 .\scripts\run-demo.ps1 -Mode existing
@@ -168,7 +188,7 @@ If no TLD folders exist under `runs/` yet, the viewer prints:
 
 `no demo history yet (run a fresh demo first)`
 
-You can also call the primitive directly — it auto-finds `demo/runs` from the current directory:
+`demo history` auto-finds `demo/runs` by walking upward from the current directory:
 
 ```bash
 dns-cli demo history

@@ -6,11 +6,18 @@
 - Use `signingKeyFile` paths or `mnemonicEnv` / `projectIdEnv` / `headersEnv` only
 - Restrict key file permissions (`chmod 600`); Windows ACL limitations are warned at init
 
+## Preprod demo material
+
+`demo/runs/` intentionally tracks shared Preprod wallets, `.env` snippets, and run artifacts for a revocable end-to-end demo. Those keys are **testnet-only**. Never reuse them on mainnet. Mutating demo commands reject mainnet and Preview profiles.
+
+For production or long-lived test identities, keep secrets out of git and rotate anything that was ever committed.
+
 ## Logging and output
 
 - Secrets are not logged on parse or sign failures
 - `config show --redact` (default) masks environment-derived values
 - Manifests and JSON output exclude secret material
+- Human stdout may use ANSI colors; disable with `--no-color` or `NO_COLOR=1`
 
 ## Artifacts
 
@@ -29,7 +36,7 @@ If a key is exposed:
 
 1. Stop using the compromised actor
 2. Rotate credentials and update config addresses if needed
-3. Do not commit `.skey` files or proof bundles with live signatures to git
+3. Do not commit production `.skey` files or proof bundles with live signatures to git
 
 ## Provider credentials
 

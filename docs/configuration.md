@@ -6,8 +6,7 @@ dns-cli uses versioned JSON profiles. Generate a starter file:
 dns-cli config init --network preprod --provider blockfrost --config dns-cli.json
 ```
 
-See `examples/config.preprod.json` / `examples/config.preview.json` for the full shape.
-Demo templates live under `demo/config/`.
+`config init` writes the full schema (network, provider, contracts placeholders, actors, transaction defaults). Demo bind templates live under `demo/config/` (`blockfrost.template.json`, `utxorpc.template.json`); DNS record samples are in `demo/config/records.json`.
 
 ## Profiles
 
@@ -72,7 +71,7 @@ Each actor requires exactly one credential source:
 
 Optional `accountId` / `addressId` apply to mnemonic-derived wallets.
 
-For Preprod demos, generate actors with `dns-cli wallet create --network preprod`.
+For Preprod demos, generate actors with `dns-cli wallet create --network preprod` (or let `demo run` create them under `demo/runs/shared/wallets/`).
 
 ## Flag precedence
 

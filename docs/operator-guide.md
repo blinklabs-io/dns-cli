@@ -20,13 +20,22 @@
 
 ## Preparation (automated Preprod demo)
 
-```powershell
-cd demo
-$env:DNS_CLI_BLOCKFROST_PROJECT_ID = '...'
-.\run-demo.ps1 -Mode fresh -Provider blockfrost
+Prefer the Go orchestrator:
+
+```bash
+export DNS_CLI_BLOCKFROST_PROJECT_ID=preprod...
+dns-cli demo run --demo-root demo --mode fresh --provider blockfrost
 ```
 
-See [`demo/README.md`](../demo/README.md). The runner waits for faucet funding of a new bootstrap wallet (≥ 150 ADA), prompts before submissions, and resumes from `runtime/state.json`.
+Or the thin wrappers from `demo/`:
+
+```powershell
+cd demo
+$env:DNS_CLI_BLOCKFROST_PROJECT_ID = 'preprod...'
+.\scripts\run-demo.ps1 -Mode fresh -Provider blockfrost
+```
+
+See [`demo/README.md`](../demo/README.md) and [`demo.md`](demo.md). The runner waits for faucet funding of the bootstrap wallet (≥ 150 ADA), prompts before submissions, and resumes from `demo/runs/<tld>/state.json` (and nested SLD run state). Inspect prior runs with `dns-cli demo history`.
 
 ## Runbook
 
@@ -35,19 +44,23 @@ See [`demo/README.md`](../demo/README.md). The runner waits for faucet funding o
 ```bash
 dns-cli config validate --online
 dns-cli registrar register-tld --tld hello --proof proof.json --out artifacts/01-register
-dns-cli tx sign --tx artifacts/01-register.unsigned.json --actor registrar --out artifacts/01-register.signed.json
-dns-cli tx submit --tx artifacts/01-register.signed.json --output json
-dns-cli tx status --tx-id <TXID> --manifest artifacts/01-register.manifest.json --wait
+dns-cli tx apply --tx artifacts/01-register.unsigned.json --actor registrar \
+  --signed artifacts/01-register.signed.json --manifest artifacts/01-register.manifest.json
 
 dns-cli owner activate-tld --tld hello --proof proof.json --out artifacts/02-activate
-# sign + submit + status ...
+dns-cli tx apply --tx artifacts/02-activate.unsigned.json --actor tldOwner \
+  --signed artifacts/02-activate.signed.json --manifest artifacts/02-activate.manifest.json
 
 dns-cli owner mint-sld --tld hello --sld www --sld-owner sldOwner --out artifacts/03-mint
-# sign (tldOwner) + submit + status ...
+dns-cli tx apply --tx artifacts/03-mint.unsigned.json --actor tldOwner \
+  --signed artifacts/03-mint.signed.json --manifest artifacts/03-mint.manifest.json
 
 dns-cli owner update-sld --tld hello --sld www --records records.json --out artifacts/04-update
-# sign (sldOwner) + submit + status ...
+dns-cli tx apply --tx artifacts/04-update.unsigned.json --actor sldOwner \
+  --signed artifacts/04-update.signed.json --manifest artifacts/04-update.manifest.json
 ```
+
+For air-gapped or multi-step ceremonies, use `tx sign` → `tx submit` → `tx status --wait` instead of `tx apply`. See [offline-transactions.md](offline-transactions.md).
 
 ## Evidence collection
 

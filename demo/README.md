@@ -69,7 +69,7 @@ export DNS_CLI_BLOCKFROST_PROJECT_ID=preprod...
 Wrappers resolve `CLI` → `dns-cli/bin/dns-cli(.exe)` → tree root → `PATH`. Interactive prompts (skipped with `-Yes` / `--yes`): mode, provider, TLD/SLD, **log level**, skip-install, clipboard. Missing/outdated binaries ask to compile into `bin/`.
 ## Prerequisites (fresh mode)
 
-- Go 1.25.10+ and local Apollo checkout at `../apollo` (see `go.mod` replace)
+- Go 1.25.10+ (Apollo resolves via `go.mod` replace; no local sibling checkout)
 - Built `dns-cli` binary (`bin/dns-cli.exe` on Windows, or wrappers will ask to build it)
 - Aiken CLI on `PATH`, **version ≥ 1.1.19** (matches `fixtures/contracts/aiken.toml`)
 - Provider credentials:
@@ -92,6 +92,6 @@ Bootstrap needs **≥ 150 ADA** from the [Preprod faucet](https://docs.cardano.o
 | Source | Destination |
 |---|---|
 | `dns-contracts/onchain/{aiken.toml,aiken.lock,plutus.json,validators,lib}` | `demo/fixtures/contracts/**` |
-| `dns-cli/examples/records.json` | `demo/config/records.json` |
+| Historical `examples/records.json` (removed) | `demo/config/records.json` (canonical starter) |
 
 `fixtures/` must not be written by runners. See [docs/demo.md](../docs/demo.md) for full operator guidance (requirements, expected results, what you can change).

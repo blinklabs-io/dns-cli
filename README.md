@@ -1,30 +1,52 @@
 # dns-cli
 
-Go-native CLI for Handshake DNS on Cardano. Builds unsigned Conway-era transactions
-for TLD registration, activation, SLD minting, and DNS record updates using
-[Apollo v2](https://github.com/Salvionied/apollo) — no `cardano-cli` at runtime.
+Go-native CLI for Handshake DNS on Cardano (**v1.0.0**). Builds unsigned Conway-era
+transactions for TLD registration, activation, SLD minting, and DNS record updates
+using [Apollo v2](https://github.com/Salvionied/apollo) — no `cardano-cli` at runtime.
+
+Human stdout uses colored panels and step roadmaps by default. Use `--no-color` or
+`NO_COLOR=1` for plain text; `--output json` for machine-readable results on stdout
+(logs stay on stderr).
 
 ## Quick start
 
+Requires **Go 1.25.10+** (module pins toolchain `go1.25.12`). Apollo resolves via
+`go.mod` `replace` — no local sibling checkout needed for a normal build.
+
 ```bash
-go build -o dns-cli ./cmd/dns-cli
-./dns-cli config init --network preprod --provider blockfrost
-./dns-cli config validate
-./dns-cli version --output json
-./dns-cli dashboard --config dns-cli.json
+go build -o bin/dns-cli ./cmd/dns-cli
+./bin/dns-cli version
+./bin/dns-cli config init --network preprod --provider blockfrost
+./bin/dns-cli config validate
+./bin/dns-cli dashboard --config dns-cli.json
 ```
 
 Windows:
 
 ```powershell
-go build -o dns-cli.exe ./cmd/dns-cli
-.\dns-cli.exe version
-.\dns-cli.exe dashboard --config dns-cli.json
+go build -o bin/dns-cli.exe ./cmd/dns-cli
+.\bin\dns-cli.exe version
+.\bin\dns-cli.exe dashboard --config dns-cli.json
 ```
 
-Interactive dashboard docs: [docs/tui.md](docs/tui.md).
+Interactive dashboard: [docs/tui.md](docs/tui.md).
 
-Requires a local Apollo checkout at `../apollo` (see `go.mod` replace).
+## Command tree
+
+```
+dns-cli version
+dns-cli config init|show|validate
+dns-cli wallet create|fund|balance|wait-funds
+dns-cli proof generate
+dns-cli system prepare|init|bind
+dns-cli registrar register-tld
+dns-cli owner activate-tld|mint-sld|update-sld
+dns-cli tx inspect|sign|submit|status|apply
+dns-cli demo history|run
+dns-cli dashboard
+```
+
+Full flag reference: [docs/commands.md](docs/commands.md).
 
 ## Protocol flow
 
@@ -33,58 +55,68 @@ Requires a local Apollo checkout at `../apollo` (see `go.mod` replace).
 3. `owner mint-sld` — atomic parent list update + SLD token pair
 4. `owner update-sld` — replace full DNS record set
 
-Each domain command writes an unsigned text envelope and manifest. Use `tx sign`,
-`tx submit`, and `tx status` for the offline lifecycle.
+Each domain command writes an unsigned text envelope and manifest. Use `tx apply`
+(or `tx sign` → `submit` → `status`) for the offline lifecycle.
 
 Bootstrap helpers:
 
-- `wallet create|fund|balance`
+- `wallet create|fund|balance|wait-funds`
 - `proof generate`
 - `system prepare|init|bind` (Aiken for parameterization only)
 
 ## Preprod demo
 
-Self-contained fresh/existing runners live in [`demo/`](demo/README.md). Full guide: [`docs/demo.md`](docs/demo.md).
+End-to-end Preprod orchestration is a first-class CLI command. Prefer that over the
+shell wrappers. Quickstart: [`demo/README.md`](demo/README.md). Full guide:
+[`docs/demo.md`](docs/demo.md).
+
+```bash
+export DNS_CLI_BLOCKFROST_PROJECT_ID=preprod...
+go build -o bin/dns-cli ./cmd/dns-cli
+./bin/dns-cli demo run --demo-root demo --mode fresh --provider blockfrost
+./bin/dns-cli demo history          # auto-finds demo/runs
+./bin/dns-cli demo run --demo-root demo --mode existing
+```
+
+Thin wrappers (prompt for unset options; can build into `bin/`):
 
 ```powershell
 cd demo
-$env:DNS_CLI_BLOCKFROST_PROJECT_ID = '...'
+$env:DNS_CLI_BLOCKFROST_PROJECT_ID = 'preprod...'
 .\scripts\run-demo.ps1 -Mode fresh -Provider blockfrost
 ```
 
 ```bash
 cd demo
-export DNS_CLI_BLOCKFROST_PROJECT_ID=...
+export DNS_CLI_BLOCKFROST_PROJECT_ID=preprod...
 ./scripts/run-demo.sh --mode fresh --provider blockfrost
 ```
 
-Keys under `demo/runs/shared/wallets/` (and any generated HNS keys) are **Preprod-only test material** — never use on mainnet.
+Starter DNS records live in `demo/config/records.json`. Run history and shared
+Preprod wallets under `demo/runs/` are tracked demo material — **never use on mainnet**.
 
 ## Documentation
 
 - [Installation](docs/installation.md)
 - [Configuration](docs/configuration.md)
 - [Commands](docs/commands.md)
+- [Interactive TUI](docs/tui.md)
 - [Offline transactions](docs/offline-transactions.md)
 - [Operator guide](docs/operator-guide.md)
 - [Protocol crosswalk](docs/protocol-crosswalk.md)
 - [Security](docs/security.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [Preprod demo guide](docs/demo.md)
-- [ADR: Apollo v2 only](docs/adr/001-no-cardano-cli-apollo-v2.md)
 - [Demo quickstart](demo/README.md)
 
 ## Stack
 
-- **Apollo v2** — transaction construction (local `../apollo` replace)
+- **Apollo v2** — transaction construction (`go.mod` replace)
 - **Bursa** — wallet and signing
 - **UTxO RPC / Blockfrost** — selectable chain providers
 - **Aiken** — validator build/parameter apply for `system prepare`
 - **dns-contracts** — on-chain source of truth
-
-## Examples
-
-See `examples/` for starter config, proof bundle, and records JSON.
+- **Bubble Tea / Lip Gloss** — dashboard and colored human reports
 
 ## Tests
 
@@ -94,8 +126,12 @@ go test -fuzz ./internal/domain -fuzztime 5s
 go test -tags integration ./...   # requires DNS_CLI_RUN_LIVE=1
 ```
 
+CI runs `go mod tidy` (must stay clean), `go vet`, and tests on Linux and Windows.
+
 ## Status
 
-CLI, config, providers, wallet, proof generation, system bootstrap, protocol encoding,
-chain query, transaction builders, offline artifacts, Preprod demo runners, docs, and CI
-are in place. Live Preprod acceptance requires provider credentials and faucet funding.
+**v1.0.0** — CLI, config, providers, wallet, proof generation, system bootstrap,
+protocol encoding, chain query, transaction builders, offline artifacts, colored
+human reports, interactive dashboard, Preprod demo orchestration (`demo run` /
+`demo history`), docs, and CI are released. Live Preprod acceptance still needs
+provider credentials and faucet funding.

@@ -70,7 +70,17 @@ no suitable collateral utxo
 ## Reference script mismatch
 
 - Run `config validate --online`
-- Confirm `referenceUtxos` match `01-init-system.sh` deployment
+- Confirm `referenceUtxos` match the latest `system init` deployment (or historical `01-init-system.sh` in dns-contracts)
+
+## Demo history empty
+
+```
+no demo history yet (run a fresh demo first)
+```
+
+- Run `dns-cli demo history` from inside the repo (or any cwd under a tree that contains `demo/runs`)
+- Or pass `--runs-root path/to/demo/runs` explicitly
+- `demo run --mode existing` is the same read-only viewer
 
 ## Confirmation timeout
 

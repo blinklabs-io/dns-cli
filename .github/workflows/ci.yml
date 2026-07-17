@@ -6,7 +6,9 @@ on:
     pull_request:
         branches: [main]
 
-# Layout must match go.mod: replace apollo => ../apollo
+# Layout historically used a local Apollo sibling checkout. go.mod now replaces
+# Apollo via a remote module pin; the checkout below is unused by the build but
+# kept so CI layout remains easy to switch back to a path replace if needed.
 #   $GITHUB_WORKSPACE/dns-cli
 #   $GITHUB_WORKSPACE/apollo
 env:

@@ -20,6 +20,8 @@ Each build writes:
 6. **Submit** with `dns-cli tx submit --tx SIGNED`
 7. **Confirm** with `dns-cli tx status --tx-id HASH --manifest FILE --wait`
 
+For a single-machine flow, `dns-cli tx apply` runs sign → submit → status `--wait` and prints the confirmed `txId`. Interactive TTY waits use a Bubble Tea status panel; `--output json` and non-TTY keep plain status lines.
+
 ## Integrity checks
 
 `tx sign` verifies:

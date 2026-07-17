@@ -5,7 +5,8 @@ on:
         tags:
             - "v*"
 
-# Layout must match go.mod: replace apollo => ../apollo
+# Apollo is resolved via go.mod replace (remote pin). Sibling checkout kept for
+# optional path-replace workflows; see ci.yml comment.
 env:
     APOLLO_REF: b2f56d0c6e9d22316b6938feeb325bdbab3846d2
 

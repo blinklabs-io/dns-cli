@@ -2,21 +2,20 @@
 
 ## Prerequisites
 
-- Go **1.25.10+** (module pins toolchain `go1.25.12`; required by Apollo)
-- Local Apollo v2 checkout at `../apollo` (required by `go.mod` `replace`)
+- Go **1.25.10+** (module pins toolchain `go1.25.12`)
+- Apollo v2 is pulled via the `go.mod` `replace` directive (no local sibling checkout required)
 - Access to Cardano **preview** or **preprod** via UTxO RPC or Blockfrost
 - Bursa-compatible signing keys or mnemonics for actors (never stored inline in config)
 - For the Preprod demo (`demo/`):
-  - [Aiken](https://aiken-lang.org/) on `PATH` (`aiken --version`)
-  - `jq` for the Bash runner
+  - [Aiken](https://aiken-lang.org/) on `PATH`, version **≥ 1.1.19** (`aiken --version`)
+  - `jq` for the Bash wrapper (`demo/scripts/run-demo.sh`)
   - Provider credentials (see Configuration)
 
 ## Build from source
 
 ```bash
 cd dns-cli
-# Apollo must exist at ../apollo relative to this module
-go build -o dns-cli ./cmd/dns-cli
+go build -o bin/dns-cli ./cmd/dns-cli
 ```
 
 Or use the Makefile:
@@ -28,18 +27,18 @@ make build
 ## Verify
 
 ```bash
-./dns-cli version
-./dns-cli version --output json
+./bin/dns-cli version
+./bin/dns-cli version --output json
 ```
 
 ## Windows
 
 ```powershell
-go build -o dns-cli.exe ./cmd/dns-cli
-.\dns-cli.exe version
+go build -o bin/dns-cli.exe ./cmd/dns-cli
+.\bin\dns-cli.exe version
 ```
 
-Add the directory containing `dns-cli` to your `PATH` for convenience.
+Add `bin/` (or another install location) to your `PATH` for convenience. Demo wrappers prefer `bin/dns-cli(.exe)` and can offer to build there.
 
 ## Provider credentials
 
