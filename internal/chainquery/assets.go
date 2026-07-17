@@ -95,12 +95,19 @@ func FindCollateral(ctx context.Context, p provider.Provider, addr common.Addres
 }
 
 // LoadFundingUTxOs returns spendable UTxOs for an actor address.
+// Unused addresses (Blockfrost 404) are normalized by the provider wrapper to
+// an empty slice; other provider failures are returned with clearer context.
 func LoadFundingUTxOs(ctx context.Context, p provider.Provider, addr common.Address) ([]common.Utxo, error) {
 	_ = ctx
-	return p.Utxos(addr)
+	utxos, err := p.Utxos(addr)
+	if err != nil {
+		return nil, fmt.Errorf("query utxos at %s: %w", addr.String(), err)
+	}
+	return utxos, nil
 }
 
 // SumLovelace returns the total lovelace at an address across all UTxOs.
+// An unused address with no chain history is reported as 0 lovelace / 0 UTxOs.
 func SumLovelace(ctx context.Context, p provider.Provider, addr common.Address) (int64, int, error) {
 	utxos, err := LoadFundingUTxOs(ctx, p, addr)
 	if err != nil {

@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "operation": "update-sld",
+  "network": "preprod",
+  "provider": "blockfrost",
+  "bodyHash": "e0b538b8ddd71ce78c4be8dc58cd22f13c39b1642d204a1b9220db3f88185523",
+  "requiredSigners": [
+    "4ce9a0fc7d009b0acd4294bc05927be45a75f81bbff56e1314a8b24b"
+  ],
+  "expectedOutputs": [
+    {
+      "role": "sld-reference-updated",
+      "index": 0
+    },
+    {
+      "role": "sld-user-token-return",
+      "index": 1
+    }
+  ],
+  "validityInterval": {
+    "start": 128618949,
+    "ttl": 128619249
+  },
+  "configDigest": "44e6bfd08afafe3edfff986c2ac53681290045fa4126c084344e33e3ff20995c",
+  "apolloRevision": "v2.0.0-20260717012746-2754803864d2",
+  "contractRevision": "unknown",
+  "createdAt": "2026-07-17T15:29:28Z",
+  "extra": {
+    "oldRecordCount": "0",
+    "recordCount": "1",
+    "sld": "www",
+    "tld": "cardano"
+  }
+}

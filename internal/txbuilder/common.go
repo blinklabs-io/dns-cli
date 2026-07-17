@@ -111,11 +111,17 @@ func (c *Context) finalize(a *apollo.Apollo, operation, description, outPrefix, 
 		slog.Error("Transaction build failed", "operation", operation, "error", err)
 		return BuildOutput{}, fmt.Errorf("complete transaction: %w", err)
 	}
-	cbor, err := completed.GetTxCbor()
+	cborBytes, err := completed.GetTxCbor()
 	if err != nil {
 		return BuildOutput{}, fmt.Errorf("encode transaction: %w", err)
 	}
-	tx, err := artifact.DecodeConwayTx(cbor)
+	if c.Provider != nil {
+		cborBytes, err = c.fixScriptDataHash(cborBytes)
+		if err != nil {
+			return BuildOutput{}, fmt.Errorf("fix script data hash: %w", err)
+		}
+	}
+	tx, err := artifact.DecodeConwayTx(cborBytes)
 	if err != nil {
 		return BuildOutput{}, err
 	}
@@ -139,7 +145,7 @@ func (c *Context) finalize(a *apollo.Apollo, operation, description, outPrefix, 
 		CreatedAt:        time.Now().UTC().Format(time.RFC3339),
 		Extra:            extra,
 	}
-	envPath, err := artifact.WriteUnsigned(outPrefix, cbor, description, manifest)
+	envPath, err := artifact.WriteUnsigned(outPrefix, cborBytes, description, manifest)
 	if err != nil {
 		return BuildOutput{}, err
 	}

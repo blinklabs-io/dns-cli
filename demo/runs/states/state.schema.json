@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/blinklabs-io/dns-cli/demo/state.schema.json",
+  "title": "dns-cli Preprod demo state (index)",
+  "description": "Demo progress is split across TLD and SLD run state files under demo/runs/. See tld-state.schema.json and sld-state.schema.json. This file remains as a documentation pointer for older references.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "note": {
+      "type": "string",
+      "const": "Use tld-state.schema.json (runs/<tld>/state.json) and sld-state.schema.json (runs/<tld>/<sld>/<runId>/state.json)."
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "network": "preprod",
+  "bursaNetwork": "preprod",
+  "mnemonic": "impact bulk town finger retreat observe term country adapt bracket evolve stuff what busy must cliff best future waste raccoon replace unhappy weasel pause",
+  "accountId": 0,
+  "addressId": 0,
+  "derivationPath": "m/1852'/1815'/0'/0/0",
+  "paymentAddress": "addr_test1qp56cpcke7x4cfvw5975e8cc6ljuezs8sjw4lchcgesrkdcmpht6xa60uxqf9fhp4sw0axfytpuutyq5wrvncwrq3yeshuk7gk",
+  "paymentKeyHash": "69ac0716cf8d5c258ea17d4c9f18d7e5cc8a07849d5fe2f846603b37",
+  "stakeKeyHash": "1b0dd7a3774fe18092a6e1ac1cfe99245879c5901470d93c38608933"
+}

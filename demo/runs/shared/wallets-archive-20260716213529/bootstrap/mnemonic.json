@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "network": "preprod",
+  "bursaNetwork": "preprod",
+  "mnemonic": "control route resist rent later forget peace drama eight march window fog apart churn industry bless awkward conduct mercy rebel empty intact arrest special",
+  "accountId": 0,
+  "addressId": 0,
+  "derivationPath": "m/1852'/1815'/0'/0/0",
+  "paymentAddress": "addr_test1qrhm9vvpeus7xarl0a66njwyrtucjvug9uep3r5ttzc5j3wp2m5xdvsx3vnfp7l2ee5dlaeyu2qtq0mmtm9a4l6y7tssndpkmv",
+  "paymentKeyHash": "efb2b181cf21e3747f7f75a9c9c41af98933882f32188e8b58b14945",
+  "stakeKeyHash": "c156e866b2068b2690fbeace68dff724e280b03f7b5ecbdaff44f2e1"
+}

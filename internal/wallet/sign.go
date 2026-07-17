@@ -60,6 +60,12 @@ func SignEnvelope(tx *conway.ConwayTransaction, w interface {
 	}
 	items = append(items, wit)
 	tx.WitnessSet.VkeyWitnesses = cbor.NewSetType(items, true)
+	// Decoded gouroboros transactions keep their original CBOR for exact
+	// round-trips. After adding a witness, clear only the cached transaction /
+	// witness bytes so MarshalCBOR serializes the updated witness set while the
+	// body can still preserve its original bytes.
+	tx.SetCbor(nil)
+	tx.WitnessSet.SetCbor(nil)
 	return nil
 }
 

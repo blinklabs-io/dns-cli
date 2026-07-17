@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "network": "preprod",
+  "networkId": 0,
+  "magic": 1,
+  "stakeKeyHash": "749769d2954da7eba2ee0520902fc8977475c84b10ce166af9565311",
+  "registrarHnsKey": "02d74296e0d777e01809154ba285af4fc9cba261bb7f314353b2f19aebec4fb333",
+  "blueprintPath": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\andamio\\contracts\\plutus.base.json",
+  "outDir": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\andamio\\contracts",
+  "validators": {
+    "sldReference": {
+      "role": "sldReference",
+      "module": "tld_registration/sld_reference",
+      "validator": "sld_reference",
+      "policyId": "c2ddec5ec296e729ac514864954a27d845341f53eaca02f8ef0f6691",
+      "scriptHash": "c2ddec5ec296e729ac514864954a27d845341f53eaca02f8ef0f6691",
+      "address": "addr_test1zrpdmmz7c2tww2dv29yxf922ylvy2dql204v5qhcau8kdyt5ja5a992d5l469ms9yzgzljyhw36usjcsectx472k2vgspknxr9",
+      "plutusFile": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\andamio\\contracts\\sld_reference.plutus",
+      "blueprintFile": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\andamio\\contracts\\plutus.sld_reference.json"
+    },
+    "tldReference": {
+      "role": "tldReference",
+      "module": "tld_registration/tld_reference",
+      "validator": "tld_reference",
+      "policyId": "15b16ee3047ff662eb875359755b9b96edec7f38090eec15265df414",
+      "scriptHash": "15b16ee3047ff662eb875359755b9b96edec7f38090eec15265df414",
+      "address": "addr_test1zq2mzmhrq3llvchtsaf4ja2mnwtwmmrl8qysamq4yewlg9r5ja5a992d5l469ms9yzgzljyhw36usjcsectx472k2vgsx3ev5v",
+      "plutusFile": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\andamio\\contracts\\tld_reference.plutus",
+      "blueprintFile": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\andamio\\contracts\\plutus.tld_reference.json"
+    },
+    "tldRegistrar": {
+      "role": "tldRegistrar",
+      "module": "tld_registration/tld_registrar",
+      "validator": "tld_registrar",
+      "policyId": "259a3161a94927d79a68a779045ab0b1b252352eb4449ac246552d41",
+      "scriptHash": "259a3161a94927d79a68a779045ab0b1b252352eb4449ac246552d41",
+      "address": "addr_test1zqje5vtp49yj04u6dznhjpz6kzcmy534966yfxkzge2j6st5ja5a992d5l469ms9yzgzljyhw36usjcsectx472k2vgssvxsu6",
+      "plutusFile": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\andamio\\contracts\\tld_registrar.plutus",
+      "blueprintFile": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\andamio\\contracts\\plutus.tld_registrar.json"
+    }
+  }
+}

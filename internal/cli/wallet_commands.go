@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"path/filepath"
+	"time"
 
 	"github.com/blinklabs-io/dns-cli/internal/chainquery"
 	"github.com/blinklabs-io/dns-cli/internal/txbuilder"
@@ -18,6 +19,7 @@ func newWalletCmd(g *GlobalFlags) *cobra.Command {
 	cmd.AddCommand(newWalletCreateCmd(g))
 	cmd.AddCommand(newWalletFundCmd(g))
 	cmd.AddCommand(newWalletBalanceCmd(g))
+	cmd.AddCommand(newWalletWaitFundsCmd(g))
 	return cmd
 }
 
@@ -26,7 +28,7 @@ func newWalletCreateCmd(g *GlobalFlags) *cobra.Command {
 	var force bool
 	cmd := &cobra.Command{
 		Use:   "create",
-		Short: "Generate a preprod wallet with Cardano text-envelope keys",
+		Short: "Generate a preprod wallet with text-envelope keys and optional mnemonic",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			p, err := printerFromFlags(g, cmd)
 			if err != nil {
@@ -36,7 +38,7 @@ func newWalletCreateCmd(g *GlobalFlags) *cobra.Command {
 				network = "preprod"
 			}
 			if format == "" {
-				format = string(wallet.FormatKeyEnvelope)
+				format = string(wallet.FormatBoth)
 			}
 			if outDir == "" {
 				outDir = filepath.Join("wallets", name)
@@ -70,7 +72,7 @@ func newWalletCreateCmd(g *GlobalFlags) *cobra.Command {
 	}
 	cmd.Flags().StringVar(&name, "name", "", "wallet name (required)")
 	cmd.Flags().StringVar(&network, "network", "preprod", "network profile (preprod only)")
-	cmd.Flags().StringVar(&format, "format", string(wallet.FormatKeyEnvelope), "output format (key-envelope|mnemonic|both)")
+	cmd.Flags().StringVar(&format, "format", string(wallet.FormatBoth), "output format (key-envelope|mnemonic|both)")
 	cmd.Flags().StringVar(&outDir, "out-dir", "", "directory for wallet artifacts")
 	cmd.Flags().BoolVar(&force, "force", false, "overwrite existing wallet artifacts")
 	_ = cmd.MarkFlagRequired("name")
@@ -117,11 +119,10 @@ func newWalletFundCmd(g *GlobalFlags) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			data := map[string]any{
+			data := unsignedBuildData(out, map[string]any{
 				"fromActor":  fromActor,
 				"collateral": collateral,
-				"out":        out,
-			}
+			})
 			allocData := make([]map[string]any, 0, len(parsed))
 			for _, a := range parsed {
 				allocData = append(allocData, map[string]any{
@@ -143,7 +144,7 @@ func newWalletFundCmd(g *GlobalFlags) *cobra.Command {
 	cmd.Flags().StringVar(&fromActor, "from-actor", "bootstrap", "funding source actor (fee payer/signer)")
 	cmd.Flags().StringArrayVar(&allocations, "allocation", nil, "destination funding as actor=lovelace (repeatable)")
 	cmd.Flags().Int64Var(&collateral, "collateral", chainquery.MinCollateralLovelace, "ADA-only collateral lovelace per actor")
-	cmd.Flags().StringVar(&out, "out", "", "output path prefix for unsigned envelope and manifest")
+	cmd.Flags().StringVar(&out, "out", "", "output path prefix for unsigned envelope and manifest (writes <out>.unsigned.json + <out>.manifest.json)")
 	_ = cmd.MarkFlagRequired("out")
 	return cmd
 }
@@ -184,6 +185,62 @@ func newWalletBalanceCmd(g *GlobalFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&actor, "actor", "", "actor name from config")
+	_ = cmd.MarkFlagRequired("actor")
+	return cmd
+}
+
+func newWalletWaitFundsCmd(g *GlobalFlags) *cobra.Command {
+	var actor string
+	var minLovelace int64
+	var poll time.Duration
+	cmd := &cobra.Command{
+		Use:   "wait-funds",
+		Short: "Wait until a configured actor reaches a minimum lovelace balance",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			p, err := printerFromFlags(g, cmd)
+			if err != nil {
+				return err
+			}
+			if actor == "" {
+				return WrapExit(ExitUsage, fmt.Errorf("--actor is required"))
+			}
+			if minLovelace <= 0 {
+				return WrapExit(ExitUsage, fmt.Errorf("--min-lovelace must be positive"))
+			}
+			if poll <= 0 {
+				return WrapExit(ExitUsage, fmt.Errorf("--poll must be positive"))
+			}
+			eff, err := loadEffective(g)
+			if err != nil {
+				return WrapExit(ExitConfig, err)
+			}
+			timeout := time.Duration(0)
+			if flag := cmd.Flag("timeout"); flag != nil && flag.Changed {
+				timeout = g.Timeout
+			}
+			result, err := runWalletWaitFunds(cmd.Context(), eff, actor, minLovelace, poll, timeout)
+			if err != nil {
+				return err
+			}
+			return p.Success(Result{
+				Command:   "wallet wait-funds",
+				Network:   eff.Profile.Network.Name,
+				Operation: "wallet.wait-funds",
+				Message:   fmt.Sprintf("actor %s funded with %d lovelace", actor, result.Lovelace),
+				Data: map[string]any{
+					"actor":    result.Actor,
+					"address":  result.Address,
+					"lovelace": result.Lovelace,
+					"utxos":    result.UTXOs,
+					"waited":   result.Waited.String(),
+					"attempts": result.Attempts,
+				},
+			})
+		},
+	}
+	cmd.Flags().StringVar(&actor, "actor", "", "actor name from config")
+	cmd.Flags().Int64Var(&minLovelace, "min-lovelace", 150000000, "minimum lovelace required before returning")
+	cmd.Flags().DurationVar(&poll, "poll", 20*time.Second, "poll interval between balance checks")
 	_ = cmd.MarkFlagRequired("actor")
 	return cmd
 }

@@ -47,6 +47,7 @@ Add the directory containing `dns-cli` to your `PATH` for convenience.
 |---|---|
 | `DNS_CLI_BLOCKFROST_PROJECT_ID` | Blockfrost |
 | `DNS_CLI_UTXORPC_URL` | UTxO RPC (when config uses `baseUrlEnv`) |
+| `DMTR_API_KEY` | Optional Demeter API key (sent as `dmtr-api-key`) |
 | `DNS_CLI_UTXORPC_HEADERS` | Optional `Key=Value,...` headers |
 
 ## Release binaries

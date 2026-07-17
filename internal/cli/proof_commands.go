@@ -17,7 +17,7 @@ func newProofCmd(g *GlobalFlags) *cobra.Command {
 }
 
 func newProofGenerateCmd(g *GlobalFlags) *cobra.Command {
-	var tld, out, registrarKey, ownerKey string
+	var tld, out, registrarKey, registrarKeyAlias, ownerKey string
 	cmd := &cobra.Command{
 		Use:   "generate",
 		Short: "Generate registrar/owner HNS keys and a proof bundle for a TLD",
@@ -29,7 +29,11 @@ func newProofGenerateCmd(g *GlobalFlags) *cobra.Command {
 			if tld == "" || out == "" {
 				return WrapExit(ExitUsage, fmt.Errorf("--tld and --out-dir are required"))
 			}
-			bundleOut, err := domain.GenerateProofBundle(tld, out, registrarKey, ownerKey)
+			regKey := firstNonEmptyFlag(registrarKey, registrarKeyAlias)
+			if registrarKey != "" && registrarKeyAlias != "" && registrarKey != registrarKeyAlias {
+				return WrapExit(ExitUsage, fmt.Errorf("--registrar-key and --registrar-hns-key must match when both are set"))
+			}
+			bundleOut, err := domain.GenerateProofBundle(tld, out, regKey, ownerKey)
 			if err != nil {
 				return WrapExit(ExitValidation, err)
 			}
@@ -43,7 +47,7 @@ func newProofGenerateCmd(g *GlobalFlags) *cobra.Command {
 					"registrarHns":   bundleOut.RegistrarHNSPath,
 					"ownerHns":       bundleOut.OwnerHNSPath,
 					"proofBundle":    bundleOut.ProofBundlePath,
-					"registrarKeyIn": registrarKey,
+					"registrarKeyIn": regKey,
 					"ownerKeyIn":     ownerKey,
 				},
 			})
@@ -52,6 +56,7 @@ func newProofGenerateCmd(g *GlobalFlags) *cobra.Command {
 	cmd.Flags().StringVar(&tld, "tld", "", "top-level domain label to sign")
 	cmd.Flags().StringVar(&out, "out-dir", "", "output directory for registrar.hns, owner.hns, and proof-bundle.json")
 	cmd.Flags().StringVar(&registrarKey, "registrar-key", "", "existing registrar HNS key JSON (generates a new key when omitted)")
+	cmd.Flags().StringVar(&registrarKeyAlias, "registrar-hns-key", "", "alias for --registrar-key")
 	cmd.Flags().StringVar(&ownerKey, "owner-key", "", "existing owner HNS key JSON (generates a new key when omitted)")
 	return cmd
 }

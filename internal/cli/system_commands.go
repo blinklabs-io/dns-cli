@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/blinklabs-io/dns-cli/internal/prereq"
 	"github.com/blinklabs-io/dns-cli/internal/system"
 	"github.com/blinklabs-io/dns-cli/internal/txbuilder"
 	"github.com/spf13/cobra"
@@ -22,7 +23,7 @@ func newSystemCmd(g *GlobalFlags) *cobra.Command {
 }
 
 func newSystemPrepareCmd(g *GlobalFlags) *cobra.Command {
-	var blueprint, registrarHNS, stakeKey, network, outDir, aikenPath string
+	var blueprint, registrarHNS, registrarKeyAlias, stakeKey, network, outDir, aikenPath string
 	var force bool
 	cmd := &cobra.Command{
 		Use:   "prepare",
@@ -32,12 +33,34 @@ func newSystemPrepareCmd(g *GlobalFlags) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			registrarKey := firstNonEmptyFlag(registrarHNS, registrarKeyAlias)
+			if registrarHNS != "" && registrarKeyAlias != "" && registrarHNS != registrarKeyAlias {
+				return WrapExit(ExitUsage, fmt.Errorf("--registrar-hns-key and --registrar-key must match when both are set"))
+			}
+			if registrarKey == "" {
+				return WrapExit(ExitUsage, fmt.Errorf("--registrar-hns-key (or --registrar-key) is required"))
+			}
 			if network == "" {
 				network = "preprod"
 			}
+			resolvedBlueprint, err := prereq.EnsureBlueprintDir(blueprint, prereq.Options{
+				StartDir:   firstNonEmptyPath(blueprint, "."),
+				AssumeYes:  false,
+				Stdout:     cmd.OutOrStdout(),
+				Stderr:     cmd.ErrOrStderr(),
+				ConfirmYes: nil, // non-interactive prepare: only auto-use existing clone
+			})
+			if err != nil {
+				// If blueprint already exists on disk, use it; otherwise surface prereq error.
+				if !prereq.ContractsOK(blueprint) {
+					return WrapExit(ExitBuild, err)
+				}
+				resolvedBlueprint = blueprint
+			}
+			blueprint = resolvedBlueprint
 			result, err := system.PrepareDeployment(cmd.Context(), system.PrepareOptions{
 				BlueprintDir:    blueprint,
-				RegistrarHNSKey: registrarHNS,
+				RegistrarHNSKey: registrarKey,
 				StakeKeyPath:    stakeKey,
 				Network:         network,
 				OutDir:          outDir,
@@ -73,13 +96,13 @@ func newSystemPrepareCmd(g *GlobalFlags) *cobra.Command {
 	}
 	cmd.Flags().StringVar(&blueprint, "blueprint", "", "Aiken project directory containing aiken.toml")
 	cmd.Flags().StringVar(&registrarHNS, "registrar-hns-key", "", "registrar HNS key JSON (registrar.hns)")
+	cmd.Flags().StringVar(&registrarKeyAlias, "registrar-key", "", "alias for --registrar-hns-key")
 	cmd.Flags().StringVar(&stakeKey, "stake-key", "", "stake.vkey envelope or wallet directory containing stake.vkey")
 	cmd.Flags().StringVar(&network, "network", "preprod", "network profile (preprod only)")
 	cmd.Flags().StringVar(&outDir, "out-dir", "", "output directory for plutus envelopes and deployment.json")
 	cmd.Flags().StringVar(&aikenPath, "aiken", "", "path to aiken binary (default: aiken on PATH)")
 	cmd.Flags().BoolVar(&force, "force", false, "overwrite existing deployment artifacts")
 	_ = cmd.MarkFlagRequired("blueprint")
-	_ = cmd.MarkFlagRequired("registrar-hns-key")
 	_ = cmd.MarkFlagRequired("stake-key")
 	_ = cmd.MarkFlagRequired("out-dir")
 	return cmd
@@ -145,7 +168,7 @@ func newSystemInitCmd(g *GlobalFlags) *cobra.Command {
 	cmd.Flags().StringVar(&configPath, "config", "", "dns-cli JSON config (required)")
 	cmd.Flags().StringVar(&deploymentPath, "deployment", "", "deployment.json from system prepare")
 	cmd.Flags().StringVar(&actor, "actor", "bootstrap", "bootstrap funding/signing actor")
-	cmd.Flags().StringVar(&out, "out", "", "output path prefix for unsigned envelope and manifest")
+	cmd.Flags().StringVar(&out, "out", "", "output path prefix for unsigned envelope and manifest (writes <out>.unsigned.json + <out>.manifest.json)")
 	_ = cmd.MarkFlagRequired("config")
 	_ = cmd.MarkFlagRequired("deployment")
 	_ = cmd.MarkFlagRequired("out")
@@ -220,4 +243,13 @@ func newSystemBindCmd(g *GlobalFlags) *cobra.Command {
 	_ = cmd.MarkFlagRequired("provider")
 	_ = cmd.MarkFlagRequired("out")
 	return cmd
+}
+
+func firstNonEmptyPath(vals ...string) string {
+	for _, v := range vals {
+		if strings.TrimSpace(v) != "" {
+			return v
+		}
+	}
+	return "."
 }

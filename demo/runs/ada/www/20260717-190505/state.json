@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 2,
+  "mode": "fresh",
+  "network": "preprod",
+  "provider": "blockfrost",
+  "tld": "ada",
+  "sld": "www",
+  "runId": "20260717-190505",
+  "confirmed": {
+    "mintSld": {
+      "txId": "b89fc1e97a6b71bbdf706cccc4281e3baf0f6d609c53af17c8cb8567ff322493",
+      "manifest": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\ada\\www\\20260717-190505\\artifacts\\04-mint-sld.manifest.json"
+    },
+    "updateSld": {
+      "txId": "9eeb8c8f0be6b2cf7ccea098903b4126bd4242f93b7cf87550bf7b5dc33b5e45",
+      "manifest": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\ada\\www\\20260717-190505\\artifacts\\05-update-sld.manifest.json"
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "operation": "mint-sld",
+  "network": "preprod",
+  "provider": "blockfrost",
+  "bodyHash": "69117c8cd1c6bd46ac04f0aba40555c121d29e5e796786e5d1e81fe8bce89363",
+  "requiredSigners": [
+    "4aacd384cd207ead56c7957b1d80a4f37dc60a51bf93068b111365f0"
+  ],
+  "expectedOutputs": [
+    {
+      "role": "tld-reference-updated",
+      "index": 0
+    },
+    {
+      "role": "sld-reference",
+      "index": 1
+    },
+    {
+      "role": "sld-user-token",
+      "index": 2
+    },
+    {
+      "role": "tld-user-token-return",
+      "index": 3
+    }
+  ],
+  "validityInterval": {
+    "start": 128621831,
+    "ttl": 128622131
+  },
+  "configDigest": "83c6903e0fe82608f3b27b148b5ad092f0ccd3ce40bb1d9eb3d8fbcee4f7f370",
+  "apolloRevision": "v2.0.0-20260717012746-2754803864d2",
+  "contractRevision": "unknown",
+  "createdAt": "2026-07-17T16:17:49Z",
+  "extra": {
+    "sld": "api",
+    "sldOwner": "sldOwner",
+    "tld": "andamio"
+  }
+}

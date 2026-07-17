@@ -24,13 +24,20 @@ profile.cov
 go.work
 go.work.sum
 
-# env file
-.env
+# env file (repo-root only; demo Preprod .env under demo/runs is tracked intentionally)
+/.env
 
-# Demo generated runtime (wallets, proofs, artifacts, state)
+# Legacy flat runtime tree (pre-runs layout) and its migration backups
 demo/runtime/**
+demo/runtime.migrated-*/**
 !demo/runtime/.gitkeep
+
+# Local build output from demo wrappers / make
+/bin/
 
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# Local brainstorm / visual companion sessions
+.superpowers/

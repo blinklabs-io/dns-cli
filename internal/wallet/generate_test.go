@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/blinklabs-io/bursa"
@@ -78,6 +79,9 @@ func TestGenerateWalletBothFormat(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(outDir, "mnemonic.json")); err != nil {
 		t.Fatal(err)
 	}
+	if _, err := os.Stat(filepath.Join(outDir, "mnemonic.phrase")); err != nil {
+		t.Fatal(err)
+	}
 	if _, err := os.Stat(filepath.Join(outDir, "payment.skey")); err != nil {
 		t.Fatal(err)
 	}
@@ -107,6 +111,13 @@ func TestGenerateWalletMnemonicFormat(t *testing.T) {
 	}
 	if record.Mnemonic == "" {
 		t.Fatal("expected mnemonic in record")
+	}
+	phrase, err := os.ReadFile(filepath.Join(outDir, "mnemonic.phrase"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.TrimSpace(string(phrase)) != record.Mnemonic {
+		t.Fatalf("mnemonic.phrase mismatch: got %q want %q", strings.TrimSpace(string(phrase)), record.Mnemonic)
 	}
 	if record.BursaNetwork != "preprod" {
 		t.Fatalf("expected preprod bursa network, got %q", record.BursaNetwork)

@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "operation": "mint-sld",
+  "network": "preprod",
+  "provider": "blockfrost",
+  "bodyHash": "2373c8616dbca6b5ab7e96024ee71b4308115800d65e521985cf64550362c75c",
+  "requiredSigners": [
+    "4aacd384cd207ead56c7957b1d80a4f37dc60a51bf93068b111365f0"
+  ],
+  "expectedOutputs": [
+    {
+      "role": "tld-reference-updated",
+      "index": 0
+    },
+    {
+      "role": "sld-reference",
+      "index": 1
+    },
+    {
+      "role": "sld-user-token",
+      "index": 2
+    },
+    {
+      "role": "tld-user-token-return",
+      "index": 3
+    }
+  ],
+  "validityInterval": {
+    "start": 128618940,
+    "ttl": 128619240
+  },
+  "configDigest": "44e6bfd08afafe3edfff986c2ac53681290045fa4126c084344e33e3ff20995c",
+  "apolloRevision": "v2.0.0-20260717012746-2754803864d2",
+  "contractRevision": "unknown",
+  "createdAt": "2026-07-17T15:29:06Z",
+  "extra": {
+    "sld": "www",
+    "sldOwner": "sldOwner",
+    "tld": "cardano"
+  }
+}

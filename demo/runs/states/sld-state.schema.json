@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/blinklabs-io/dns-cli/demo/sld-state.schema.json",
+  "title": "dns-cli Preprod demo SLD run state",
+  "description": "Resumable SLD-scoped demo progress at demo/runs/<tld>/<sld>/<runId>/state.json (mintSld, updateSld).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "mode",
+    "network",
+    "provider",
+    "tld",
+    "sld",
+    "runId",
+    "confirmed"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 2,
+      "description": "SLD run state schema version."
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "fresh",
+        "existing"
+      ]
+    },
+    "network": {
+      "type": "string",
+      "const": "preprod"
+    },
+    "provider": {
+      "type": "string",
+      "enum": [
+        "blockfrost",
+        "utxorpc"
+      ]
+    },
+    "tld": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sld": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Timestamp folder name under runs/<tld>/<sld>/ (yyyyMMdd-HHmmss)."
+    },
+    "confirmed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mintSld",
+        "updateSld"
+      ],
+      "properties": {
+        "mintSld": {
+          "$ref": "#/$defs/stepResult"
+        },
+        "updateSld": {
+          "$ref": "#/$defs/stepResult"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "stepResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "txId",
+        "manifest"
+      ],
+      "properties": {
+        "txId": {
+          "type": "string"
+        },
+        "manifest": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

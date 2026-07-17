@@ -110,7 +110,7 @@ func SystemInit(ctx context.Context, bctx *Context, opts SystemInitOptions) (Bui
 		"dns-cli system init: publish reference scripts",
 		opts.OutPrefix,
 		opts.ContractRevision,
-		[]string{actor},
+		[]string{pkhHex},
 		outputs,
 		extra,
 	)

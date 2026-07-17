@@ -103,6 +103,9 @@ func GenerateWallet(opts GenerateOptions) (*GeneratedWallet, error) {
 			return nil, err
 		}
 		paths["mnemonic.json"] = path
+		if err := attachMnemonicPhrasePath(opts.OutDir, paths); err != nil {
+			return nil, err
+		}
 		if err := roundTripMnemonic(apolloWallet.Mnemonic(), walletOpts, apolloWallet.Address()); err != nil {
 			return nil, err
 		}
@@ -115,6 +118,9 @@ func GenerateWallet(opts GenerateOptions) (*GeneratedWallet, error) {
 			return nil, err
 		}
 		paths["mnemonic.json"] = path
+		if err := attachMnemonicPhrasePath(opts.OutDir, paths); err != nil {
+			return nil, err
+		}
 		if err := verifyMnemonicMatchesKeys(apolloWallet.Mnemonic(), walletOpts, material); err != nil {
 			return nil, err
 		}
@@ -180,7 +186,20 @@ func ensureOutDir(opts GenerateOptions) error {
 		if _, err := os.Stat(mnPath); err == nil && !opts.Force {
 			return fmt.Errorf("wallet artifacts already exist in %s (use --force to overwrite)", opts.OutDir)
 		}
+		phrasePath := filepath.Join(opts.OutDir, "mnemonic.phrase")
+		if _, err := os.Stat(phrasePath); err == nil && !opts.Force {
+			return fmt.Errorf("wallet artifacts already exist in %s (use --force to overwrite)", opts.OutDir)
+		}
 	}
+	return nil
+}
+
+func attachMnemonicPhrasePath(outDir string, paths map[string]string) error {
+	phrasePath := filepath.Join(outDir, "mnemonic.phrase")
+	if _, err := os.Stat(phrasePath); err != nil {
+		return fmt.Errorf("missing mnemonic.phrase after mnemonic write: %w", err)
+	}
+	paths["mnemonic.phrase"] = phrasePath
 	return nil
 }
 
@@ -300,6 +319,10 @@ func writeMnemonicArtifact(outDir, network, bursaNet, mnemonic string, accountID
 	path := filepath.Join(outDir, "mnemonic.json")
 	if err := writeSecretFile(path, raw); err != nil {
 		return "", fmt.Errorf("write mnemonic.json: %w", err)
+	}
+	phrasePath := filepath.Join(outDir, "mnemonic.phrase")
+	if err := writeSecretFile(phrasePath, []byte(strings.TrimSpace(mnemonic)+"\n")); err != nil {
+		return "", fmt.Errorf("write mnemonic.phrase: %w", err)
 	}
 	return path, nil
 }

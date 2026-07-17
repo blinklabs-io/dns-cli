@@ -2,156 +2,96 @@
 
 Self-contained Cardano **Preprod** demonstration for Handshake DNS lifecycle flows.
 
+Orchestration lives in Go (`dns-cli demo run`). The scripts under `scripts/` are thin wrappers that map flags and call the CLI.
+
+Detailed documentation: [docs/demo.md](../docs/demo.md).
+
 ## Security warning
 
-Copied keys under `fixtures/preprod/wallets/` and any generated HNS private keys are **public, compromised Preprod-only material**. Never use them on mainnet. Mutating demo commands reject mainnet and Preview profiles.
+Generated wallets under `runs/shared/wallets/` and any generated HNS private keys are **Preprod-only test material**. Never use them on mainnet. Mutating demo commands reject mainnet and Preview profiles.
 
 ## Modes
 
 | Mode | Purpose |
 |---|---|
-| `fresh` (default) | Create new wallets, wait for faucet funding, deploy parameterized validators, run register → activate → mint SLD → update DNS |
-| `existing` | Read-only inspection of the historical Preprod deployment in `fixtures/preprod` |
+| `fresh` (default) | Create wallets, wait for faucet funding, deploy parameterized validators, run register → activate → mint SLD → update DNS |
+| `existing` | Read-only summary of local `runs/` history (each TLD + its SLD runs, confirmed tx IDs, explorer URLs). No chain writes |
 
 ## Layout
 
 ```text
 demo/
-  README.md
-  state.schema.json           # JSON Schema for runtime/state.json
-  run-demo.sh / run-demo.ps1  # resumable runners
-  records.json
-  config/                     # templates + historical existing-* profiles
+  README.md                   # this quickstart
+  scripts/
+    run-demo.ps1 / run-demo.sh
+  config/
+    blockfrost.template.json  # system bind base (fresh)
+    utxorpc.template.json
+    records.json              # DNS records template (copied into each SLD run)
   fixtures/
-    preprod/                  # byte-for-byte copy of dns-contracts/preprod (immutable)
     contracts/                # Aiken sources + plutus.json for system prepare
-  runtime/                    # generated wallets, proofs, validators, artifacts, state
+  runs/                       # full Preprod demo history + shared test wallets (tracked)
+    .gitkeep
+    states/                   # tracked JSON schemas
+    shared/                   # wallets, .env, tools (Preprod demo material)
+    <tld>/                    # contracts, proofs, config, artifacts 00–03, TLD state
+    <tld>/<sld>/<runId>/      # run.json, records.json, artifacts 04–05, SLD state
 ```
 
-## Prerequisites
+## Quick start
 
-- Go 1.25.10+ and local Apollo checkout at `../apollo` (see `go.mod` replace)
-- Built `dns-cli` binary (`dns-cli.exe` on Windows)
-- Aiken CLI on `PATH` (fresh mode)
-- `jq` (Bash runner only)
-- Provider credentials:
-  - Blockfrost: `DNS_CLI_BLOCKFROST_PROJECT_ID`
-  - UTxO RPC: `DNS_CLI_UTXORPC_URL` and optional `DNS_CLI_UTXORPC_HEADERS`
-
-Both runners **check these at startup**. If something is missing they print a short guide, ask whether to install/set it, and when possible:
-
-| Missing | Interactive offer |
-|---|---|
-| `dns-cli` | `go build` from the parent module (needs Go + Apollo) |
-| `jq` (Bash) | brew / apt / dnf, or download into `runtime/tools/` |
-| `aiken` (fresh) | official installer / aikup / `cargo install aiken` |
-| provider env | prompt for value and save to `runtime/.env` (gitignored) |
-
-Flags: `-Yes` / `--yes` (auto-approve), `-SkipInstall` / `--skip-install` (guides only). Env: `DEMO_ASSUME_YES=1`.
-
-## Historical deployment (existing mode)
-
-Reference UTxOs from init tx `ef635b55fce6abc39cd4c843722d9d574cb719114e224f2cd1c8747d5abfc19e`:
-
-| Role | Ref | Policy ID |
-|---|---|---|
-| tldRegistrar | `#0` | `ea32305e62561a0c0bb69588a936afb6fabd0fb4d2cc2a6c67363e9d` |
-| tldReference | `#1` | `694cb48da919e928b3e51c4648f051326ac150eaa9436792ec7a6e35` |
-| sldReference | `#2` | `96512d4c426d912ba453014e74a57d655dfb3980154c4de106f69320` |
-
-Addresses live in `fixtures/preprod/validators/*.addr`. Historical tx files are evidence only and are not replayable.
-
-## Funding budget (fresh mode)
-
-The runner waits until the bootstrap wallet holds **≥ 150 ADA**, then allocates:
-
-| Actor | Allocation | Notes |
-|---|---|---|
-| registrar | 30 ADA | includes 5 ADA collateral + spend |
-| tldOwner | 50 ADA | includes 5 ADA collateral + spend |
-| sldOwner | 30 ADA | includes 5 ADA collateral + spend |
-
-Remainder covers reference-script deployment fees and buffers.
-
-Fund the printed bootstrap address with the [Cardano Preprod faucet](https://docs.cardano.org/cardano-testnets/tools/faucet/).
-
-## Runners
-
-Both runners are resumable via `runtime/state.json` (see `state.schema.json`). Confirmed steps (`fund`, `deploy`, `register`, `activate`, `mintSld`, `updateSld`) are skipped on re-run. Always parse CLI stdout JSON (`--output json`); logs stay on stderr.
-
-### Bash
+From the `dns-cli/` module root (or any cwd with an absolute `--demo-root`):
 
 ```bash
-cd demo
-chmod +x run-demo.sh
-
-# Fresh deploy (Blockfrost default)
 export DNS_CLI_BLOCKFROST_PROJECT_ID=preprod...
-./run-demo.sh --mode fresh --provider blockfrost
-
-# Fresh with UTxO RPC and custom labels
-export DNS_CLI_UTXORPC_URL=https://...
-./run-demo.sh --mode fresh --provider utxorpc --tld demo-acme --sld www
-
-# Resume after interruption (same runtime/state.json)
-./run-demo.sh
-
-# Historical read-only
-./run-demo.sh --mode existing --provider blockfrost
-
-# Extensive runner + dns-cli logging (also: -E, -v, DEMO_EXTENSIVE_LOGGING=1)
-./run-demo.sh --mode existing --provider blockfrost --extensive-logging
-./run-demo.sh --log-level extensive --mode fresh --provider blockfrost
+dns-cli demo run --demo-root demo --mode fresh --provider blockfrost
+dns-cli demo run --demo-root demo                    # resume
+dns-cli demo run --demo-root demo --mode existing    # history
 ```
 
-Optional env overrides: `CLI` (path to binary), `DEMO_MODE`, `DEMO_PROVIDER`, `DEMO_LOG_LEVEL` (`quiet|normal|extensive`), `DEMO_EXTENSIVE_LOGGING`.
-
-### PowerShell
+From the `demo/` directory via wrappers (prompts for unset options, asks to build into `../bin/` if needed):
 
 ```powershell
-cd demo
-
-# Fresh deploy (Blockfrost default)
 $env:DNS_CLI_BLOCKFROST_PROJECT_ID = 'preprod...'
-.\run-demo.ps1 -Mode fresh -Provider blockfrost
-
-# Fresh with UTxO RPC and custom labels
-$env:DNS_CLI_UTXORPC_URL = 'https://...'
-.\run-demo.ps1 -Mode fresh -Provider utxorpc -Tld demo-acme -Sld www
-
-# Resume after interruption
-.\run-demo.ps1
-
-# Historical read-only
-.\run-demo.ps1 -Mode existing -Provider blockfrost
-
-# Extensive runner + dns-cli logging (also: -LogLevel Extensive, DEMO_EXTENSIVE_LOGGING=1)
-.\run-demo.ps1 -Mode existing -Provider blockfrost -ExtensiveLogging
-.\run-demo.ps1 -LogLevel Extensive -Mode fresh -Provider blockfrost
+.\scripts\run-demo.ps1
+.\scripts\run-demo.ps1 -Mode fresh -Provider blockfrost -LogLevel Normal -Yes
+.\scripts\run-demo.ps1 -Mode existing
 ```
 
-Optional env overrides: `CLI`, `DEMO_MODE`, `DEMO_PROVIDER`, `DEMO_LOG_LEVEL` (`quiet|normal|extensive`), `DEMO_EXTENSIVE_LOGGING`.
+```bash
+chmod +x scripts/run-demo.sh
+export DNS_CLI_BLOCKFROST_PROJECT_ID=preprod...
+./scripts/run-demo.sh
+./scripts/run-demo.sh --mode fresh --provider blockfrost --log-level normal -y
+./scripts/run-demo.sh --mode existing
+```
 
-### Fresh flow (both shells)
+Wrappers resolve `CLI` → `dns-cli/bin/dns-cli(.exe)` → tree root → `PATH`. Interactive prompts (skipped with `-Yes` / `--yes`): mode, provider, TLD/SLD, **log level**, skip-install, clipboard. Missing/outdated binaries ask to compile into `bin/`.
+## Prerequisites (fresh mode)
 
-1. Resolve `dns-cli` from `CLI` or `../dns-cli` / `../dns-cli.exe`
-2. Create wallets under `runtime/wallets/{bootstrap,registrar,tld-owner,sld-owner}` if missing
-3. Write `runtime/config/bootstrap.json` (real actor addresses/keys; `REPLACE_ME` policy placeholders allowed offline)
-4. Poll `wallet balance` until bootstrap ≥ 150 ADA
-5. `proof generate` → `system prepare` (Aiken)
-6. Prompt: `Proceed with Preprod submissions? [y/N]`
-7. For each unconfirmed step: build → `tx sign` → `tx submit` → `tx status --wait --manifest` → save state atomically
-8. After deploy: `system bind` → `runtime/config/{blockfrost|utxorpc}.json`
-9. Lifecycle: register → activate → mint-sld → update-sld
+- Go 1.25.10+ and local Apollo checkout at `../apollo` (see `go.mod` replace)
+- Built `dns-cli` binary (`bin/dns-cli.exe` on Windows, or wrappers will ask to build it)
+- Aiken CLI on `PATH`, **version ≥ 1.1.19** (matches `fixtures/contracts/aiken.toml`)
+- Provider credentials:
+  - Blockfrost: `DNS_CLI_BLOCKFROST_PROJECT_ID`
+  - UTxO RPC: `DNS_CLI_UTXORPC_URL`, optional `DMTR_API_KEY` / `DNS_CLI_UTXORPC_HEADERS`
 
-Artifacts land under `runtime/artifacts/00-fund` … `05-update-sld`.
+The Go runner verifies the demo tree and contracts **before any run mode**. If `demo/` assets or `dns-contracts` are missing, it asks to create/pull them (or prints guides with `--skip-install`). Fresh mode also requires Aiken ≥ 1.1.19. Bootstrap faucet address is copied to the clipboard when possible (`--no-clipboard` to disable).
+
+Flags: `-Yes` / `--yes`, `-SkipInstall` / `--skip-install`. Env: `DEMO_ASSUME_YES=1`.
+
+Bootstrap needs **≥ 150 ADA** from the [Preprod faucet](https://docs.cardano.org/cardano-testnets/tools/faucet/) before fund/deploy.
+
+## Resume behavior
+
+- **TLD** steps (`fund`, `deploy`, `register`, `activate`) resume from `runs/<tld>/state.json`
+- **SLD** steps: if the latest `runs/<tld>/<sld>/<runId>/` is incomplete, that run is resumed; otherwise a new `yyyyMMdd-HHmmss` run folder is created
 
 ## Provenance
 
 | Source | Destination |
 |---|---|
-| `dns-contracts/preprod/**` | `demo/fixtures/preprod/**` |
 | `dns-contracts/onchain/{aiken.toml,aiken.lock,plutus.json,validators,lib}` | `demo/fixtures/contracts/**` |
-| `dns-cli/examples/records.json` | `demo/records.json` |
+| `dns-cli/examples/records.json` | `demo/config/records.json` |
 
-Copy date: 2026-07-14. `fixtures/` must not be written by runners.
+`fixtures/` must not be written by runners. See [docs/demo.md](../docs/demo.md) for full operator guidance (requirements, expected results, what you can change).

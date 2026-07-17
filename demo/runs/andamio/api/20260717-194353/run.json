@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "mode": "fresh",
+  "network": "preprod",
+  "provider": "blockfrost",
+  "tld": "andamio",
+  "sld": "api",
+  "runId": "20260717-194353",
+  "createdAt": "2026-07-17T19:43:53.3177792+03:30",
+  "sharedDir": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\shared",
+  "tldDir": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\andamio",
+  "sldRunDir": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\andamio\\api\\20260717-194353"
+}

@@ -11,6 +11,7 @@ go build -o dns-cli ./cmd/dns-cli
 ./dns-cli config init --network preprod --provider blockfrost
 ./dns-cli config validate
 ./dns-cli version --output json
+./dns-cli dashboard --config dns-cli.json
 ```
 
 Windows:
@@ -18,7 +19,10 @@ Windows:
 ```powershell
 go build -o dns-cli.exe ./cmd/dns-cli
 .\dns-cli.exe version
+.\dns-cli.exe dashboard --config dns-cli.json
 ```
+
+Interactive dashboard docs: [docs/tui.md](docs/tui.md).
 
 Requires a local Apollo checkout at `../apollo` (see `go.mod` replace).
 
@@ -40,15 +44,21 @@ Bootstrap helpers:
 
 ## Preprod demo
 
-Self-contained fresh/existing runners live in [`demo/`](demo/README.md):
+Self-contained fresh/existing runners live in [`demo/`](demo/README.md). Full guide: [`docs/demo.md`](docs/demo.md).
 
 ```powershell
 cd demo
 $env:DNS_CLI_BLOCKFROST_PROJECT_ID = '...'
-.\run-demo.ps1 -Mode fresh -Provider blockfrost
+.\scripts\run-demo.ps1 -Mode fresh -Provider blockfrost
 ```
 
-Keys under `demo/fixtures/preprod/wallets/` are **public Preprod-only fixtures** — never use on mainnet.
+```bash
+cd demo
+export DNS_CLI_BLOCKFROST_PROJECT_ID=...
+./scripts/run-demo.sh --mode fresh --provider blockfrost
+```
+
+Keys under `demo/runs/shared/wallets/` (and any generated HNS keys) are **Preprod-only test material** — never use on mainnet.
 
 ## Documentation
 
@@ -60,8 +70,9 @@ Keys under `demo/fixtures/preprod/wallets/` are **public Preprod-only fixtures**
 - [Protocol crosswalk](docs/protocol-crosswalk.md)
 - [Security](docs/security.md)
 - [Troubleshooting](docs/troubleshooting.md)
+- [Preprod demo guide](docs/demo.md)
 - [ADR: Apollo v2 only](docs/adr/001-no-cardano-cli-apollo-v2.md)
-- [Preprod demo](demo/README.md)
+- [Demo quickstart](demo/README.md)
 
 ## Stack
 

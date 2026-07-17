@@ -37,6 +37,15 @@ sld "..." already exists under tld "..."
 - Use a unique label for test deployments
 - Query chain state before rebuilding
 
+## Unused address / Blockfrost 404
+
+A brand-new wallet with no history often returns HTTP 404 from Blockfrost
+(`The requested component has not been found`). dns-cli treats that as an
+**empty UTxO set** (0 lovelace), not a hard failure. You should see a clear
+hint to fund the address via the Preprod faucet rather than an opaque API error.
+
+Auth failures (401/403) and rate limits (429) still fail fast with guidance.
+
 ## Provider mismatch
 
 ```

@@ -27,8 +27,8 @@ func TestUnknownCommandExitCode(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	if ExitCode(err) == ExitOK {
-		t.Fatalf("unexpected exit code %d", ExitCode(err))
+	if ExitCode(err) != ExitUsage {
+		t.Fatalf("got exit %d want %d (%v)", ExitCode(err), ExitUsage, err)
 	}
 }
 
@@ -231,6 +231,108 @@ func TestSystemInitBindHelp(t *testing.T) {
 	}
 	if !bytes.Contains([]byte(out), []byte("--tx-id")) {
 		t.Fatalf("expected --tx-id: %s", out)
+	}
+}
+
+func TestWalletWaitFundsHelp(t *testing.T) {
+	out, err := captureExecute(t, "wallet", "wait-funds", "--help")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"--actor", "--min-lovelace", "--poll"} {
+		if !bytes.Contains([]byte(out), []byte(want)) {
+			t.Fatalf("expected %s in help: %s", want, out)
+		}
+	}
+}
+
+func TestWalletWaitFundsRequiresActor(t *testing.T) {
+	root := NewRoot()
+	root.SetErr(&bytes.Buffer{})
+	root.SetArgs([]string{"wallet", "wait-funds"})
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if ExitCode(err) != ExitUsage {
+		t.Fatalf("got exit %d want %d (%v)", ExitCode(err), ExitUsage, err)
+	}
+}
+
+func TestTxApplyHelp(t *testing.T) {
+	out, err := captureExecute(t, "tx", "apply", "--help")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"--tx", "--actor", "--signed", "--manifest"} {
+		if !bytes.Contains([]byte(out), []byte(want)) {
+			t.Fatalf("expected %s in help: %s", want, out)
+		}
+	}
+}
+
+func TestTxApplyRequiresFlags(t *testing.T) {
+	root := NewRoot()
+	root.SetErr(&bytes.Buffer{})
+	root.SetArgs([]string{"tx", "apply"})
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if ExitCode(err) != ExitUsage {
+		t.Fatalf("got exit %d want %d (%v)", ExitCode(err), ExitUsage, err)
+	}
+}
+
+func TestDemoHistoryHelp(t *testing.T) {
+	out, err := captureExecute(t, "demo", "history", "--help")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Contains([]byte(out), []byte("auto-detect")) && !bytes.Contains([]byte(out), []byte("--runs-root")) {
+		t.Fatalf("expected auto-detect / --runs-root in help: %s", out)
+	}
+}
+
+func TestDemoRunHelp(t *testing.T) {
+	out, err := captureExecute(t, "demo", "run", "--help")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"--demo-root", "--mode", "--provider", "--yes", "--skip-install"} {
+		if !bytes.Contains([]byte(out), []byte(want)) {
+			t.Fatalf("expected %s in help: %s", want, out)
+		}
+	}
+}
+
+func TestDemoRunRequiresDemoRoot(t *testing.T) {
+	root := NewRoot()
+	root.SetErr(&bytes.Buffer{})
+	root.SetArgs([]string{"demo", "run"})
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if ExitCode(err) != ExitUsage {
+		t.Fatalf("got exit %d want %d (%v)", ExitCode(err), ExitUsage, err)
+	}
+}
+
+func TestDemoHistoryEmptyJSON(t *testing.T) {
+	root := NewRoot()
+	buf := &bytes.Buffer{}
+	root.SetOut(buf)
+	root.SetErr(&bytes.Buffer{})
+	root.SetArgs([]string{"demo", "history", "--runs-root", t.TempDir(), "--output", "json"})
+	if err := root.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Contains(buf.Bytes(), []byte(`"ok": true`)) {
+		t.Fatalf("unexpected output: %s", buf.String())
+	}
+	if !bytes.Contains(buf.Bytes(), []byte("no demo history yet")) {
+		t.Fatalf("expected empty history message: %s", buf.String())
 	}
 }
 

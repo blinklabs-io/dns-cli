@@ -44,16 +44,16 @@ func newActivateTLDCmd(g *GlobalFlags) *cobra.Command {
 				Operation: "activate-tld",
 				Artifact:  artifact,
 				Message:   "built unsigned activate-tld transaction",
-				Data: map[string]any{
-					"tld": tld,
-					"out": out,
-				},
+				Data: unsignedBuildData(out, map[string]any{
+					"tld":   tld,
+					"proof": proof,
+				}),
 			})
 		},
 	}
 	cmd.Flags().StringVar(&tld, "tld", "", "top-level domain label to activate")
 	cmd.Flags().StringVar(&proof, "proof", "", "path to static Handshake proof JSON bundle")
-	cmd.Flags().StringVar(&out, "out", "", "output path prefix for unsigned envelope and manifest")
+	cmd.Flags().StringVar(&out, "out", "", "output path prefix for unsigned envelope and manifest (writes <out>.unsigned.json + <out>.manifest.json)")
 	return cmd
 }
 
@@ -84,19 +84,18 @@ func newMintSLDCmd(g *GlobalFlags) *cobra.Command {
 				Operation: "mint-sld",
 				Artifact:  artifact,
 				Message:   "built unsigned mint-sld transaction",
-				Data: map[string]any{
+				Data: unsignedBuildData(out, map[string]any{
 					"tld":      tld,
 					"sld":      sld,
 					"sldOwner": sldOwner,
-					"out":      out,
-				},
+				}),
 			})
 		},
 	}
 	cmd.Flags().StringVar(&tld, "tld", "", "parent top-level domain")
 	cmd.Flags().StringVar(&sld, "sld", "", "second-level domain label to mint")
 	cmd.Flags().StringVar(&sldOwner, "sld-owner", "", "actor name that should receive the SLD user token")
-	cmd.Flags().StringVar(&out, "out", "", "output path prefix for unsigned envelope and manifest")
+	cmd.Flags().StringVar(&out, "out", "", "output path prefix for unsigned envelope and manifest (writes <out>.unsigned.json + <out>.manifest.json)")
 	return cmd
 }
 
@@ -127,18 +126,17 @@ func newUpdateSLDCmd(g *GlobalFlags) *cobra.Command {
 				Operation: "update-sld",
 				Artifact:  artifact,
 				Message:   "built unsigned update-sld transaction",
-				Data: map[string]any{
+				Data: unsignedBuildData(out, map[string]any{
 					"tld":     tld,
 					"sld":     sld,
 					"records": records,
-					"out":     out,
-				},
+				}),
 			})
 		},
 	}
 	cmd.Flags().StringVar(&tld, "tld", "", "parent top-level domain")
 	cmd.Flags().StringVar(&sld, "sld", "", "second-level domain whose records will be replaced")
 	cmd.Flags().StringVar(&records, "records", "", "path to DNS records JSON file (complete replacement)")
-	cmd.Flags().StringVar(&out, "out", "", "output path prefix for unsigned envelope and manifest")
+	cmd.Flags().StringVar(&out, "out", "", "output path prefix for unsigned envelope and manifest (writes <out>.unsigned.json + <out>.manifest.json)")
 	return cmd
 }

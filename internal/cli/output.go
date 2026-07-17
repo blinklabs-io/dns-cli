@@ -7,6 +7,8 @@ import (
 	"log/slog"
 	"os"
 	"strings"
+
+	"github.com/blinklabs-io/dns-cli/internal/report"
 )
 
 // OutputMode controls how command results are rendered.
@@ -86,46 +88,39 @@ func (p *Printer) write(r Result) error {
 }
 
 func (p *Printer) writeHuman(r Result) error {
-	var b strings.Builder
-	if r.OK {
-		if r.Message != "" {
-			b.WriteString(r.Message)
-			b.WriteByte('\n')
-		} else {
-			b.WriteString("ok\n")
-		}
-	} else {
-		msg := "error"
+	th := report.New(p.Color)
+	msg := r.Message
+	if !r.OK {
+		msg = "error"
 		if r.Error != nil && r.Error.Message != "" {
 			msg = r.Error.Message
 		} else if r.Message != "" {
 			msg = r.Message
 		}
-		b.WriteString(msg)
-		b.WriteByte('\n')
+	} else if msg == "" {
+		msg = "ok"
+	}
+	rows := make([]report.KV, 0, 8)
+	if r.Command != "" {
+		rows = append(rows, report.KV{Key: "command", Value: r.Command})
 	}
 	if r.Operation != "" {
-		fmt.Fprintf(&b, "operation: %s\n", r.Operation)
+		rows = append(rows, report.KV{Key: "operation", Value: r.Operation})
 	}
 	if r.Network != "" {
-		fmt.Fprintf(&b, "network: %s\n", r.Network)
+		rows = append(rows, report.KV{Key: "network", Value: r.Network})
 	}
 	if r.Artifact != "" {
-		fmt.Fprintf(&b, "artifact: %s\n", r.Artifact)
+		rows = append(rows, report.KV{Key: "artifact", Value: r.Artifact})
 	}
 	if r.TxID != "" {
-		fmt.Fprintf(&b, "txId: %s\n", r.TxID)
+		rows = append(rows, report.KV{Key: "txId", Value: r.TxID})
 	}
 	if r.ExplorerURL != "" {
-		fmt.Fprintf(&b, "explorer: %s\n", r.ExplorerURL)
+		rows = append(rows, report.KV{Key: "explorer", Value: r.ExplorerURL})
 	}
-	for _, w := range r.Warnings {
-		fmt.Fprintf(&b, "warning: %s\n", w)
-	}
-	for k, v := range r.Data {
-		fmt.Fprintf(&b, "%s: %v\n", k, v)
-	}
-	_, err := io.WriteString(p.Stdout, b.String())
+	rows = append(rows, report.SortedDataRows(r.Data)...)
+	_, err := io.WriteString(p.Stdout, th.ResultPanel(r.OK, msg, rows, r.Warnings))
 	return err
 }
 

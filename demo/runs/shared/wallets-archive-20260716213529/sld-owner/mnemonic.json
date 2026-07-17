@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "network": "preprod",
+  "bursaNetwork": "preprod",
+  "mnemonic": "zebra velvet culture diamond lecture ahead payment inside dentist laptop taxi baby chest gain manual glad peace chief infant parent toy disorder broccoli display",
+  "accountId": 0,
+  "addressId": 0,
+  "derivationPath": "m/1852'/1815'/0'/0/0",
+  "paymentAddress": "addr_test1qzuyrzc3sl748qkhg8qrmsge44msd28va6y4eyle04dvnma66yran987gqp7ffmw5css79x8n79lxvqsrj5kj6uqac9qw99tdf",
+  "paymentKeyHash": "b8418b1187fd5382d741c03dc119ad7706a8ecee895c93f97d5ac9ef",
+  "stakeKeyHash": "bad107d994fe4003e4a76ea6210f14c79f8bf330101ca9696b80ee0a"
+}

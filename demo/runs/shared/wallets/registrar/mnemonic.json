@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "network": "preprod",
+  "bursaNetwork": "preprod",
+  "mnemonic": "hip pelican man fix horn physical sting scorpion cannon visa alien market mercy mercy vanish reject layer series float river trumpet glory course bubble",
+  "accountId": 0,
+  "addressId": 0,
+  "derivationPath": "m/1852'/1815'/0'/0/0",
+  "paymentAddress": "addr_test1qzlslylezamx396hcc3xd64y0lrh0m7sw6m5wqe76u29whkf84g0s2lzncmxca6twygx7g5zr5s6np8ek38myxwjh76snm7kgh",
+  "paymentKeyHash": "bf0f93f91776689757c62266eaa47fc777efd076b747033ed714575e",
+  "stakeKeyHash": "c93d50f82be29e366c774b71106f22821d21a984f9b44fb219d2bfb5"
+}

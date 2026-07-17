@@ -13,7 +13,7 @@ func newUtxoRPC(eff *config.Effective) (Provider, error) {
 	if err != nil {
 		return nil, err
 	}
-	headers, err := loadHeaders(eff.Profile.Provider.HeadersEnv)
+	headers, err := resolveUtxoRPCHeaders(eff.Profile.Provider.HeadersEnv)
 	if err != nil {
 		return nil, err
 	}

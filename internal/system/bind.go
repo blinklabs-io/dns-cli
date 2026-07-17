@@ -104,10 +104,13 @@ func BindConfig(opts BindOptions) (*config.Document, error) {
 		RoleTLDReference: fmt.Sprintf("%s#%d", txID, 1),
 		RoleSLDReference: fmt.Sprintf("%s#%d", txID, 2),
 	}
-	if strings.TrimSpace(prof.Contracts.BlueprintPath) == "" || strings.Contains(prof.Contracts.BlueprintPath, "GENERATED") {
-		if dep.BlueprintPath != "" {
-			prof.Contracts.BlueprintPath = dep.BlueprintPath
-		}
+	// Prefer the prepared deployment blueprint. Template paths like
+	// ../runtime/contracts/plutus.json are relative to demo/config/ and break
+	// when the bound config is written under runtime/config/.
+	if dep.BlueprintPath != "" {
+		prof.Contracts.BlueprintPath = dep.BlueprintPath
+	} else if strings.TrimSpace(prof.Contracts.BlueprintPath) == "" || strings.Contains(prof.Contracts.BlueprintPath, "GENERATED") {
+		return nil, fmt.Errorf("deployment missing blueprintPath and base config has no usable blueprintPath")
 	}
 
 	if prof.Actors == nil {

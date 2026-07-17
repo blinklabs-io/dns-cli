@@ -97,6 +97,57 @@ func TestNewUtxoRPCFromEnv(t *testing.T) {
 	}
 }
 
+func TestResolveUtxoRPCHeadersFromDMTRAPIKey(t *testing.T) {
+	t.Setenv("DMTR_API_KEY", "utxorpc1testkey")
+	got, err := resolveUtxoRPCHeaders("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got["dmtr-api-key"] != "utxorpc1testkey" {
+		t.Fatalf("got %#v", got)
+	}
+}
+
+func TestResolveUtxoRPCHeadersMergesDMTRAPIKey(t *testing.T) {
+	const envName = "DNS_CLI_TEST_UTXORPC_HEADERS_MERGE"
+	t.Setenv(envName, "X-Custom=one")
+	t.Setenv("DMTR_API_KEY", "utxorpc1merge")
+	got, err := resolveUtxoRPCHeaders(envName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got["dmtr-api-key"] != "utxorpc1merge" {
+		t.Fatalf("missing dmtr-api-key: %#v", got)
+	}
+	if got["X-Custom"] != "one" {
+		t.Fatalf("missing custom header: %#v", got)
+	}
+}
+
+func TestResolveUtxoRPCHeadersExplicitDmtrWins(t *testing.T) {
+	const envName = "DNS_CLI_TEST_UTXORPC_HEADERS_EXPLICIT"
+	t.Setenv(envName, "dmtr-api-key=from-headers")
+	t.Setenv("DMTR_API_KEY", "from-dmtr-env")
+	got, err := resolveUtxoRPCHeaders(envName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got["dmtr-api-key"] != "from-headers" {
+		t.Fatalf("explicit headersEnv should win: %#v", got)
+	}
+}
+
+func TestResolveUtxoRPCHeadersEmpty(t *testing.T) {
+	t.Setenv("DMTR_API_KEY", "")
+	got, err := resolveUtxoRPCHeaders("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != nil {
+		t.Fatalf("expected nil headers, got %#v", got)
+	}
+}
+
 func TestNewBlockfrost(t *testing.T) {
 	doc, _ := config.DefaultDocument("preprod", "blockfrost")
 	p := doc.Profiles["preprod"]

@@ -42,15 +42,15 @@ func newRegisterTLDCmd(g *GlobalFlags) *cobra.Command {
 				Operation: "register-tld",
 				Artifact:  artifact,
 				Message:   "built unsigned register-tld transaction",
-				Data: map[string]any{
-					"tld": tld,
-					"out": out,
-				},
+				Data: unsignedBuildData(out, map[string]any{
+					"tld":   tld,
+					"proof": proof,
+				}),
 			})
 		},
 	}
 	cmd.Flags().StringVar(&tld, "tld", "", "top-level domain label to register")
 	cmd.Flags().StringVar(&proof, "proof", "", "path to static Handshake proof JSON bundle")
-	cmd.Flags().StringVar(&out, "out", "", "output path prefix for unsigned envelope and manifest")
+	cmd.Flags().StringVar(&out, "out", "", "output path prefix for unsigned envelope and manifest (writes <out>.unsigned.json + <out>.manifest.json)")
 	return cmd
 }

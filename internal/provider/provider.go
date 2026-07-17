@@ -21,7 +21,7 @@ type Provider interface {
 	backend.ChainContext
 	Name() string
 	Health(ctx context.Context) error
-	AwaitOutputs(ctx context.Context, txID common.Blake2b256, indexes []uint32) error
+	AwaitOutputs(ctx context.Context, txID common.Blake2b256, indexes []uint32, explorerURL string, reporter logging.WaitReporter) error
 }
 
 // New constructs a provider from an effective profile.
@@ -61,7 +61,7 @@ func (w *wrapped) Health(ctx context.Context) error {
 	return nil
 }
 
-func (w *wrapped) AwaitOutputs(ctx context.Context, txID common.Blake2b256, indexes []uint32) error {
+func (w *wrapped) AwaitOutputs(ctx context.Context, txID common.Blake2b256, indexes []uint32, explorerURL string, reporter logging.WaitReporter) error {
 	if len(indexes) == 0 {
 		return fmt.Errorf("no output indexes to await")
 	}
@@ -69,27 +69,61 @@ func (w *wrapped) AwaitOutputs(ctx context.Context, txID common.Blake2b256, inde
 	defer ticker.Stop()
 	txHex := hex.EncodeToString(txID.Bytes())
 	slog.Debug("Awaiting transaction outputs", "txId", txHex, "indexes", indexes)
-	for {
-		allFound := true
+
+	started := time.Now()
+	var deadline time.Time
+	if d, ok := ctx.Deadline(); ok {
+		deadline = d
+	}
+	progress := logging.WaitProgress{
+		Stage:       "tx.confirm",
+		Process:     "waiting for outputs",
+		TxID:        txHex,
+		ExplorerURL: explorerURL,
+		Indexes:     indexes,
+		StartedAt:   started,
+		Deadline:    deadline,
+	}
+
+	poll := 0
+	check := func() bool {
 		for _, idx := range indexes {
 			utxo, err := w.UtxoByRef(txID, idx)
 			if err != nil || utxo == nil {
-				allFound = false
-				break
+				return false
 			}
 		}
-		if allFound {
+		return true
+	}
+
+	for {
+		poll++
+		progress.Poll = poll
+		if reporter != nil {
+			reporter.Tick(progress)
+		}
+		if check() {
 			slog.Info("Transaction outputs confirmed", "txId", txHex)
+			if reporter != nil {
+				reporter.Done(progress, nil)
+			}
 			return nil
 		}
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("confirmation timeout or canceled: %w", ctx.Err())
+			err := fmt.Errorf("confirmation timeout or canceled: %w", ctx.Err())
+			if reporter != nil {
+				reporter.Done(progress, err)
+			}
+			return err
 		case <-ticker.C:
 			slog.Log(ctx, logging.LevelTrace, "Polling for transaction outputs", "txId", txHex)
 		}
 	}
 }
+
+const dmtrAPIKeyEnv = "DMTR_API_KEY"
+const dmtrAPIKeyHeader = "dmtr-api-key"
 
 func loadHeaders(envName string) (map[string]string, error) {
 	if envName == "" {
@@ -112,6 +146,28 @@ func loadHeaders(envName string) (map[string]string, error) {
 		out[strings.TrimSpace(kv[0])] = strings.TrimSpace(kv[1])
 	}
 	return out, nil
+}
+
+// resolveUtxoRPCHeaders loads optional headersEnv values and, matching the
+// utxorpc go-sdk Demeter example, applies DMTR_API_KEY as dmtr-api-key when
+// that header is not already set explicitly.
+func resolveUtxoRPCHeaders(headersEnv string) (map[string]string, error) {
+	headers, err := loadHeaders(headersEnv)
+	if err != nil {
+		return nil, err
+	}
+	if key := strings.TrimSpace(os.Getenv(dmtrAPIKeyEnv)); key != "" {
+		if headers == nil {
+			headers = map[string]string{}
+		}
+		if _, exists := headers[dmtrAPIKeyHeader]; !exists {
+			headers[dmtrAPIKeyHeader] = key
+		}
+	}
+	if len(headers) == 0 {
+		return nil, nil
+	}
+	return headers, nil
 }
 
 func requireEnv(name string) (string, error) {

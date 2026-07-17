@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "network": "preprod",
+  "bursaNetwork": "preprod",
+  "mnemonic": "piano glad plunge tower army option engage piano effort online under behave over poet banner tornado shiver speed stereo forum hint crew time renew",
+  "accountId": 0,
+  "addressId": 0,
+  "derivationPath": "m/1852'/1815'/0'/0/0",
+  "paymentAddress": "addr_test1qpxwng8u05qfkzkdg22tcpvj00j95a0crwll2msnzj5tyj78v7l68ehuq504ymlq79tmkumeu0fk9hzhh3rjpyke49yq2x0r3x",
+  "paymentKeyHash": "4ce9a0fc7d009b0acd4294bc05927be45a75f81bbff56e1314a8b24b",
+  "stakeKeyHash": "c767bfa3e6fc051f526fe0f157bb7379e3d362dc57bc472092d9a948"
+}

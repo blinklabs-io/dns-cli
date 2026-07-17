@@ -196,7 +196,7 @@ func DefaultDocument(network, provider string) (*Document, error) {
 		},
 		Transaction: TransactionConfig{
 			TTLSlots:            300,
-			ConfirmationTimeout: "10m",
+			ConfirmationTimeout: "20m",
 			PollInterval:        "5s",
 			ArtifactDir:         "artifacts",
 			MaxDatumBytes:       4000,
@@ -256,7 +256,7 @@ func providerDefaults(provider, network string) (ProviderConfig, error) {
 // ConfirmationTimeout parses the profile timeout.
 func (t TransactionConfig) ConfirmationTimeoutDuration() (time.Duration, error) {
 	if t.ConfirmationTimeout == "" {
-		return 10 * time.Minute, nil
+		return 20 * time.Minute, nil
 	}
 	return time.ParseDuration(t.ConfirmationTimeout)
 }

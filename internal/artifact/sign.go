@@ -72,9 +72,19 @@ func SignWithWallet(envelopePath, manifestPath, outPath string, w wallet.Signer,
 	if err := wallet.SignEnvelope(tx, w, bodyHash, required, allowExtra); err != nil {
 		return err
 	}
+	if CountVKeyWitnesses(tx) == 0 {
+		return fmt.Errorf("signing produced no vkey witnesses")
+	}
 	out, err := EncodeConwayTx(tx)
 	if err != nil {
 		return err
+	}
+	roundTrip, err := DecodeConwayTx(out)
+	if err != nil {
+		return fmt.Errorf("verify signed transaction encoding: %w", err)
+	}
+	if CountVKeyWitnesses(roundTrip) == 0 {
+		return fmt.Errorf("signed transaction encoding dropped vkey witnesses")
 	}
 	outEnv := Envelope{
 		Type:        TypeWitnessedConway,

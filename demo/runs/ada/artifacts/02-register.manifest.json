@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "operation": "register-tld",
+  "network": "preprod",
+  "provider": "blockfrost",
+  "bodyHash": "6fa17a3b777c509466657981050697c00669aedc9c756f45a61c72527cbcf9e7",
+  "requiredSigners": [
+    "bf0f93f91776689757c62266eaa47fc777efd076b747033ed714575e"
+  ],
+  "expectedOutputs": [
+    {
+      "role": "registrar-registration",
+      "index": 0
+    }
+  ],
+  "validityInterval": {
+    "start": 128619412,
+    "ttl": 128619712
+  },
+  "configDigest": "d04b71e9d8b9f5ed65e660ad448f7bec3c61cb680a0cc84f970c6c86cd120978",
+  "apolloRevision": "v2.0.0-20260717012746-2754803864d2",
+  "contractRevision": "unknown",
+  "createdAt": "2026-07-17T15:37:00Z",
+  "extra": {
+    "tld": "ada"
+  }
+}

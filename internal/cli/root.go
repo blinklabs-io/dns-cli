@@ -48,7 +48,7 @@ func NewRoot() *cobra.Command {
 	root.PersistentFlags().StringVar(&g.Network, "network", "", "network profile override (preview|preprod)")
 	root.PersistentFlags().StringVar(&g.Provider, "provider", "", "provider override (utxorpc|blockfrost)")
 	root.PersistentFlags().StringVar(&g.Output, "output", "human", "output format (human|json)")
-	root.PersistentFlags().DurationVar(&g.Timeout, "timeout", 10*time.Minute, "operation timeout")
+	root.PersistentFlags().DurationVar(&g.Timeout, "timeout", 20*time.Minute, "operation timeout")
 	root.PersistentFlags().IntVarP(&g.Verbose, "verbose", "v", 2, "log verbosity 0-4 (error|warn|info|debug|trace)")
 	root.PersistentFlags().StringVar(&g.ArtifactDir, "artifact-dir", "", "directory for transaction artifacts")
 	root.PersistentFlags().BoolVar(&g.NoColor, "no-color", false, "disable color in human output and logs")
@@ -61,6 +61,8 @@ func NewRoot() *cobra.Command {
 	root.AddCommand(newOwnerCmd(g))
 	root.AddCommand(newProofCmd(g))
 	root.AddCommand(newTxCmd(g))
+	root.AddCommand(newDemoCmd(g))
+	root.AddCommand(newDashboardCmd(g))
 
 	return root
 }
@@ -92,7 +94,8 @@ func newVersionCmd(g *GlobalFlags) *cobra.Command {
 					},
 				})
 			}
-			_, err = fmt.Fprint(cmd.OutOrStdout(), formatVersionHuman(v))
+			color := !g.NoColor && os.Getenv("NO_COLOR") == ""
+			_, err = fmt.Fprint(cmd.OutOrStdout(), formatVersionHuman(v, color))
 			return err
 		},
 	}

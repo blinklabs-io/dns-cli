@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "network": "preprod",
+  "bursaNetwork": "preprod",
+  "mnemonic": "since trial pill alien south brisk because client unit belt snake student embody industry cage office choice elegant exchange ski sausage pizza motion walk",
+  "accountId": 0,
+  "addressId": 0,
+  "derivationPath": "m/1852'/1815'/0'/0/0",
+  "paymentAddress": "addr_test1qp92e5uye5s8at2kc72hk8vq5nehm3s22xlexp5tzyfktu9gygwm5398pzn07mlmk7r0se0d6pq30xmwd8t47ertr2ns7vjp6s",
+  "paymentKeyHash": "4aacd384cd207ead56c7957b1d80a4f37dc60a51bf93068b111365f0",
+  "stakeKeyHash": "a8221dba44a708a6ff6ffbb786f865edd041179b6e69d75f646b1aa7"
+}

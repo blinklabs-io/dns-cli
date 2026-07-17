@@ -1,6 +1,9 @@
 package provider
 
 import (
+	"net/http"
+	"time"
+
 	"github.com/Salvionied/apollo/v2/backend/blockfrost"
 	"github.com/blinklabs-io/dns-cli/internal/config"
 )
@@ -23,5 +26,10 @@ func newBlockfrost(eff *config.Effective) (Provider, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &wrapped{ChainContext: cc, name: "blockfrost", pollInterval: poll}, nil
+	return &blockfrostProvider{
+		wrapped:    &wrapped{ChainContext: cc, name: "blockfrost", pollInterval: poll},
+		baseURL:    baseURL,
+		projectID:  projectID,
+		httpClient: &http.Client{Timeout: 30 * time.Second},
+	}, nil
 }

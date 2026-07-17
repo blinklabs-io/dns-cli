@@ -45,7 +45,11 @@ Or supply the URL via environment:
 }
 ```
 
-Exactly one of `baseURL` or `baseUrlEnv` must resolve. Optional headers are `Key=Value,...` in `DNS_CLI_UTXORPC_HEADERS`.
+Exactly one of `baseURL` or `baseUrlEnv` must resolve. For Demeter-hosted
+endpoints, set `DMTR_API_KEY` (applied as the `dmtr-api-key` header, matching
+the [utxorpc go-sdk](https://github.com/utxorpc/go-sdk) convention). Optional
+extra headers are `Key=Value,...` in `DNS_CLI_UTXORPC_HEADERS`; an explicit
+`dmtr-api-key` there wins over `DMTR_API_KEY`.
 
 ### Blockfrost
 

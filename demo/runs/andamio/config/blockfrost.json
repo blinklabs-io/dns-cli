@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "defaultProfile": "preprod",
+  "profiles": {
+    "preprod": {
+      "network": {
+        "name": "preprod",
+        "id": 0,
+        "magic": 1,
+        "explorerTxURL": "https://preprod.cexplorer.io/tx/{txId}"
+      },
+      "provider": {
+        "type": "blockfrost",
+        "baseURL": "https://cardano-preprod.blockfrost.io/api/v0",
+        "projectIdEnv": "DNS_CLI_BLOCKFROST_PROJECT_ID"
+      },
+      "contracts": {
+        "blueprintPath": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\andamio\\contracts\\plutus.base.json",
+        "tldRegistrarAddress": "addr_test1zqje5vtp49yj04u6dznhjpz6kzcmy534966yfxkzge2j6st5ja5a992d5l469ms9yzgzljyhw36usjcsectx472k2vgssvxsu6",
+        "tldReferenceAddress": "addr_test1zq2mzmhrq3llvchtsaf4ja2mnwtwmmrl8qysamq4yewlg9r5ja5a992d5l469ms9yzgzljyhw36usjcsectx472k2vgsx3ev5v",
+        "sldReferenceAddress": "addr_test1zrpdmmz7c2tww2dv29yxf922ylvy2dql204v5qhcau8kdyt5ja5a992d5l469ms9yzgzljyhw36usjcsectx472k2vgspknxr9",
+        "tldRegistrarPolicyId": "259a3161a94927d79a68a779045ab0b1b252352eb4449ac246552d41",
+        "tldReferencePolicyId": "15b16ee3047ff662eb875359755b9b96edec7f38090eec15265df414",
+        "sldReferencePolicyId": "c2ddec5ec296e729ac514864954a27d845341f53eaca02f8ef0f6691",
+        "referenceUtxos": {
+          "sldReference": "3076679d799c61553bf1062abae3cb54212ad415a1c40d365a14db4b89fcd701#2",
+          "tldReference": "3076679d799c61553bf1062abae3cb54212ad415a1c40d365a14db4b89fcd701#1",
+          "tldRegistrar": "3076679d799c61553bf1062abae3cb54212ad415a1c40d365a14db4b89fcd701#0"
+        }
+      },
+      "actors": {
+        "bootstrap": {
+          "address": "addr_test1qrt0sl66dtdmu0s6uedkpgczljxq0qj0z3awrs7xu2smw8t5ja5a992d5l469ms9yzgzljyhw36usjcsectx472k2vgs2pqcn6",
+          "signingKeyFile": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\shared\\wallets\\bootstrap\\payment.skey"
+        },
+        "registrar": {
+          "address": "addr_test1qzlslylezamx396hcc3xd64y0lrh0m7sw6m5wqe76u29whkf84g0s2lzncmxca6twygx7g5zr5s6np8ek38myxwjh76snm7kgh",
+          "signingKeyFile": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\shared\\wallets\\registrar\\payment.skey"
+        },
+        "sldOwner": {
+          "address": "addr_test1qpxwng8u05qfkzkdg22tcpvj00j95a0crwll2msnzj5tyj78v7l68ehuq504ymlq79tmkumeu0fk9hzhh3rjpyke49yq2x0r3x",
+          "signingKeyFile": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\shared\\wallets\\sld-owner\\payment.skey"
+        },
+        "tldOwner": {
+          "address": "addr_test1qp92e5uye5s8at2kc72hk8vq5nehm3s22xlexp5tzyfktu9gygwm5398pzn07mlmk7r0se0d6pq30xmwd8t47ertr2ns7vjp6s",
+          "signingKeyFile": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\shared\\wallets\\tld-owner\\payment.skey"
+        }
+      },
+      "transaction": {
+        "ttlSlots": 300,
+        "confirmationTimeout": "20m",
+        "pollInterval": "5s",
+        "artifactDir": "../artifacts",
+        "maxDatumBytes": 4000
+      }
+    }
+  }
+}

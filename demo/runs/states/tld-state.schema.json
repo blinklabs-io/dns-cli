@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/blinklabs-io/dns-cli/demo/tld-state.schema.json",
+  "title": "dns-cli Preprod demo TLD state",
+  "description": "Resumable TLD-scoped demo progress at demo/runs/<tld>/state.json (fund, deploy, register, activate).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "mode",
+    "network",
+    "provider",
+    "tld",
+    "confirmed"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 2,
+      "description": "TLD state schema version."
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "fresh",
+        "existing"
+      ]
+    },
+    "network": {
+      "type": "string",
+      "const": "preprod"
+    },
+    "provider": {
+      "type": "string",
+      "enum": [
+        "blockfrost",
+        "utxorpc"
+      ]
+    },
+    "tld": {
+      "type": "string",
+      "minLength": 1
+    },
+    "confirmed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fund",
+        "deploy",
+        "register",
+        "activate"
+      ],
+      "properties": {
+        "fund": {
+          "$ref": "#/$defs/stepResult"
+        },
+        "deploy": {
+          "$ref": "#/$defs/stepResult"
+        },
+        "register": {
+          "$ref": "#/$defs/stepResult"
+        },
+        "activate": {
+          "$ref": "#/$defs/stepResult"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "stepResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "txId",
+        "manifest"
+      ],
+      "properties": {
+        "txId": {
+          "type": "string"
+        },
+        "manifest": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

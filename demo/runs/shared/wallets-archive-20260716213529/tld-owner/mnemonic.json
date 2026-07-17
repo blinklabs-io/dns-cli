@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "network": "preprod",
+  "bursaNetwork": "preprod",
+  "mnemonic": "better army hawk rival certain stomach nuclear year banana hello cannon train benefit because dust wisdom annual ceiling alert decrease guilt common rent flush",
+  "accountId": 0,
+  "addressId": 0,
+  "derivationPath": "m/1852'/1815'/0'/0/0",
+  "paymentAddress": "addr_test1qrueh23egnyyr04n9jd9ys0jck7hs36pquwc7f6k4lmzas2rysgrn8fjt3zzwccwlwlusnv75dqecum5pudy6lap888sczp634",
+  "paymentKeyHash": "f99baa3944c841beb32c9a5241f2c5bd784741071d8f2756aff62ec1",
+  "stakeKeyHash": "432410399d325c4427630efbbfc84d9ea3419c73740f1a4d7fa139cf"
+}

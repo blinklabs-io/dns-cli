@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "network": "preprod",
+  "bursaNetwork": "preprod",
+  "mnemonic": "cruise assume traffic moment reform broken easily project over dad recall raw army deputy hybrid sauce pipe urge saddle outer level razor dwarf awkward",
+  "accountId": 0,
+  "addressId": 0,
+  "derivationPath": "m/1852'/1815'/0'/0/0",
+  "paymentAddress": "addr_test1qrt0sl66dtdmu0s6uedkpgczljxq0qj0z3awrs7xu2smw8t5ja5a992d5l469ms9yzgzljyhw36usjcsectx472k2vgs2pqcn6",
+  "paymentKeyHash": "d6f87f5a6adbbe3e1ae65b60a302fc8c07824f147ae1c3c6e2a1b71d",
+  "stakeKeyHash": "749769d2954da7eba2ee0520902fc8977475c84b10ce166af9565311"
+}

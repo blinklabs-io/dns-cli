@@ -1,14 +1,15 @@
 package cli
 
 import (
-	"fmt"
 	"runtime"
 	"runtime/debug"
+
+	"github.com/blinklabs-io/dns-cli/internal/report"
 )
 
 // Build metadata — overridden via -ldflags at release time.
 var (
-	Version          = "dev"
+	Version          = "1.0.0"
 	GitCommit        = "unknown"
 	BuildDate        = "unknown"
 	ContractRevision = "unknown"
@@ -52,9 +53,13 @@ func ResolveVersion() VersionInfo {
 	return info
 }
 
-func formatVersionHuman(v VersionInfo) string {
-	return fmt.Sprintf(
-		"dns-cli %s\ncommit: %s\nbuilt: %s\ngo: %s\napollo: %s\ncontracts: %s\n",
-		v.Version, v.GitCommit, v.BuildDate, v.GoVersion, v.ApolloRevision, v.ContractRevision,
-	)
+func formatVersionHuman(v VersionInfo, color bool) string {
+	th := report.New(color)
+	return th.Panel("dns-cli "+v.Version, []report.KV{
+		{Key: "commit", Value: v.GitCommit},
+		{Key: "built", Value: v.BuildDate},
+		{Key: "go", Value: v.GoVersion},
+		{Key: "apollo", Value: v.ApolloRevision},
+		{Key: "contracts", Value: v.ContractRevision},
+	})
 }

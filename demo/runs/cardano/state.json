@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 2,
+  "mode": "fresh",
+  "network": "preprod",
+  "provider": "blockfrost",
+  "tld": "cardano",
+  "confirmed": {
+    "fund": {
+      "txId": "c3d1d6ccd64d75c6d4e4e12cbd80e2341c51025d1a211facd491e552592b2116",
+      "manifest": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\cardano\\artifacts\\00-fund.manifest.json"
+    },
+    "deploy": {
+      "txId": "e644611f706ed566e7dcc131803d2da89df72991f0a196739290553467b3af47",
+      "manifest": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\cardano\\artifacts\\01-deploy.manifest.json"
+    },
+    "register": {
+      "txId": "282b409de11c18b1906c89b516c8059f1dda25e29739b395585240d054cbd4ab",
+      "manifest": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\cardano\\artifacts\\02-register.manifest.json"
+    },
+    "activate": {
+      "txId": "7fd61d09f82d4f7461a35c52eaab5ece404d75292503273b32cd902a15f79999",
+      "manifest": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\cardano\\artifacts\\03-activate.manifest.json"
+    }
+  }
+}

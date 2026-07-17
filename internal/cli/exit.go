@@ -2,6 +2,7 @@ package cli
 
 import (
 	"errors"
+	"strings"
 )
 
 // Exit codes used by dns-cli. Scripts may rely on these values.
@@ -56,6 +57,13 @@ func ExitCode(err error) int {
 	var ec ExitCoder
 	if errors.As(err, &ec) {
 		return ec.ExitCode()
+	}
+	msg := err.Error()
+	if strings.Contains(msg, "required flag") ||
+		strings.Contains(msg, "unknown flag") ||
+		strings.Contains(msg, "unknown command") ||
+		strings.Contains(msg, "invalid argument") {
+		return ExitUsage
 	}
 	return ExitInternal
 }

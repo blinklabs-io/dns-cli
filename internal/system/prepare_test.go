@@ -223,12 +223,14 @@ func TestPrepareDeploymentWithFakeAiken(t *testing.T) {
 
 func TestBindConfig(t *testing.T) {
 	tmp := t.TempDir()
+	depBlueprint := filepath.Join(tmp, "contracts", "plutus.base.json")
 	dep := &system.DeploymentJSON{
-		Version:      1,
-		Network:      "preprod",
-		NetworkID:    0,
-		Magic:        1,
-		StakeKeyHash: strings.Repeat("11", 28),
+		Version:       1,
+		Network:       "preprod",
+		NetworkID:     0,
+		Magic:         1,
+		StakeKeyHash:  strings.Repeat("11", 28),
+		BlueprintPath: depBlueprint,
 		Validators: map[string]system.ValidatorArtifact{
 			system.RoleTLDRegistrar: {Role: system.RoleTLDRegistrar, PolicyID: strings.Repeat("aa", 28), Address: "addr_test1qpaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", PlutusFile: "a.plutus"},
 			system.RoleTLDReference: {Role: system.RoleTLDReference, PolicyID: strings.Repeat("bb", 28), Address: "addr_test1qpbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", PlutusFile: "b.plutus"},
@@ -319,6 +321,9 @@ func TestBindConfig(t *testing.T) {
 	}
 	if prof.Actors["bootstrap"].Address != wallets["bootstrap"] {
 		t.Fatalf("bootstrap addr")
+	}
+	if prof.Contracts.BlueprintPath != depBlueprint {
+		t.Fatalf("blueprintPath: got %q want deployment path %q", prof.Contracts.BlueprintPath, depBlueprint)
 	}
 }
 

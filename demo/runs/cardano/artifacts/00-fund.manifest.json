@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "operation": "wallet.fund",
+  "network": "preprod",
+  "provider": "blockfrost",
+  "bodyHash": "c3d1d6ccd64d75c6d4e4e12cbd80e2341c51025d1a211facd491e552592b2116",
+  "requiredSigners": [
+    "d6f87f5a6adbbe3e1ae65b60a302fc8c07824f147ae1c3c6e2a1b71d"
+  ],
+  "expectedOutputs": [
+    {
+      "role": "registrar-collateral",
+      "index": 0
+    },
+    {
+      "role": "registrar-spend",
+      "index": 1
+    },
+    {
+      "role": "tldOwner-collateral",
+      "index": 2
+    },
+    {
+      "role": "tldOwner-spend",
+      "index": 3
+    },
+    {
+      "role": "sldOwner-collateral",
+      "index": 4
+    },
+    {
+      "role": "sldOwner-spend",
+      "index": 5
+    }
+  ],
+  "validityInterval": {
+    "start": 128617683,
+    "ttl": 128617983
+  },
+  "configDigest": "b1148327c81df2349131d598f0a6108ff1623e4cf34bfbc42967fc01a9ba5f55",
+  "apolloRevision": "v2.0.0-20260717012746-2754803864d2",
+  "contractRevision": "",
+  "createdAt": "2026-07-17T15:08:42Z",
+  "extra": {
+    "allocation.0.actor": "registrar",
+    "allocation.0.lovelace": "30000000",
+    "allocation.1.actor": "tldOwner",
+    "allocation.1.lovelace": "50000000",
+    "allocation.2.actor": "sldOwner",
+    "allocation.2.lovelace": "30000000",
+    "collateral": "5000000",
+    "fromActor": "bootstrap"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "mode": "fresh",
+  "network": "preprod",
+  "provider": "blockfrost",
+  "tld": "cardano",
+  "sld": "www",
+  "runId": "20260717-183808",
+  "createdAt": "2026-07-17T18:56:15.8414339+03:30",
+  "sharedDir": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\shared",
+  "tldDir": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\cardano",
+  "sldRunDir": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\cardano\\www\\20260717-183808"
+}

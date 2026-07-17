@@ -33,4 +33,4 @@ If a key is exposed:
 
 ## Provider credentials
 
-Blockfrost project IDs and UTxO RPC headers are loaded from environment at runtime only.
+Blockfrost project IDs, Demeter `DMTR_API_KEY`, and UTxO RPC headers are loaded from environment at runtime only.

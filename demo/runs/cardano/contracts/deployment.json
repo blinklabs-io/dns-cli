@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "network": "preprod",
+  "networkId": 0,
+  "magic": 1,
+  "stakeKeyHash": "749769d2954da7eba2ee0520902fc8977475c84b10ce166af9565311",
+  "registrarHnsKey": "03141453c92c35c7887394dc94faf853b7df61111ba7d8b376cfbbbcb60793f95f",
+  "blueprintPath": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\cardano\\contracts\\plutus.base.json",
+  "outDir": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\cardano\\contracts",
+  "validators": {
+    "sldReference": {
+      "role": "sldReference",
+      "module": "tld_registration/sld_reference",
+      "validator": "sld_reference",
+      "policyId": "f41a6090a4d5618c2cad7c239009c73c3d03c5fee97dc97ad9f28ef6",
+      "scriptHash": "f41a6090a4d5618c2cad7c239009c73c3d03c5fee97dc97ad9f28ef6",
+      "address": "addr_test1zr6p5cys5n2krrpv447z8yqfcu7r6q79lm5hmjt6m8egaan5ja5a992d5l469ms9yzgzljyhw36usjcsectx472k2vgsjwh0y8",
+      "plutusFile": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\cardano\\contracts\\sld_reference.plutus",
+      "blueprintFile": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\cardano\\contracts\\plutus.sld_reference.json"
+    },
+    "tldReference": {
+      "role": "tldReference",
+      "module": "tld_registration/tld_reference",
+      "validator": "tld_reference",
+      "policyId": "dddc0719e414f9320122201fa98586832b1ce2f450c85729bed66d4c",
+      "scriptHash": "dddc0719e414f9320122201fa98586832b1ce2f450c85729bed66d4c",
+      "address": "addr_test1zrwacpceus20jvspygspl2v9s6pjk88z73gvs4efhmtx6nr5ja5a992d5l469ms9yzgzljyhw36usjcsectx472k2vgsr9c2w6",
+      "plutusFile": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\cardano\\contracts\\tld_reference.plutus",
+      "blueprintFile": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\cardano\\contracts\\plutus.tld_reference.json"
+    },
+    "tldRegistrar": {
+      "role": "tldRegistrar",
+      "module": "tld_registration/tld_registrar",
+      "validator": "tld_registrar",
+      "policyId": "c278b9da2e9516ad7ceb1a24039b0e6be4e4b19fdfe0d974e2bdf118",
+      "scriptHash": "c278b9da2e9516ad7ceb1a24039b0e6be4e4b19fdfe0d974e2bdf118",
+      "address": "addr_test1zrp83ww69623dttuavdzgqumpe47fe93nl07pkt5u27lzxr5ja5a992d5l469ms9yzgzljyhw36usjcsectx472k2vgsk97qwh",
+      "plutusFile": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\cardano\\contracts\\tld_registrar.plutus",
+      "blueprintFile": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\cardano\\contracts\\plutus.tld_registrar.json"
+    }
+  }
+}

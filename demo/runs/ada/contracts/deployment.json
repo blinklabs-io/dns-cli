@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "network": "preprod",
+  "networkId": 0,
+  "magic": 1,
+  "stakeKeyHash": "749769d2954da7eba2ee0520902fc8977475c84b10ce166af9565311",
+  "registrarHnsKey": "02344b2b94e32c38335349c5a915852e0c5cca041312ac9d8ccf5645cc39f6c6b9",
+  "blueprintPath": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\ada\\contracts\\plutus.base.json",
+  "outDir": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\ada\\contracts",
+  "validators": {
+    "sldReference": {
+      "role": "sldReference",
+      "module": "tld_registration/sld_reference",
+      "validator": "sld_reference",
+      "policyId": "c8acdb400d28bb001b163f4b9eb55b013917813eeacc5f4ff863de0e",
+      "scriptHash": "c8acdb400d28bb001b163f4b9eb55b013917813eeacc5f4ff863de0e",
+      "address": "addr_test1zry2ek6qp55tkqqmzcl5h844tvqnj9up8m4vch60lp3aurn5ja5a992d5l469ms9yzgzljyhw36usjcsectx472k2vgs27fyr7",
+      "plutusFile": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\ada\\contracts\\sld_reference.plutus",
+      "blueprintFile": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\ada\\contracts\\plutus.sld_reference.json"
+    },
+    "tldReference": {
+      "role": "tldReference",
+      "module": "tld_registration/tld_reference",
+      "validator": "tld_reference",
+      "policyId": "2e4078b2de1b1040be92598e51249bbd65f61a3b43c2ca6897253b20",
+      "scriptHash": "2e4078b2de1b1040be92598e51249bbd65f61a3b43c2ca6897253b20",
+      "address": "addr_test1zqhyq79jmcd3qs97jfvcu5fynw7ktas68dpu9jngjujnkgr5ja5a992d5l469ms9yzgzljyhw36usjcsectx472k2vgs22uwd2",
+      "plutusFile": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\ada\\contracts\\tld_reference.plutus",
+      "blueprintFile": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\ada\\contracts\\plutus.tld_reference.json"
+    },
+    "tldRegistrar": {
+      "role": "tldRegistrar",
+      "module": "tld_registration/tld_registrar",
+      "validator": "tld_registrar",
+      "policyId": "b2f7c725b4958fae8d2ad5b534f7c6e0702ace54a6cf9293faf6df8f",
+      "scriptHash": "b2f7c725b4958fae8d2ad5b534f7c6e0702ace54a6cf9293faf6df8f",
+      "address": "addr_test1zze003e9kj2clt5d9t2m2d8hcms8q2kw2jnvly5nltmdlrm5ja5a992d5l469ms9yzgzljyhw36usjcsectx472k2vgszf8f0v",
+      "plutusFile": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\ada\\contracts\\tld_registrar.plutus",
+      "blueprintFile": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\ada\\contracts\\plutus.tld_registrar.json"
+    }
+  }
+}

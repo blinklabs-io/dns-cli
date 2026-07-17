@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "operation": "system-init",
+  "network": "preprod",
+  "provider": "blockfrost",
+  "bodyHash": "8fd16b7b7a88a94e76c09b4ddb3e4398a13d89301ff01394af5cc56febe33331",
+  "requiredSigners": [
+    "d6f87f5a6adbbe3e1ae65b60a302fc8c07824f147ae1c3c6e2a1b71d"
+  ],
+  "expectedOutputs": [
+    {
+      "role": "tldRegistrar",
+      "index": 0
+    },
+    {
+      "role": "tldReference",
+      "index": 1
+    },
+    {
+      "role": "sldReference",
+      "index": 2
+    }
+  ],
+  "validityInterval": {
+    "start": 128619383,
+    "ttl": 128619683
+  },
+  "configDigest": "b1148327c81df2349131d598f0a6108ff1623e4cf34bfbc42967fc01a9ba5f55",
+  "apolloRevision": "v2.0.0-20260717012746-2754803864d2",
+  "contractRevision": "unknown",
+  "createdAt": "2026-07-17T15:36:28Z",
+  "extra": {
+    "sldReferencePolicyId": "c8acdb400d28bb001b163f4b9eb55b013917813eeacc5f4ff863de0e",
+    "tldReferencePolicyId": "2e4078b2de1b1040be92598e51249bbd65f61a3b43c2ca6897253b20",
+    "tldRegistrarPolicyId": "b2f7c725b4958fae8d2ad5b534f7c6e0702ace54a6cf9293faf6df8f"
+  }
+}

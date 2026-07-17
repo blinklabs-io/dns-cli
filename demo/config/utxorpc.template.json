@@ -15,7 +15,7 @@
         "headersEnv": "DNS_CLI_UTXORPC_HEADERS"
       },
       "contracts": {
-        "blueprintPath": "../runtime/contracts/plutus.json",
+        "blueprintPath": "GENERATED_BY_SYSTEM_BIND",
         "tldRegistrarAddress": "GENERATED_BY_SYSTEM_BIND",
         "tldReferenceAddress": "GENERATED_BY_SYSTEM_BIND",
         "sldReferenceAddress": "GENERATED_BY_SYSTEM_BIND",
@@ -31,26 +31,26 @@
       "actors": {
         "bootstrap": {
           "address": "GENERATED_BY_WALLET_CREATE",
-          "signingKeyFile": "../runtime/wallets/bootstrap/payment.skey"
+          "signingKeyFile": "../wallets/bootstrap/payment.skey"
         },
         "registrar": {
           "address": "GENERATED_BY_WALLET_CREATE",
-          "signingKeyFile": "../runtime/wallets/registrar/payment.skey"
+          "signingKeyFile": "../wallets/registrar/payment.skey"
         },
         "tldOwner": {
           "address": "GENERATED_BY_WALLET_CREATE",
-          "signingKeyFile": "../runtime/wallets/tld-owner/payment.skey"
+          "signingKeyFile": "../wallets/tld-owner/payment.skey"
         },
         "sldOwner": {
           "address": "GENERATED_BY_WALLET_CREATE",
-          "signingKeyFile": "../runtime/wallets/sld-owner/payment.skey"
+          "signingKeyFile": "../wallets/sld-owner/payment.skey"
         }
       },
       "transaction": {
         "ttlSlots": 300,
-        "confirmationTimeout": "10m",
+        "confirmationTimeout": "20m",
         "pollInterval": "5s",
-        "artifactDir": "../runtime/artifacts",
+        "artifactDir": "../artifacts",
         "maxDatumBytes": 4000
       }
     }

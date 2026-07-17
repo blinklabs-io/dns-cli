@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "operation": "update-sld",
+  "network": "preprod",
+  "provider": "blockfrost",
+  "bodyHash": "7253ae87d77441e9953f7b609897f6cd6fd3fbbef13e98b0b391a736a7fcb3d5",
+  "requiredSigners": [
+    "4ce9a0fc7d009b0acd4294bc05927be45a75f81bbff56e1314a8b24b"
+  ],
+  "expectedOutputs": [
+    {
+      "role": "sld-reference-updated",
+      "index": 0
+    },
+    {
+      "role": "sld-user-token-return",
+      "index": 1
+    }
+  ],
+  "validityInterval": {
+    "start": 128621934,
+    "ttl": 128622234
+  },
+  "configDigest": "83c6903e0fe82608f3b27b148b5ad092f0ccd3ce40bb1d9eb3d8fbcee4f7f370",
+  "apolloRevision": "v2.0.0-20260717012746-2754803864d2",
+  "contractRevision": "unknown",
+  "createdAt": "2026-07-17T16:19:16Z",
+  "extra": {
+    "oldRecordCount": "0",
+    "recordCount": "1",
+    "sld": "api",
+    "tld": "andamio"
+  }
+}

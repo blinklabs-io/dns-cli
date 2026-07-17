@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/blinklabs-io/dns-cli/demo/run.schema.json",
+  "title": "dns-cli Preprod demo SLD run metadata",
+  "description": "Non-resumable metadata at demo/runs/<tld>/<sld>/<runId>/run.json pointing at shared and TLD roots.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "mode",
+    "network",
+    "provider",
+    "tld",
+    "sld",
+    "runId",
+    "createdAt",
+    "sharedDir",
+    "tldDir",
+    "sldRunDir"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "fresh",
+        "existing"
+      ]
+    },
+    "network": {
+      "type": "string",
+      "const": "preprod"
+    },
+    "provider": {
+      "type": "string",
+      "enum": [
+        "blockfrost",
+        "utxorpc"
+      ]
+    },
+    "tld": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sld": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "ISO-8601 creation time for this run folder."
+    },
+    "sharedDir": {
+      "type": "string",
+      "description": "Absolute path to demo/runs/shared."
+    },
+    "tldDir": {
+      "type": "string",
+      "description": "Absolute path to demo/runs/<tld>."
+    },
+    "sldRunDir": {
+      "type": "string",
+      "description": "Absolute path to this run folder."
+    }
+  }
+}
