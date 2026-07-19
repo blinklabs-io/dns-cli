@@ -4,9 +4,9 @@
 
 | Flag | Description |
 |---|---|
-| `--config` | Path to JSON config (default `dns-cli.json`) |
-| `--network` | Profile override (`preview` \| `preprod`). Demo orchestration is **preprod-only**; `preview` is for non-demo protocol work when your config allows it |
-| `--provider` | Provider override (`utxorpc` \| `blockfrost`) |
+| `--config` | Path to JSON config (default `config/dns-cli.json`) |
+| `--network` | Profile override (profile name, e.g. `preprod`, `preprod-blockfrost`, `preprod-utxorpc`). Demo orchestration is **preprod-only** |
+| `--provider` | Provider **type** override only (`utxorpc` \| `blockfrost`) — does not swap URL/env fields; prefer separate profiles |
 | `--output` | `human` (default) or `json` |
 | `--timeout` | Operation timeout (default `20m`) |
 | `-v`, `--verbose` | Log verbosity `0`–`4` (default `2`): `0` error, `1` warn, `2` info, `3` debug, `4` trace |
@@ -117,6 +117,21 @@ dns-cli owner update-sld --tld NAME --sld LABEL --records records.json --out art
 
 Flag aliases (UX only): `tx sign --signed` ≡ `--out`; `tx apply --out` ≡ `--signed`.
 
+## Provider readiness
+
+Commands that contact the chain print a **Provider readiness** panel on stderr and
+block on missing credentials or failed health. There is no `config check` command.
+
+| Checks readiness | Stays offline |
+|---|---|
+| `wallet fund\|balance\|wait-funds` | `wallet create` |
+| `system init` | `system prepare`, `system bind` |
+| `registrar register-tld` | `proof generate` |
+| `owner activate-tld\|mint-sld\|update-sld` | `config init\|show`, offline `config validate` |
+| `tx submit\|status\|apply` | `tx inspect\|sign` |
+| `config validate --online` | |
+| `demo run` (fresh + existing resume) | `demo history` |
+
 ## Demo
 
 ```bash
@@ -130,9 +145,15 @@ dns-cli demo run \
 dns-cli demo run --mode existing
 ```
 
-`demo history` auto-detects `demo/runs` by walking upward from the current directory (override with `--runs-root`). It is a read-only scan of `runs/<tld>/state.json` and nested SLD run state (skips `shared/` and `states/`).
+`demo history` auto-detects `demo/runs` by walking upward from the current directory (override with `--runs-root`). It is a **read-only** scan of `runs/<tld>/state.json` and nested SLD run state with confirmed tx IDs and explorer URLs (skips `shared/` and `states/`).
 
-`demo run` auto-detects `demo/` (`--demo-root` optional) and owns the full Preprod orchestration (prereq checks for demo layout + dns-contracts + Aiken, wallets, faucet wait, prepare/deploy, register → update, resume). Unset `--mode` / `--provider` / `--log-level` use numbered menus; skip-install and clipboard use yes-no when those flags were not passed. `--yes` auto-approves install/default prompts but **never** skips `Proceed with Preprod submissions?`. Missing contracts are cloned from `https://github.com/blinklabs-io/dns-contracts.git` when the operator agrees.
+`demo run --mode existing` is **not** a history alias. It lists local TLD/SLD runs
+with stage (`fund`…`update-sld` / `complete`), lets you pick a number, checks
+provider readiness, and resumes that exact run ID. Completed rows are shown but
+not selectable. The picker never shows transaction IDs or explorer links.
+`--yes` never auto-selects a run and never skips `Proceed with Preprod submissions?`.
+
+`demo run` (fresh) auto-detects `demo/` (`--demo-root` optional) and owns the full Preprod orchestration (prereq checks for demo layout + dns-contracts + Aiken, wallets, faucet wait, prepare/deploy, register → update, resume). Unset `--mode` / `--provider` / `--log-level` use numbered menus; skip-install and clipboard use yes-no when those flags were not passed. Missing contracts are cloned from `https://github.com/blinklabs-io/dns-contracts.git` when the operator agrees.
 
 ## End-to-end demo
 

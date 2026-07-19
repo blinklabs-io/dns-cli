@@ -9,13 +9,13 @@ import (
 func TestAskChoiceNumberedMenu(t *testing.T) {
 	var out bytes.Buffer
 	in := strings.NewReader("2\n")
-	p := NewPrompter(in, &out, false)
+	p := NewPrompter(in, &out, false, false)
 	got := p.AskChoice("Mode", "fresh", []string{"fresh", "existing"})
 	if got != "existing" {
 		t.Fatalf("got %q want existing", got)
 	}
 	text := out.String()
-	for _, want := range []string{"Mode", "1) fresh (default)", "2) existing", "Enter number [1]:"} {
+	for _, want := range []string{"◆ Mode", "1) fresh (default)", "2) existing", "Enter number [1]:"} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("output missing %q:\n%s", want, text)
 		}
@@ -25,7 +25,7 @@ func TestAskChoiceNumberedMenu(t *testing.T) {
 func TestAskChoiceDefaultOnEmpty(t *testing.T) {
 	var out bytes.Buffer
 	in := strings.NewReader("\n")
-	p := NewPrompter(in, &out, false)
+	p := NewPrompter(in, &out, false, false)
 	got := p.AskChoice("Provider", "blockfrost", []string{"blockfrost", "utxorpc"})
 	if got != "blockfrost" {
 		t.Fatalf("got %q want blockfrost", got)
@@ -35,7 +35,7 @@ func TestAskChoiceDefaultOnEmpty(t *testing.T) {
 func TestAskChoiceAcceptsName(t *testing.T) {
 	var out bytes.Buffer
 	in := strings.NewReader("utxorpc\n")
-	p := NewPrompter(in, &out, false)
+	p := NewPrompter(in, &out, false, false)
 	got := p.AskChoice("Provider", "blockfrost", []string{"blockfrost", "utxorpc"})
 	if got != "utxorpc" {
 		t.Fatalf("got %q want utxorpc", got)
@@ -45,7 +45,7 @@ func TestAskChoiceAcceptsName(t *testing.T) {
 func TestAskChoiceInvalidKeepsDefault(t *testing.T) {
 	var out bytes.Buffer
 	in := strings.NewReader("9\n")
-	p := NewPrompter(in, &out, false)
+	p := NewPrompter(in, &out, false, false)
 	got := p.AskChoice("Mode", "fresh", []string{"fresh", "existing"})
 	if got != "fresh" {
 		t.Fatalf("got %q want fresh", got)
@@ -57,7 +57,7 @@ func TestAskChoiceInvalidKeepsDefault(t *testing.T) {
 
 func TestAskChoiceAssumeYes(t *testing.T) {
 	var out bytes.Buffer
-	p := NewPrompter(strings.NewReader(""), &out, true)
+	p := NewPrompter(strings.NewReader(""), &out, true, false)
 	got := p.AskChoice("Mode", "existing", []string{"fresh", "existing"})
 	if got != "existing" {
 		t.Fatalf("got %q want existing", got)
@@ -70,7 +70,7 @@ func TestAskChoiceAssumeYes(t *testing.T) {
 func TestAskChoiceFallsBackToString(t *testing.T) {
 	var out bytes.Buffer
 	in := strings.NewReader("www\n")
-	p := NewPrompter(in, &out, false)
+	p := NewPrompter(in, &out, false, false)
 	got := p.AskChoice("SLD", "app", nil)
 	if got != "www" {
 		t.Fatalf("got %q want www", got)

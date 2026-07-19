@@ -1,0 +1,110 @@
+{
+  "version": 1,
+  "defaultProfile": "preprod-blockfrost",
+  "profiles": {
+    "preprod-blockfrost": {
+      "network": {
+        "name": "preprod",
+        "id": 0,
+        "magic": 1,
+        "explorerTxURL": "https://preprod.cexplorer.io/tx/{txId}"
+      },
+      "provider": {
+        "type": "blockfrost",
+        "baseURL": "https://cardano-preprod.blockfrost.io/api/v0",
+        "projectIdEnv": "DNS_CLI_BLOCKFROST_PROJECT_ID"
+      },
+      "contracts": {
+        "blueprintPath": "../../dns-contracts/onchain/plutus.json",
+        "tldRegistrarAddress": "REPLACE_ME_TLD_REGISTRAR_ADDRESS",
+        "tldReferenceAddress": "REPLACE_ME_TLD_REFERENCE_ADDRESS",
+        "sldReferenceAddress": "REPLACE_ME_SLD_REFERENCE_ADDRESS",
+        "tldRegistrarPolicyId": "REPLACE_ME_TLD_REGISTRAR_POLICY_ID",
+        "tldReferencePolicyId": "REPLACE_ME_TLD_REFERENCE_POLICY_ID",
+        "sldReferencePolicyId": "REPLACE_ME_SLD_REFERENCE_POLICY_ID",
+        "referenceUtxos": {
+          "tldRegistrar": "REPLACE_ME_TXHASH#0",
+          "tldReference": "REPLACE_ME_TXHASH#1",
+          "sldReference": "REPLACE_ME_TXHASH#2"
+        }
+      },
+      "actors": {
+        "bootstrap": {
+          "address": "addr_test1...bootstrap",
+          "signingKeyFile": "../keys/bootstrap.skey"
+        },
+        "registrar": {
+          "address": "addr_test1...registrar",
+          "signingKeyFile": "../keys/registrar.skey"
+        },
+        "tldOwner": {
+          "address": "addr_test1...tldOwner",
+          "mnemonicEnv": "DNS_CLI_TLD_OWNER_MNEMONIC"
+        },
+        "sldOwner": {
+          "address": "addr_test1...sldOwner",
+          "signingKeyFile": "../keys/sld-owner.skey"
+        }
+      },
+      "transaction": {
+        "ttlSlots": 900,
+        "confirmationTimeout": "20m",
+        "pollInterval": "5s",
+        "artifactDir": "../artifacts",
+        "maxDatumBytes": 4000
+      }
+    },
+    "preprod-utxorpc": {
+      "network": {
+        "name": "preprod",
+        "id": 0,
+        "magic": 1,
+        "explorerTxURL": "https://preprod.cexplorer.io/tx/{txId}"
+      },
+      "provider": {
+        "type": "utxorpc",
+        "baseUrlEnv": "DNS_CLI_UTXORPC_URL",
+        "headersEnv": "DNS_CLI_UTXORPC_HEADERS"
+      },
+      "contracts": {
+        "blueprintPath": "../../dns-contracts/onchain/plutus.json",
+        "tldRegistrarAddress": "REPLACE_ME_TLD_REGISTRAR_ADDRESS",
+        "tldReferenceAddress": "REPLACE_ME_TLD_REFERENCE_ADDRESS",
+        "sldReferenceAddress": "REPLACE_ME_SLD_REFERENCE_ADDRESS",
+        "tldRegistrarPolicyId": "REPLACE_ME_TLD_REGISTRAR_POLICY_ID",
+        "tldReferencePolicyId": "REPLACE_ME_TLD_REFERENCE_POLICY_ID",
+        "sldReferencePolicyId": "REPLACE_ME_SLD_REFERENCE_POLICY_ID",
+        "referenceUtxos": {
+          "tldRegistrar": "REPLACE_ME_TXHASH#0",
+          "tldReference": "REPLACE_ME_TXHASH#1",
+          "sldReference": "REPLACE_ME_TXHASH#2"
+        }
+      },
+      "actors": {
+        "bootstrap": {
+          "address": "addr_test1...bootstrap",
+          "signingKeyFile": "../keys/bootstrap.skey"
+        },
+        "registrar": {
+          "address": "addr_test1...registrar",
+          "signingKeyFile": "../keys/registrar.skey"
+        },
+        "tldOwner": {
+          "address": "addr_test1...tldOwner",
+          "mnemonicEnv": "DNS_CLI_TLD_OWNER_MNEMONIC"
+        },
+        "sldOwner": {
+          "address": "addr_test1...sldOwner",
+          "signingKeyFile": "../keys/sld-owner.skey"
+        }
+      },
+      "transaction": {
+        "ttlSlots": 900,
+        "confirmationTimeout": "20m",
+        "pollInterval": "5s",
+        "artifactDir": "../artifacts",
+        "maxDatumBytes": 4000
+      }
+    }
+  }
+}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/Salvionied/apollo/v2/backend/utxorpc"
 	"github.com/blinklabs-io/dns-cli/internal/config"
+	sdk "github.com/utxorpc/go-sdk"
 )
 
 func newUtxoRPC(eff *config.Effective) (Provider, error) {
@@ -17,6 +18,12 @@ func newUtxoRPC(eff *config.Effective) (Provider, error) {
 	if err != nil {
 		return nil, err
 	}
+	opts := []sdk.ClientOption{sdk.WithBaseUrl(baseURL)}
+	if len(headers) > 0 {
+		opts = append(opts, sdk.WithHeaders(headers))
+	}
+	client := sdk.NewClient(opts...)
+
 	cc := utxorpc.NewUtxoRpcChainContext(
 		baseURL,
 		eff.Profile.Network.ID,
@@ -26,7 +33,10 @@ func newUtxoRPC(eff *config.Effective) (Provider, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &wrapped{ChainContext: cc, name: "utxorpc", pollInterval: poll}, nil
+	return &utxorpcProvider{
+		wrapped: &wrapped{ChainContext: cc, name: "utxorpc", pollInterval: poll},
+		client:  client,
+	}, nil
 }
 
 // resolveBaseURL picks exactly one usable URL source from provider config.

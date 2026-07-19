@@ -9,7 +9,6 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/blinklabs-io/dns-cli/internal/logging"
@@ -28,10 +27,6 @@ type blockfrostProvider struct {
 	baseURL    string
 	projectID  string
 	httpClient *http.Client
-
-	paramsMu            sync.Mutex
-	cachedCostModelsRaw json.RawMessage
-	paramsCacheAt       time.Time
 }
 
 type bfTxUtxosResponse struct {
@@ -170,13 +165,15 @@ func (b *blockfrostProvider) AwaitOutputs(ctx context.Context, txID common.Blake
 		}
 		select {
 		case <-ctx.Done():
-			err := fmt.Errorf("confirmation timeout or canceled: %w", ctx.Err())
+			err := fmt.Errorf("confirmation timeout or canceled: %w", context.Cause(ctx))
 			if reporter != nil {
 				reporter.Done(progress, err)
 			}
 			return err
 		case <-ticker.C:
-			slog.Log(ctx, logging.LevelTrace, "Polling for transaction outputs", "txId", txHex)
+			if poll%12 == 0 {
+				slog.Debug("Still waiting for transaction outputs", "txId", txHex, "poll", poll)
+			}
 		}
 	}
 }

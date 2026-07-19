@@ -5,6 +5,30 @@ import (
 	"testing"
 )
 
+func TestChoiceMenuPlain(t *testing.T) {
+	out := New(false).ChoiceMenu("Mode", "fresh", []string{"fresh", "existing"})
+	if HasANSI(out) {
+		t.Fatalf("unexpected ANSI: %q", out)
+	}
+	for _, want := range []string{"◆ Mode", "1) fresh (default)", "2) existing"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("missing %q in:\n%s", want, out)
+		}
+	}
+}
+
+func TestSectionOpenClose(t *testing.T) {
+	th := New(false)
+	open := th.SectionOpen("Demo run options")
+	close := th.SectionClose()
+	if !strings.Contains(open, "══ Demo run options ══") {
+		t.Fatalf("bad open: %q", open)
+	}
+	if !strings.Contains(close, "════════════════════════") {
+		t.Fatalf("bad close: %q", close)
+	}
+}
+
 func TestSplashNoColorPlain(t *testing.T) {
 	out := New(false).Splash("Handshake DNS on Cardano · Preprod demo", "fresh", "blockfrost", "www.demo")
 	if HasANSI(out) {
@@ -68,5 +92,46 @@ func TestTxLineMissing(t *testing.T) {
 	out := New(false).TxLine("fund", "", "https://example/")
 	if !strings.Contains(out, "(not confirmed)") {
 		t.Fatalf("expected missing tx: %q", out)
+	}
+}
+
+func TestCompletionLayout(t *testing.T) {
+	th := New(false)
+	out := th.Completion(
+		"DEMO COMPLETE · app.alice",
+		[]KV{{Key: "Name", Value: "app.alice"}, {Key: "Provider", Value: "utxorpc"}},
+		th.TxLine("fund", "aaa", "https://example/"),
+		"  records  /tmp/records.json\n",
+		"  next steps\n",
+	)
+	for _, want := range []string{
+		"DEMO COMPLETE · app.alice",
+		"Name", "app.alice",
+		"Provider", "utxorpc",
+		"Transactions",
+		"● fund",
+		"https://example/aaa",
+		"Artifacts / state",
+		"Next",
+	} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("missing %q in:\n%s", want, out)
+		}
+	}
+	if HasANSI(out) {
+		t.Fatalf("unexpected ANSI: %q", out)
+	}
+}
+
+func TestWrapCLI(t *testing.T) {
+	long := "dns-cli owner mint-sld --config /very/long/path/to/config.json --tld alice --sld app --out /another/long/path"
+	parts := wrapCLI(long, 40)
+	if len(parts) < 2 {
+		t.Fatalf("expected wrap, got %#v", parts)
+	}
+	for _, p := range parts {
+		if len(p) > 40 {
+			t.Fatalf("part too long (%d): %q", len(p), p)
+		}
 	}
 }

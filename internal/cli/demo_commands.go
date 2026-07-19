@@ -83,10 +83,14 @@ func newDemoRunCmd(g *GlobalFlags) *cobra.Command {
 func mapDemoRunErr(err error) error {
 	msg := err.Error()
 	switch {
-	case contains(msg, "--demo-root", "demo root", "could not find demo", "required", "invalid mode", "invalid provider", "invalid log level"):
-		return WrapExit(ExitUsage, err)
-	case contains(msg, "config", "template", "credential", "PROJECT_ID", "UTXORPC"):
+	case contains(msg, "unsupported TLD state", "unsupported SLD state", "identity conflict", "provider conflict", "network conflict", "mismatch"):
+		return WrapExit(ExitValidation, err)
+	case contains(msg, "provider health", "provider:"):
+		return WrapExit(ExitProvider, err)
+	case contains(msg, "environment variable", "PROJECT_ID", "UTXORPC", "DMTR_API_KEY", "credential", "template", "config"):
 		return WrapExit(ExitConfig, err)
+	case contains(msg, "--demo-root", "demo root", "could not find demo", "invalid mode", "invalid provider", "invalid log level", "tld and sld are required"):
+		return WrapExit(ExitUsage, err)
 	case contains(msg, "apply", "submit"):
 		return WrapExit(ExitSubmit, err)
 	case contains(msg, "prepare", "proof", "bind", "fund"):

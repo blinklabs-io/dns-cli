@@ -74,7 +74,9 @@ func NewFundingContext(ctx context.Context, eff *config.Effective) (*Context, er
 }
 
 func (c *Context) newApollo(feePayer common.Address) *apollo.Apollo {
-	return apollo.New(c.Provider).SetWallet(apollo.NewExternalWallet(feePayer))
+	return apollo.New(c.Provider).
+		SetWallet(apollo.NewExternalWallet(feePayer)).
+		AddEvaluationWitnessProvider(actorEvaluationWitnessProvider{eff: c.Eff})
 }
 
 func (c *Context) validityWindow() (start, ttl int64, err error) {
@@ -114,12 +116,6 @@ func (c *Context) finalize(a *apollo.Apollo, operation, description, outPrefix, 
 	cborBytes, err := completed.GetTxCbor()
 	if err != nil {
 		return BuildOutput{}, fmt.Errorf("encode transaction: %w", err)
-	}
-	if c.Provider != nil {
-		cborBytes, err = c.fixScriptDataHash(cborBytes)
-		if err != nil {
-			return BuildOutput{}, fmt.Errorf("fix script data hash: %w", err)
-		}
 	}
 	tx, err := artifact.DecodeConwayTx(cborBytes)
 	if err != nil {

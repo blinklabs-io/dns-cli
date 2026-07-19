@@ -28,6 +28,10 @@ func RegisterTLD(ctx context.Context, bctx *Context, tld domain.Label, proof dom
 	if err != nil {
 		return BuildOutput{}, err
 	}
+	// Fund tx confirmation can race registrar address indexing (empty/404 briefly).
+	if err := chainquery.EnsureFundingVisible(ctx, bctx.Provider, registrar, chainquery.MinActorFundingLovelace); err != nil {
+		return BuildOutput{}, fmt.Errorf("registrar funding: %w", err)
+	}
 	funding, err := chainquery.LoadFundingUTxOs(ctx, bctx.Provider, registrar)
 	if err != nil {
 		return BuildOutput{}, err

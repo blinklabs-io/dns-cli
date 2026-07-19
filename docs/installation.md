@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Go **1.25.10+** (module pins toolchain `go1.25.12`)
+- Go **1.25.12+** (module pins toolchain `go1.25.12`)
 - Apollo v2 is pulled via the `go.mod` `replace` directive (no local sibling checkout required)
 - Access to Cardano **preview** or **preprod** via UTxO RPC or Blockfrost
 - Bursa-compatible signing keys or mnemonics for actors (never stored inline in config)
@@ -57,13 +57,25 @@ make build
 
 Add `bin/` (or another install location) to your `PATH` for convenience.
 
+## Configuration
+
+Default config path is `config/dns-cli.json`. Start from the dual-provider example:
+
+```bash
+cp config/dns-cli.example.json config/dns-cli.json
+```
+
+Or: `dns-cli config init --network preprod --provider blockfrost`.
+
+Provider-dependent commands automatically print a readiness summary and block if credentials or health checks fail. There is no separate `config check` command.
+
 ## Provider credentials
 
 | Variable | Provider |
 |---|---|
 | `DNS_CLI_BLOCKFROST_PROJECT_ID` | Blockfrost |
 | `DNS_CLI_UTXORPC_URL` | UTxO RPC (when config uses `baseUrlEnv`) |
-| `DMTR_API_KEY` | Optional Demeter API key (sent as `dmtr-api-key`) |
+| `DMTR_API_KEY` | Optional Demeter API key (sent as `dmtr-api-key`); required for Demeter hosts when headers are empty |
 | `DNS_CLI_UTXORPC_HEADERS` | Optional `Key=Value,...` headers |
 
 ## Release binaries

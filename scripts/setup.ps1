@@ -78,11 +78,22 @@ try {
     $commit = 'unknown'
     try { $commit = (git rev-parse --short HEAD 2>$null).Trim() } catch { }
     if ([string]::IsNullOrWhiteSpace($commit)) { $commit = 'unknown' }
+
+    $contracts = 'unknown'
+    $sibling = Join-Path (Split-Path $Root -Parent) 'dns-contracts'
+    if (Test-Path -LiteralPath $sibling) {
+        try { $contracts = (git -C $sibling rev-parse --short HEAD 2>$null).Trim() } catch { }
+    }
+    if ([string]::IsNullOrWhiteSpace($contracts) -or $contracts -eq 'unknown') {
+        try { $contracts = (git log -1 --format=%h -- demo/fixtures/contracts 2>$null).Trim() } catch { }
+    }
+    if ([string]::IsNullOrWhiteSpace($contracts)) { $contracts = 'unknown' }
+
     $built = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
     $pkg = 'github.com/blinklabs-io/dns-cli/internal/cli'
-    $ldflags = "-X $pkg.GitCommit=$commit -X $pkg.BuildDate=$built"
+    $ldflags = "-X $pkg.GitCommit=$commit -X $pkg.BuildDate=$built -X $pkg.ContractRevision=$contracts"
     Write-Host "Building -> $BinExe"
-    Write-Host "ldflags: commit=$commit built=$built"
+    Write-Host "ldflags: commit=$commit built=$built contracts=$contracts"
     go build -ldflags $ldflags -o $BinExe ./cmd/dns-cli
     if ($LASTEXITCODE -ne 0) {
         throw "go build failed"

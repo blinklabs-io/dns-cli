@@ -20,7 +20,7 @@ func TestFormatWaitBoxContainsFields(t *testing.T) {
 	}
 	lines := formatWaitBox(p, false, nil)
 	joined := strings.Join(lines, "\n")
-	for _, want := range []string{"tx.confirm", "waiting for outputs", "#0,#1", "abc123", "https://example/tx/abc123", "poll", "#2", "dns-cli wait"} {
+	for _, want := range []string{"tx.confirm", "waiting for outputs", "#0,#1", "abc123", "https://example/tx/abc123", "timing", "poll #2", "dns-cli wait"} {
 		if !strings.Contains(joined, want) {
 			t.Fatalf("box missing %q:\n%s", want, joined)
 		}
@@ -40,14 +40,14 @@ func TestStatusBoxPlainModePrintsNewlines(t *testing.T) {
 	}
 	box.Tick(p)
 	out := buf.String()
-	if !strings.Contains(out, "[wait]") {
+	if !strings.Contains(out, "◆ wait") || !strings.Contains(out, "deadbeef") {
 		t.Fatalf("expected wait line, got %q", out)
 	}
 	if !strings.Contains(out, "explorer: https://explorer/deadbeef") {
 		t.Fatalf("expected explorer line, got %q", out)
 	}
 	box.Done(p, nil)
-	if !strings.Contains(buf.String(), "state=confirmed") {
+	if !strings.Contains(buf.String(), "confirmed") {
 		t.Fatalf("expected confirmed Done line, got %q", buf.String())
 	}
 }

@@ -41,13 +41,16 @@ func newConfigInitCmd(g *GlobalFlags) *cobra.Command {
 			}
 			out := g.ConfigPath
 			if out == "" {
-				out = "dns-cli.json"
+				out = config.DefaultConfigPath
 			}
 			if _, err := os.Stat(out); err == nil && !force {
 				return WrapExit(ExitConfig, fmt.Errorf("config file already exists: %s (use --force to overwrite)", out))
 			}
 			doc, err := config.DefaultDocument(network, provider)
 			if err != nil {
+				return WrapExit(ExitConfig, err)
+			}
+			if err := config.ApplyStarterRelativePaths(doc, out); err != nil {
 				return WrapExit(ExitConfig, err)
 			}
 			if err := os.MkdirAll(filepath.Dir(out), 0o700); err != nil && filepath.Dir(out) != "." {
@@ -116,9 +119,17 @@ func newConfigValidateCmd(g *GlobalFlags) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			eff, err := loadEffective(g)
-			if err != nil {
-				return WrapExit(ExitConfig, err)
+			var eff *config.Effective
+			if online {
+				eff, err = loadReadyEffective(cmd, g)
+				if err != nil {
+					return err
+				}
+			} else {
+				eff, err = loadEffective(g)
+				if err != nil {
+					return WrapExit(ExitConfig, err)
+				}
 			}
 			if err := config.ValidateOffline(eff); err != nil {
 				return WrapExit(ExitValidation, err)
@@ -145,7 +156,7 @@ func newConfigValidateCmd(g *GlobalFlags) *cobra.Command {
 func loadEffective(g *GlobalFlags) (*config.Effective, error) {
 	path := g.ConfigPath
 	if path == "" {
-		path = "dns-cli.json"
+		path = config.DefaultConfigPath
 	}
 	overrides := config.Overrides{
 		Network:     g.Network,

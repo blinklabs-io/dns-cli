@@ -7,6 +7,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/blinklabs-io/dns-cli/internal/report"
 )
 
 // Prompter handles interactive confirmations for the demo runner.
@@ -23,23 +25,26 @@ type stdPrompter struct {
 	in        *bufio.Reader
 	out       io.Writer
 	assumeYes bool
+	th        *report.Theme
 }
 
-// NewPrompter creates a stdin/stdout prompter.
-func NewPrompter(in io.Reader, out io.Writer, assumeYes bool) Prompter {
+// NewPrompter creates a stdin/stdout prompter. color enables ANSI when the terminal supports it.
+func NewPrompter(in io.Reader, out io.Writer, assumeYes bool, color bool) Prompter {
 	return &stdPrompter{
 		in:        bufio.NewReader(mustReader(in)),
 		out:       mustWriter(out),
 		assumeYes: assumeYes,
+		th:        report.New(color),
 	}
 }
 
 func (p *stdPrompter) ConfirmYes(prompt string) bool {
 	if p.assumeYes {
-		fmt.Fprintf(p.out, "%s [y/N]: y (assume-yes)\n", prompt)
+		fmt.Fprint(p.out, p.th.PromptCursor(prompt+" [y/N]: "))
+		fmt.Fprintln(p.out, "y (assume-yes)")
 		return true
 	}
-	fmt.Fprintf(p.out, "%s [y/N]: ", prompt)
+	fmt.Fprint(p.out, p.th.PromptCursor(prompt+" [y/N]: "))
 	line, _ := p.in.ReadString('\n')
 	line = strings.TrimSpace(line)
 	return strings.EqualFold(line, "y") || strings.EqualFold(line, "yes")
@@ -47,10 +52,11 @@ func (p *stdPrompter) ConfirmYes(prompt string) bool {
 
 func (p *stdPrompter) ConfirmDefault(prompt string) bool {
 	if p.assumeYes {
-		fmt.Fprintf(p.out, "%s [Y/n]: Y (assume-yes)\n", prompt)
+		fmt.Fprint(p.out, p.th.PromptCursor(prompt+" [Y/n]: "))
+		fmt.Fprintln(p.out, "Y (assume-yes)")
 		return true
 	}
-	fmt.Fprintf(p.out, "%s [Y/n]: ", prompt)
+	fmt.Fprint(p.out, p.th.PromptCursor(prompt+" [Y/n]: "))
 	line, _ := p.in.ReadString('\n')
 	line = strings.TrimSpace(line)
 	if line == "" {
@@ -60,18 +66,20 @@ func (p *stdPrompter) ConfirmDefault(prompt string) bool {
 }
 
 func (p *stdPrompter) ConfirmProceed(prompt string) bool {
-	fmt.Fprintf(p.out, "%s [y/N]: ", prompt)
+	fmt.Fprint(p.out, p.th.PromptCursor(prompt+" [y/N]: "))
 	line, _ := p.in.ReadString('\n')
 	line = strings.TrimSpace(line)
 	return strings.EqualFold(line, "y") || strings.EqualFold(line, "yes")
 }
 
 func (p *stdPrompter) AskString(prompt, def string) string {
+	label := fmt.Sprintf("%s [%s]: ", prompt, def)
 	if p.assumeYes {
-		fmt.Fprintf(p.out, "%s [%s]: %s (assume-yes)\n", prompt, def, def)
+		fmt.Fprint(p.out, p.th.PromptCursor(label))
+		fmt.Fprintf(p.out, "%s (assume-yes)\n", def)
 		return def
 	}
-	fmt.Fprintf(p.out, "%s [%s]: ", prompt, def)
+	fmt.Fprint(p.out, p.th.PromptCursor(label))
 	line, _ := p.in.ReadString('\n')
 	line = strings.TrimSpace(line)
 	if line == "" {
@@ -86,20 +94,14 @@ func (p *stdPrompter) AskChoice(prompt, def string, allowed []string) string {
 	}
 	if p.assumeYes {
 		pick := resolveChoiceDefault(def, allowed)
-		fmt.Fprintf(p.out, "%s [%s]: %s (assume-yes)\n", prompt, pick, pick)
+		fmt.Fprint(p.out, p.th.PromptCursor(fmt.Sprintf("%s [%s]: ", prompt, pick)))
+		fmt.Fprintf(p.out, "%s (assume-yes)\n", pick)
 		return pick
 	}
 
 	defaultIndex := choiceDefaultIndex(def, allowed)
-	fmt.Fprintf(p.out, "%s\n", prompt)
-	for i, opt := range allowed {
-		mark := ""
-		if i+1 == defaultIndex {
-			mark = " (default)"
-		}
-		fmt.Fprintf(p.out, "  %d) %s%s\n", i+1, opt, mark)
-	}
-	fmt.Fprintf(p.out, "Enter number [%d]: ", defaultIndex)
+	fmt.Fprint(p.out, p.th.ChoiceMenu(prompt, def, allowed))
+	fmt.Fprint(p.out, p.th.PromptCursor(fmt.Sprintf("Enter number [%d]: ", defaultIndex)))
 	line, _ := p.in.ReadString('\n')
 	line = strings.TrimSpace(line)
 	if line == "" {
@@ -113,7 +115,7 @@ func (p *stdPrompter) AskChoice(prompt, def string, allowed []string) string {
 			return opt
 		}
 	}
-	fmt.Fprintf(p.out, "Invalid choice %q; keeping default %q.\n", line, allowed[defaultIndex-1])
+	fmt.Fprint(p.out, p.th.Warn(fmt.Sprintf("Invalid choice %q; keeping default %q.", line, allowed[defaultIndex-1])))
 	return allowed[defaultIndex-1]
 }
 
@@ -130,11 +132,15 @@ func resolveChoiceDefault(def string, allowed []string) string {
 	return allowed[choiceDefaultIndex(def, allowed)-1]
 }
 
-// ReadSecret reads a line without echo when possible; falls back to plain ReadString.
+// ReadSecret reads a credential line from in.
+// Prefer a *bufio.Reader (or the demo Prompter's reader) so shared stdin is not double-buffered.
 func ReadSecret(in io.Reader, out io.Writer, prompt string) (string, error) {
-	fmt.Fprintf(mustWriter(out), "%s: ", prompt)
-	// Plain read — demo credentials are Preprod-only; avoid platform-specific terminal deps.
-	line, err := bufio.NewReader(mustReader(in)).ReadString('\n')
+	fmt.Fprint(mustWriter(out), report.New(false).PromptCursor(prompt+": "))
+	br, ok := in.(*bufio.Reader)
+	if !ok {
+		br = bufio.NewReader(mustReader(in))
+	}
+	line, err := br.ReadString('\n')
 	if err != nil && err != io.EOF {
 		return "", err
 	}

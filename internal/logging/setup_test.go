@@ -94,3 +94,27 @@ func TestConfigureJSONOutput(t *testing.T) {
 		t.Fatalf("JSON handler should not emit ANSI: %q", out)
 	}
 }
+
+func TestSuspendQuietLogsFiltersInfo(t *testing.T) {
+	var buf bytes.Buffer
+	if err := Configure(Options{Verbose: 4, NoColor: true, Writer: &buf}); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(ResumeQuietLogs)
+	SuspendQuietLogs()
+	slog.Info("hidden-while-waiting")
+	slog.Debug("also-hidden")
+	slog.Warn("warn-visible")
+	out := buf.String()
+	if strings.Contains(out, "hidden-while-waiting") || strings.Contains(out, "also-hidden") {
+		t.Fatalf("suspended quiet logs should drop info/debug: %q", out)
+	}
+	if !strings.Contains(out, "warn-visible") {
+		t.Fatalf("warn should still pass while suspended: %q", out)
+	}
+	ResumeQuietLogs()
+	slog.Info("after-resume")
+	if !strings.Contains(buf.String(), "after-resume") {
+		t.Fatalf("info should resume: %q", buf.String())
+	}
+}

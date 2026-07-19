@@ -61,7 +61,7 @@ func Configure(opts Options) error {
 			},
 		})
 	}
-	slog.SetDefault(slog.New(handler))
+	slog.SetDefault(slog.New(wrapHandler(handler)))
 	return nil
 }
 

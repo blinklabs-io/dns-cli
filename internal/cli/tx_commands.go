@@ -110,9 +110,9 @@ func newTxSubmitCmd(g *GlobalFlags) *cobra.Command {
 			if txPath == "" {
 				return WrapExit(ExitUsage, fmt.Errorf("--tx is required"))
 			}
-			eff, err := loadEffective(g)
+			eff, err := loadReadyEffective(cmd, g)
 			if err != nil {
-				return WrapExit(ExitConfig, err)
+				return err
 			}
 			txID, explorer, err := runTxSubmit(cmd.Context(), eff, txPath)
 			if err != nil {
@@ -151,9 +151,9 @@ func newTxStatusCmd(g *GlobalFlags) *cobra.Command {
 			if txID == "" {
 				return WrapExit(ExitUsage, fmt.Errorf("--tx-id is required"))
 			}
-			eff, err := loadEffective(g)
+			eff, err := loadReadyEffective(cmd, g)
 			if err != nil {
-				return WrapExit(ExitConfig, err)
+				return err
 			}
 			status, err := runTxStatus(cmd.Context(), eff, txID, manifest, wait, g.Timeout, g.Output, !g.NoColor && os.Getenv("NO_COLOR") == "")
 			if err != nil {
@@ -198,9 +198,9 @@ func newTxApplyCmd(g *GlobalFlags) *cobra.Command {
 			if txPath == "" || actor == "" || signedPath == "" || manifest == "" {
 				return WrapExit(ExitUsage, fmt.Errorf("--tx, --actor, --signed (or --out), and --manifest are required"))
 			}
-			eff, err := loadEffective(g)
+			eff, err := loadReadyEffective(cmd, g)
 			if err != nil {
-				return WrapExit(ExitConfig, err)
+				return err
 			}
 			result, err := runTxApply(cmd.Context(), eff, txPath, actor, signedPath, manifest, allowExtra, g.Timeout, g.Output, !g.NoColor && os.Getenv("NO_COLOR") == "")
 			if err != nil {

@@ -30,9 +30,9 @@ func newActivateTLDCmd(g *GlobalFlags) *cobra.Command {
 			if tld == "" || proof == "" || out == "" {
 				return WrapExit(ExitUsage, fmt.Errorf("--tld, --proof, and --out are required"))
 			}
-			eff, err := loadEffective(g)
+			eff, err := loadReadyEffective(cmd, g)
 			if err != nil {
-				return WrapExit(ExitConfig, err)
+				return err
 			}
 			artifact, err := runActivateTLD(cmd.Context(), eff, tld, proof, out)
 			if err != nil {
@@ -70,9 +70,9 @@ func newMintSLDCmd(g *GlobalFlags) *cobra.Command {
 			if tld == "" || sld == "" || sldOwner == "" || out == "" {
 				return WrapExit(ExitUsage, fmt.Errorf("--tld, --sld, --sld-owner, and --out are required"))
 			}
-			eff, err := loadEffective(g)
+			eff, err := loadReadyEffective(cmd, g)
 			if err != nil {
-				return WrapExit(ExitConfig, err)
+				return err
 			}
 			artifact, err := runMintSLD(cmd.Context(), eff, tld, sld, sldOwner, out)
 			if err != nil {
@@ -112,9 +112,9 @@ func newUpdateSLDCmd(g *GlobalFlags) *cobra.Command {
 			if tld == "" || sld == "" || records == "" || out == "" {
 				return WrapExit(ExitUsage, fmt.Errorf("--tld, --sld, --records, and --out are required"))
 			}
-			eff, err := loadEffective(g)
+			eff, err := loadReadyEffective(cmd, g)
 			if err != nil {
-				return WrapExit(ExitConfig, err)
+				return err
 			}
 			artifact, err := runUpdateSLD(cmd.Context(), eff, tld, sld, records, out)
 			if err != nil {

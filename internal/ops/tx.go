@@ -2,6 +2,7 @@ package ops
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -9,10 +10,12 @@ import (
 	"time"
 
 	"github.com/blinklabs-io/dns-cli/internal/artifact"
+	"github.com/blinklabs-io/dns-cli/internal/chainquery"
 	"github.com/blinklabs-io/dns-cli/internal/config"
 	"github.com/blinklabs-io/dns-cli/internal/logging"
 	"github.com/blinklabs-io/dns-cli/internal/provider"
 	"github.com/blinklabs-io/dns-cli/internal/wallet"
+	"github.com/blinklabs-io/gouroboros/ledger/common"
 )
 
 // TxApplyResult describes a signed, submitted, and confirmed transaction.
@@ -133,6 +136,7 @@ func (c *Client) TxStatus(ctx context.Context, eff *config.Effective, txID, mani
 		return "", err
 	}
 	var indexes []uint32
+	var ttlSlot int64
 	if manifestPath != "" {
 		man, err := artifact.ReadManifest(manifestPath)
 		if err != nil {
@@ -141,6 +145,7 @@ func (c *Client) TxStatus(ctx context.Context, eff *config.Effective, txID, mani
 		for _, o := range man.ExpectedOutputs {
 			indexes = append(indexes, o.Index)
 		}
+		ttlSlot = man.ValidityInterval.TTL
 	}
 	hash, err := TxIDToBlake(txID)
 	if err != nil {
@@ -163,6 +168,17 @@ func (c *Client) TxStatus(ctx context.Context, eff *config.Effective, txID, mani
 	if len(indexes) == 0 {
 		return "", fmt.Errorf("--wait requires --manifest with expected output indexes")
 	}
+	if ttlSlot > 0 {
+		if tip, tipErr := prov.Tip(); tipErr == nil && tip >= uint64(ttlSlot) {
+			return "", fmt.Errorf(
+				"transaction validity already expired: tip slot %d >= ttl %d; rebuild and resubmit the unsigned tx",
+				tip, ttlSlot,
+			)
+		}
+		var cancelTTL context.CancelCauseFunc
+		ctx, cancelTTL = provider.WithTTLCancel(ctx, prov.Tip, ttlSlot)
+		defer cancelTTL(nil)
+	}
 	if reporter == nil {
 		reporter = logging.NewStatusBox(logging.StatusBoxOptions{ForcePlain: true})
 	}
@@ -171,6 +187,12 @@ func (c *Client) TxStatus(ctx context.Context, eff *config.Effective, txID, mani
 	}
 	explorer := strings.ReplaceAll(eff.Profile.Network.ExplorerTxURL, "{txId}", txID)
 	if err := prov.AwaitOutputs(ctx, hash, indexes, explorer, reporter); err != nil {
+		if cause := context.Cause(ctx); cause != nil &&
+			!errors.Is(cause, context.Canceled) &&
+			!errors.Is(cause, context.DeadlineExceeded) {
+			slog.Warn("Transaction confirmation aborted", "txId", txID, "error", cause)
+			return "", cause
+		}
 		slog.Warn("Transaction confirmation timed out or canceled", "txId", txID, "error", err)
 		return "", err
 	}
@@ -212,10 +234,45 @@ func (c *Client) TxApply(ctx context.Context, eff *config.Effective, unsignedPat
 	if status != "confirmed" {
 		return TxApplyResult{}, fmt.Errorf("transaction status %q", status)
 	}
+	// Tx-output confirmation can race the address UTxO index used by the next build.
+	if err := syncActorFundingAfterApply(ctx, eff, actor, signedPath); err != nil {
+		return TxApplyResult{}, err
+	}
 	return TxApplyResult{
 		TxID:        txID,
 		ExplorerURL: explorer,
 		Status:      status,
 		SignedPath:  signedPath,
 	}, nil
+}
+
+// syncActorFundingAfterApply waits until the signing actor's spent inputs are
+// gone from the address API (Blockfrost lag after AwaitOutputs).
+func syncActorFundingAfterApply(ctx context.Context, eff *config.Effective, actor, signedPath string) error {
+	a, ok := eff.Profile.Actors[actor]
+	if !ok || strings.TrimSpace(a.Address) == "" {
+		slog.Debug("Skip funding UTxO sync; actor address missing", "actor", actor)
+		return nil
+	}
+	addr, err := common.NewAddress(a.Address)
+	if err != nil {
+		return fmt.Errorf("actor %s address: %w", actor, err)
+	}
+	refs, err := artifact.TxInputRefs(signedPath)
+	if err != nil {
+		slog.Warn("Could not read spent inputs for UTxO sync; skipping", "path", signedPath, "error", err)
+		return nil
+	}
+	if len(refs) == 0 {
+		return nil
+	}
+	prov, err := provider.New(eff)
+	if err != nil {
+		return err
+	}
+	slog.Info("Waiting for signer funding UTxOs to refresh after confirm", "actor", actor, "exclude", len(refs))
+	if err := chainquery.SyncFundingAfterSpend(ctx, prov, addr, refs); err != nil {
+		return fmt.Errorf("address UTxO sync after confirm (actor %s): %w", actor, err)
+	}
+	return nil
 }

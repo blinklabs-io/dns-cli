@@ -45,7 +45,7 @@ type Runner struct {
 	sldState *SLDState
 }
 
-// Run executes the demo per opts. For existing mode it prints history and returns.
+// Run executes the demo per opts. Existing mode lists local runs and resumes one.
 func Run(ctx context.Context, opts Options) error {
 	if opts.DemoRoot == "" {
 		return fmt.Errorf("demo root is required")
@@ -63,7 +63,7 @@ func Run(ctx context.Context, opts Options) error {
 		stdout: mustWriter(opts.Stdout),
 		stderr: mustWriter(opts.Stderr),
 	}
-	r.prompt = NewPrompter(r.stdin, r.stdout, opts.Yes || envTruthy("DEMO_ASSUME_YES"))
+	r.prompt = NewPrompter(r.stdin, r.stdout, opts.Yes || envTruthy("DEMO_ASSUME_YES"), !opts.NoColor)
 
 	// Validate or repair the demo source tree before every run mode.
 	if err := r.ensureDemoLayout(); err != nil {
@@ -75,6 +75,7 @@ func Run(ctx context.Context, opts Options) error {
 	if err := LoadEnvFile(paths.EnvFile); err != nil {
 		return err
 	}
+
 	if err := r.resolveSettings(); err != nil {
 		return err
 	}
@@ -85,25 +86,16 @@ func Run(ctx context.Context, opts Options) error {
 	}
 
 	if r.mode == "existing" {
-		history, err := ReadHistory(paths.RunsRoot)
-		if err != nil {
-			return err
-		}
-		_, err = fmt.Fprint(r.stdout, FormatHistoryHumanAt(history, paths.RunsRoot, !r.opts.NoColor))
-		return err
+		return r.runExisting()
 	}
 
-	// Fresh mode: verify demo tree + contracts before any side effects.
+	// Single brand splash after options are known (mode / provider / name).
 	g := r.guide()
-	name := r.sld + "." + r.tld
-	if r.tld == "" {
-		name = "(pending)"
-	}
 	fmt.Fprint(r.stdout, r.theme().Splash(
 		"Handshake DNS on Cardano · Preprod demo",
 		r.mode,
 		r.provider,
-		name,
+		r.sld+"."+r.tld,
 	))
 	fmt.Fprintln(r.stdout, "")
 	g.Step("Prerequisites",
@@ -112,18 +104,24 @@ func Run(ctx context.Context, opts Options) error {
 		return err
 	}
 
+	g.Step("Provider credentials",
+		"Confirm endpoint + API credentials (defaults and existing values are shown; blank keeps them).")
+	if err := r.ensureCredentials(); err != nil {
+		return err
+	}
+
 	g.Step("Layout & wallets",
 		"Create/reuse runs/shared wallets and write bootstrap.json for faucet funding.")
 	if err := r.initLayout(); err != nil {
-		return err
-	}
-	if err := r.ensureCredentials(); err != nil {
 		return err
 	}
 	if err := r.ensureWallets(); err != nil {
 		return err
 	}
 	if err := r.writeBootstrapConfig(); err != nil {
+		return err
+	}
+	if err := r.checkProviderReadiness(r.paths.BootstrapConfig); err != nil {
 		return err
 	}
 
@@ -472,7 +470,7 @@ func (r *Runner) freshSubmissions() error {
 	// Deploy tx-output confirmation can race Blockfrost address UTxOs used to
 	// resolve reference scripts during register/activate/mint builds.
 	if r.needsProtocolSteps() {
-		g.Note("Waiting for reference UTxOs to appear on the address API (Blockfrost lag).")
+		g.Note("Waiting for reference UTxOs to appear on the provider index (can lag after deploy).")
 		eff, err := r.loadConfig(boundCfg)
 		if err != nil {
 			return err
@@ -510,6 +508,7 @@ func (r *Runner) freshSubmissions() error {
 			"TLD owner activates the registration (first OwnerAction).",
 			"dns-cli owner activate-tld --config "+boundHint+" --tld "+r.tld+" --proof "+quotePath(r.paths.ProofBundle)+" --out "+quotePath(filepath.Join(r.paths.TldArtifacts, "03-activate")),
 			"dns-cli tx apply --config "+boundHint+" --tx …/03-activate.unsigned.json --actor tldOwner --signed …/03-activate.signed.json --manifest …/03-activate.manifest.json")
+		g.Note("Waiting for registration UTxO on the address API (Blockfrost lag).")
 		eff, err := r.loadConfig(boundCfg)
 		if err != nil {
 			return err

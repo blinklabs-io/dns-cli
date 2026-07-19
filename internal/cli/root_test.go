@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -81,6 +82,55 @@ func TestConfigInitDry(t *testing.T) {
 	root.SetArgs([]string{"config", "init", "--network", "preview", "--provider", "utxorpc", "--config", t.TempDir() + "/dns-cli.json", "--force"})
 	if err := root.Execute(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestConfigInitDefaultPath(t *testing.T) {
+	dir := t.TempDir()
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(cwd) })
+
+	root := NewRoot()
+	root.SetOut(&bytes.Buffer{})
+	root.SetErr(&bytes.Buffer{})
+	root.SetArgs([]string{"config", "init", "--network", "preprod", "--provider", "blockfrost", "--force"})
+	if err := root.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	want := filepath.Join(dir, "config", "dns-cli.json")
+	if _, err := os.Stat(want); err != nil {
+		t.Fatalf("expected default config at %s: %v", want, err)
+	}
+	raw, err := os.ReadFile(want)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Contains(raw, []byte("../../dns-contracts/onchain/plutus.json")) {
+		t.Fatalf("expected config-dir-relative blueprint path, got:\n%s", raw)
+	}
+}
+
+func TestConfigInitExplicitPathWins(t *testing.T) {
+	dir := t.TempDir()
+	out := filepath.Join(dir, "custom.json")
+	root := NewRoot()
+	root.SetOut(&bytes.Buffer{})
+	root.SetErr(&bytes.Buffer{})
+	root.SetArgs([]string{"config", "init", "--network", "preview", "--provider", "utxorpc", "--config", out, "--force"})
+	if err := root.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(out); err != nil {
+		t.Fatalf("explicit config missing: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "config", "dns-cli.json")); !os.IsNotExist(err) {
+		t.Fatal("default path should not be written when --config is set")
 	}
 }
 

@@ -1,6 +1,13 @@
 package chainquery
 
-import "testing"
+import (
+	"context"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/blinklabs-io/gouroboros/ledger/common"
+)
 
 func TestNormalizeRefs(t *testing.T) {
 	m := normalizeRefs([]string{" Ab#1 ", "ab#1", ""})
@@ -30,5 +37,26 @@ func TestBlakeFromHex(t *testing.T) {
 	}
 	if _, err := blakeFromHex("abcd"); err == nil {
 		t.Fatal("expected error")
+	}
+}
+
+func TestWaitByAssetNilProvider(t *testing.T) {
+	err := WaitByAsset(context.Background(), nil, common.Address{}, AssetID{PolicyID: "aa", Name: "bb"}, WaitByAssetOpts{Timeout: time.Second})
+	if err == nil || !strings.Contains(err.Error(), "nil provider") {
+		t.Fatalf("got %v", err)
+	}
+}
+
+func TestEnsureFundingVisibleNilProvider(t *testing.T) {
+	err := EnsureFundingVisible(context.Background(), nil, common.Address{}, MinActorFundingLovelace)
+	if err == nil || !strings.Contains(err.Error(), "nil provider") {
+		t.Fatalf("got %v", err)
+	}
+}
+
+func TestSyncFundingAfterSpendNilProvider(t *testing.T) {
+	err := SyncFundingAfterSpend(context.Background(), nil, common.Address{}, []string{"aa#0"})
+	if err == nil || !strings.Contains(err.Error(), "nil provider") {
+		t.Fatalf("got %v", err)
 	}
 }

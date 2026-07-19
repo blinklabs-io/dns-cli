@@ -111,9 +111,9 @@ func newWalletFundCmd(g *GlobalFlags) *cobra.Command {
 				}
 				parsed = append(parsed, alloc)
 			}
-			eff, err := loadEffective(g)
+			eff, err := loadReadyEffective(cmd, g)
 			if err != nil {
-				return WrapExit(ExitConfig, err)
+				return err
 			}
 			artifact, err := runWalletFund(cmd.Context(), eff, fromActor, parsed, collateral, out)
 			if err != nil {
@@ -162,9 +162,9 @@ func newWalletBalanceCmd(g *GlobalFlags) *cobra.Command {
 			if actor == "" {
 				return WrapExit(ExitUsage, fmt.Errorf("--actor is required"))
 			}
-			eff, err := loadEffective(g)
+			eff, err := loadReadyEffective(cmd, g)
 			if err != nil {
-				return WrapExit(ExitConfig, err)
+				return err
 			}
 			total, count, err := runWalletBalance(cmd.Context(), eff, actor)
 			if err != nil {
@@ -210,9 +210,9 @@ func newWalletWaitFundsCmd(g *GlobalFlags) *cobra.Command {
 			if poll <= 0 {
 				return WrapExit(ExitUsage, fmt.Errorf("--poll must be positive"))
 			}
-			eff, err := loadEffective(g)
+			eff, err := loadReadyEffective(cmd, g)
 			if err != nil {
-				return WrapExit(ExitConfig, err)
+				return err
 			}
 			timeout := time.Duration(0)
 			if flag := cmd.Flag("timeout"); flag != nil && flag.Changed {

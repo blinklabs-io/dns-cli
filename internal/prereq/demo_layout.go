@@ -211,7 +211,7 @@ const defaultBlockfrostTemplate = `{
         }
       },
       "transaction": {
-        "ttlSlots": 300,
+        "ttlSlots": 900,
         "confirmationTimeout": "20m",
         "pollInterval": "5s",
         "artifactDir": "../artifacts",
@@ -271,7 +271,7 @@ const defaultUtxorpcTemplate = `{
         }
       },
       "transaction": {
-        "ttlSlots": 300,
+        "ttlSlots": 900,
         "confirmationTimeout": "20m",
         "pollInterval": "5s",
         "artifactDir": "../artifacts",

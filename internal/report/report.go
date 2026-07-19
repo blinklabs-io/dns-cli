@@ -212,20 +212,29 @@ func (t *Theme) roadmapStyle(st RoadmapStatus) (string, lipgloss.Style) {
 func (t *Theme) Step(title, what string, cliLines ...string) string {
 	var b strings.Builder
 	b.WriteByte('\n')
-	b.WriteString(t.render(t.brand(), "━━ DEMO ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"))
+	rule := t.style(lipgloss.NewStyle().Foreground(lipgloss.Color("#38bdf8")))
+	b.WriteString(t.render(rule, "━━ DEMO ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"))
 	b.WriteByte('\n')
 	b.WriteString(t.render(t.current(), "  "+title))
 	b.WriteByte('\n')
 	if what != "" {
-		b.WriteString(t.render(t.accent(), "  "+what))
-		b.WriteByte('\n')
+		for _, line := range wrapWords(what, 72) {
+			b.WriteString(t.render(t.accent(), "  "+line))
+			b.WriteByte('\n')
+		}
 	}
 	if len(cliLines) > 0 {
 		b.WriteString(t.render(t.dim(), "  Equivalent CLI:"))
 		b.WriteByte('\n')
 		for _, line := range cliLines {
-			b.WriteString(t.render(t.brand(), "    "+line))
-			b.WriteByte('\n')
+			for i, part := range wrapCLI(line, 76) {
+				prefix := "    "
+				if i > 0 {
+					prefix = "      "
+				}
+				b.WriteString(t.render(t.brand(), prefix+part))
+				b.WriteByte('\n')
+			}
 		}
 	}
 	b.WriteString(t.render(t.dim(), "────────────────────────────────────────────"))
@@ -235,7 +244,7 @@ func (t *Theme) Step(title, what string, cliLines ...string) string {
 
 // Note prints a short one-line demo note.
 func (t *Theme) Note(msg string) string {
-	return t.render(t.dim(), "── DEMO · ") + msg + "\n"
+	return t.render(t.dim(), "── DEMO · ") + t.render(t.accent(), msg) + "\n"
 }
 
 // Dim styles secondary text (or returns plain when color is off).
@@ -246,6 +255,51 @@ func (t *Theme) Dim(s string) string {
 // Warn formats a warning line.
 func (t *Theme) Warn(msg string) string {
 	return t.render(t.warn(), "warning: ") + msg + "\n"
+}
+
+// SectionOpen renders a colored banner opening for interactive option blocks.
+func (t *Theme) SectionOpen(title string) string {
+	line := "══ " + title + " ══"
+	return "\n" + t.render(t.brand(), line) + "\n"
+}
+
+// SectionClose renders a matching closing rule.
+func (t *Theme) SectionClose() string {
+	return t.render(t.brand(), "════════════════════════") + "\n\n"
+}
+
+// ChoiceMenu renders a numbered option list (title + choices). Does not include the input cursor line.
+func (t *Theme) ChoiceMenu(title, def string, allowed []string) string {
+	var b strings.Builder
+	b.WriteString(t.render(t.title(), "◆ "+title))
+	b.WriteByte('\n')
+	defaultIndex := 1
+	for i, opt := range allowed {
+		if strings.EqualFold(def, opt) {
+			defaultIndex = i + 1
+			break
+		}
+	}
+	for i, opt := range allowed {
+		n := i + 1
+		mark := ""
+		if n == defaultIndex {
+			mark = " (default)"
+		}
+		line := fmt.Sprintf("  %d) %s%s", n, opt, mark)
+		if n == defaultIndex {
+			b.WriteString(t.render(t.current(), line))
+		} else {
+			b.WriteString(t.render(t.dim(), line))
+		}
+		b.WriteByte('\n')
+	}
+	return b.String()
+}
+
+// PromptCursor is the trailing input label shown before reading stdin (no trailing newline).
+func (t *Theme) PromptCursor(label string) string {
+	return t.render(t.accent(), label)
 }
 
 // Kv formats a single key/value line.
@@ -259,17 +313,19 @@ func (t *Theme) TxLine(label, txID, explorerPrefix string) string {
 	labelPad := fmt.Sprintf("%-12s", label)
 	if strings.TrimSpace(txID) == "" {
 		b.WriteString("  ")
+		b.WriteString(t.render(t.pending(), "○ "))
 		b.WriteString(t.render(t.dim(), labelPad))
-		b.WriteString(t.render(t.pending(), "  (not confirmed)"))
+		b.WriteString(t.render(t.pending(), "(not confirmed)"))
 		b.WriteByte('\n')
 		return b.String()
 	}
 	b.WriteString("  ")
-	b.WriteString(t.render(t.dim(), labelPad+"  "))
+	b.WriteString(t.render(t.done(), "● "))
+	b.WriteString(t.render(t.dim(), labelPad))
 	b.WriteString(t.render(t.brand(), txID))
 	b.WriteByte('\n')
 	if explorerPrefix != "" {
-		b.WriteString("                 ")
+		b.WriteString("      ")
 		b.WriteString(t.render(t.accent(), explorerPrefix+txID))
 		b.WriteByte('\n')
 	}
@@ -282,25 +338,36 @@ func (t *Theme) Completion(title string, meta []KV, txBlock, pathsBlock, nextBlo
 	b.WriteByte('\n')
 	b.WriteString(t.render(t.ok(), "◆ "+title))
 	b.WriteByte('\n')
+	b.WriteByte('\n')
+	keyWidth := 10
 	for _, row := range meta {
-		b.WriteString("  ")
-		b.WriteString(t.render(t.dim(), fmt.Sprintf("%-10s", row.Key)))
-		b.WriteString(row.Value)
+		if n := len(strings.TrimRight(row.Key, ":")); n > keyWidth {
+			keyWidth = n
+		}
+	}
+	for _, row := range meta {
+		key := strings.TrimRight(row.Key, ":")
+		b.WriteString(t.render(t.dim(), fmt.Sprintf("  %-*s  ", keyWidth, key)))
+		b.WriteString(t.render(t.current(), row.Value))
 		b.WriteByte('\n')
 	}
 	if txBlock != "" {
 		b.WriteByte('\n')
-		b.WriteString(t.render(t.dim(), "  Transactions (Preprod explorer):"))
+		b.WriteString(t.render(t.title(), "  Transactions"))
+		b.WriteByte('\n')
+		b.WriteString(t.render(t.dim(), "  Preprod explorer links"))
 		b.WriteByte('\n')
 		b.WriteString(txBlock)
 	}
 	if pathsBlock != "" {
 		b.WriteByte('\n')
-		b.WriteString(t.render(t.dim(), "  Artifacts / state:"))
+		b.WriteString(t.render(t.title(), "  Artifacts / state"))
 		b.WriteByte('\n')
 		b.WriteString(pathsBlock)
 	}
 	if nextBlock != "" {
+		b.WriteByte('\n')
+		b.WriteString(t.render(t.title(), "  Next"))
 		b.WriteByte('\n')
 		b.WriteString(nextBlock)
 	}
@@ -382,27 +449,30 @@ func (t *Theme) WaitPanel(info WaitInfo) string {
 	default:
 		stateStyled = t.render(t.current(), state)
 	}
+	processVal := process
+	if info.Indexes != "" {
+		processVal = strings.TrimSpace(process + " " + info.Indexes)
+	}
+	timing := fmt.Sprintf("%s elapsed · %s left · poll #%d", info.Elapsed, info.Remain, info.Poll)
 	rows := []KV{
-		{Key: "stage", Value: fmt.Sprintf("%s (%s)", stage, stateStyled)},
-		{Key: "process", Value: strings.TrimSpace(process + " " + info.Indexes)},
-		{Key: "elapsed", Value: info.Elapsed},
-		{Key: "timeout", Value: info.Remain + " remaining"},
-		{Key: "poll", Value: fmt.Sprintf("#%d", info.Poll)},
+		{Key: "status", Value: fmt.Sprintf("%s · %s", stage, stateStyled)},
+		{Key: "process", Value: processVal},
+		{Key: "timing", Value: timing},
 		{Key: "txId", Value: info.TxID},
 	}
 	if info.ExplorerURL != "" {
 		rows = append(rows, KV{Key: "explorer", Value: info.ExplorerURL})
 	}
 	if info.Error != "" {
-		rows = append(rows, KV{Key: "error", Value: info.Error})
+		rows = append(rows, KV{Key: "error", Value: t.render(t.errStyle(), info.Error)})
 	}
 	if info.ShowKeys {
-		rows = append(rows, KV{Key: "keys", Value: "c/q cancel · ctrl+c quit"})
+		rows = append(rows, KV{Key: "keys", Value: "c / q cancel · ctrl+c quit"})
 	}
 	return t.Panel("dns-cli wait", rows)
 }
 
-// WaitLine is a single-line wait status for non-TTY / CI pipes.
+// WaitLine is a single-line wait status for non-TTY / CI pipes / final commit.
 func (t *Theme) WaitLine(info WaitInfo) string {
 	stage := info.Stage
 	if stage == "" {
@@ -412,13 +482,26 @@ func (t *Theme) WaitLine(info WaitInfo) string {
 	if state == "" {
 		state = "waiting"
 	}
-	msg := fmt.Sprintf("[wait] stage=%s state=%s poll=#%d elapsed=%s remaining=%s txId=%s",
-		stage, state, info.Poll, info.Elapsed, info.Remain, info.TxID)
-	if info.Error != "" {
-		msg += " error=" + info.Error
+	stateStyled := state
+	switch state {
+	case "confirmed":
+		stateStyled = t.render(t.ok(), state)
+	case "failed":
+		stateStyled = t.render(t.errStyle(), state)
+	default:
+		stateStyled = t.render(t.current(), state)
 	}
-	prefix := t.render(t.brand(), "◆ wait")
-	return prefix + "  " + t.render(t.dim(), msg)
+	var b strings.Builder
+	b.WriteString(t.render(t.brand(), "◆ wait"))
+	b.WriteString("  ")
+	b.WriteString(t.render(t.dim(), stage+" · "))
+	b.WriteString(stateStyled)
+	b.WriteString(t.render(t.dim(), fmt.Sprintf(" · poll #%d · %s · tx ", info.Poll, info.Elapsed)))
+	b.WriteString(t.render(t.brand(), info.TxID))
+	if info.Error != "" {
+		b.WriteString(t.render(t.errStyle(), " · "+info.Error))
+	}
+	return b.String()
 }
 
 // Guide renders a titled self-serve instruction block.
@@ -455,4 +538,63 @@ func SortedDataRows(data map[string]any) []KV {
 // HasANSI reports whether s contains an ESC CSI sequence (for tests).
 func HasANSI(s string) bool {
 	return strings.Contains(s, "\x1b[")
+}
+
+// wrapWords soft-wraps plain prose at width (rune-aware via runes of spaces).
+func wrapWords(s string, width int) []string {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return nil
+	}
+	if width < 20 {
+		width = 20
+	}
+	words := strings.Fields(s)
+	var lines []string
+	var cur strings.Builder
+	for _, w := range words {
+		if cur.Len() == 0 {
+			cur.WriteString(w)
+			continue
+		}
+		if cur.Len()+1+len(w) > width {
+			lines = append(lines, cur.String())
+			cur.Reset()
+			cur.WriteString(w)
+			continue
+		}
+		cur.WriteByte(' ')
+		cur.WriteString(w)
+	}
+	if cur.Len() > 0 {
+		lines = append(lines, cur.String())
+	}
+	return lines
+}
+
+// wrapCLI wraps long CLI command lines on whitespace when possible.
+func wrapCLI(s string, width int) []string {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return nil
+	}
+	if width < 24 {
+		width = 24
+	}
+	if len(s) <= width {
+		return []string{s}
+	}
+	var lines []string
+	for len(s) > width {
+		cut := strings.LastIndex(s[:width], " ")
+		if cut < width/3 {
+			cut = width
+		}
+		lines = append(lines, strings.TrimSpace(s[:cut]))
+		s = strings.TrimSpace(s[cut:])
+	}
+	if s != "" {
+		lines = append(lines, s)
+	}
+	return lines
 }

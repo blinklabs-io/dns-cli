@@ -105,7 +105,10 @@ func (m waitModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m waitModel) View() tea.View {
-	return tea.NewView(renderWaitView(m.progress, m.done, m.err, m.color))
+	// Alt screen isolates the wait panel from slog/stderr so redraws stay clean.
+	v := tea.NewView(renderWaitView(m.progress, m.done, m.err, m.color))
+	v.AltScreen = true
+	return v
 }
 
 func renderWaitView(p logging.WaitProgress, done bool, err error, color bool) string {
@@ -225,6 +228,7 @@ func (r *bubbleWaitReporter) Tick(p logging.WaitProgress) {
 	if r.closed() {
 		return
 	}
+	logging.SuspendQuietLogs()
 	r.ensureStarted()
 	if r.prog != nil {
 		r.prog.Send(waitTickMsg{Progress: p})
@@ -236,6 +240,7 @@ func (r *bubbleWaitReporter) Done(p logging.WaitProgress, err error) {
 	r.mu.Lock()
 	r.cancel = nil
 	r.mu.Unlock()
+	defer logging.ResumeQuietLogs()
 	if r.closed() {
 		return
 	}
@@ -250,4 +255,6 @@ func (r *bubbleWaitReporter) Done(p logging.WaitProgress, err error) {
 			r.prog.Quit()
 		}
 	}
+	// Leave a clean newline on the primary screen after alt-screen exit.
+	fmt.Fprintln(r.out)
 }

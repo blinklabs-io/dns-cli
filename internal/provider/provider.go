@@ -111,13 +111,16 @@ func (w *wrapped) AwaitOutputs(ctx context.Context, txID common.Blake2b256, inde
 		}
 		select {
 		case <-ctx.Done():
-			err := fmt.Errorf("confirmation timeout or canceled: %w", ctx.Err())
+			err := fmt.Errorf("confirmation timeout or canceled: %w", context.Cause(ctx))
 			if reporter != nil {
 				reporter.Done(progress, err)
 			}
 			return err
 		case <-ticker.C:
-			slog.Log(ctx, logging.LevelTrace, "Polling for transaction outputs", "txId", txHex)
+			// Avoid TRACE spam over the wait TUI; log occasionally at debug.
+			if poll%12 == 0 {
+				slog.Debug("Still waiting for transaction outputs", "txId", txHex, "poll", poll)
+			}
 		}
 	}
 }

@@ -18,6 +18,14 @@ func ActivateTLD(ctx context.Context, bctx *Context, tld domain.Label, proof dom
 	if err := domain.ValidateProofForActivation(proof, tld.Bytes); err != nil {
 		return BuildOutput{}, fmt.Errorf("invalid owner proof: %w", err)
 	}
+	// Register may be confirmed via tx APIs before the registrar address index catches up.
+	regAsset := chainquery.AssetID{
+		PolicyID: bctx.Contracts.RegistrarPolicyID,
+		Name:     bctx.Contracts.TLDReferencePolicyID,
+	}
+	if err := chainquery.WaitByAsset(ctx, bctx.Provider, bctx.Contracts.RegistrarAddr, regAsset, chainquery.WaitByAssetOpts{}); err != nil {
+		return BuildOutput{}, fmt.Errorf("registration not found: %w", err)
+	}
 	reg, err := chainquery.FindRegistration(ctx, bctx.Provider, bctx.Contracts, tld)
 	if err != nil {
 		return BuildOutput{}, fmt.Errorf("registration not found: %w", err)
@@ -36,6 +44,9 @@ func ActivateTLD(ctx context.Context, bctx *Context, tld domain.Label, proof dom
 	tldOwnerPKH, err := loadActorKeyHash(bctx.Eff, "tldOwner")
 	if err != nil {
 		return BuildOutput{}, err
+	}
+	if err := chainquery.EnsureFundingVisible(ctx, bctx.Provider, tldOwner, chainquery.MinActorFundingLovelace); err != nil {
+		return BuildOutput{}, fmt.Errorf("tldOwner funding: %w", err)
 	}
 	funding, err := chainquery.LoadFundingUTxOs(ctx, bctx.Provider, tldOwner)
 	if err != nil {

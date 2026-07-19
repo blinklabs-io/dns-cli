@@ -66,35 +66,50 @@ func (g guide) Done(rep CompletionReport) {
 		txBlock.WriteString(g.th.TxLine(step.Label, step.TxID, prefix))
 	}
 
-	var paths strings.Builder
+	pathRows := make([]report.KV, 0, 4)
 	if rep.RecordsPath != "" {
-		paths.WriteString(g.th.Kv("    records", rep.RecordsPath))
+		pathRows = append(pathRows, report.KV{Key: "records", Value: rep.RecordsPath})
 	}
 	if rep.BoundConfig != "" {
-		paths.WriteString(g.th.Kv("    bound cfg", rep.BoundConfig))
+		pathRows = append(pathRows, report.KV{Key: "bound cfg", Value: rep.BoundConfig})
 	}
 	if rep.TLDState != "" {
-		paths.WriteString(g.th.Kv("    TLD state", rep.TLDState))
+		pathRows = append(pathRows, report.KV{Key: "TLD state", Value: rep.TLDState})
 	}
 	if rep.SLDRunDir != "" {
-		paths.WriteString(g.th.Kv("    SLD run", rep.SLDRunDir))
+		pathRows = append(pathRows, report.KV{Key: "SLD run", Value: rep.SLDRunDir})
+	}
+	var paths strings.Builder
+	keyWidth := 0
+	for _, row := range pathRows {
+		if n := len(row.Key); n > keyWidth {
+			keyWidth = n
+		}
+	}
+	for _, row := range pathRows {
+		paths.WriteString(g.th.Dim(fmt.Sprintf("  %-*s  ", keyWidth, row.Key)))
+		paths.WriteString(row.Value)
+		paths.WriteByte('\n')
 	}
 
 	var next strings.Builder
-	next.WriteString(g.th.Dim("  Change DNS later: edit the records file, then:"))
+	next.WriteString(g.th.Dim("  Change DNS later — edit the records file, then:"))
 	next.WriteByte('\n')
-	next.WriteString("    dns-cli owner update-sld --config <bound.json> \\\n")
-	fmt.Fprintf(&next, "      --tld %s --sld %s --records <records.json> --out <prefix>\n", rep.TLD, rep.SLD)
-	next.WriteString("    dns-cli tx apply --config <bound.json> --tx <prefix>.unsigned.json \\\n")
-	next.WriteString("      --actor sldOwner --signed <prefix>.signed.json --manifest <prefix>.manifest.json\n")
+	next.WriteString(g.th.Dim("    dns-cli owner update-sld --config <bound.json> \\"))
+	next.WriteByte('\n')
+	fmt.Fprintf(&next, "%s\n", g.th.Dim(fmt.Sprintf("      --tld %s --sld %s --records <records.json> --out <prefix>", rep.TLD, rep.SLD)))
+	next.WriteString(g.th.Dim("    dns-cli tx apply --config <bound.json> --tx <prefix>.unsigned.json \\"))
+	next.WriteByte('\n')
+	next.WriteString(g.th.Dim("      --actor sldOwner --signed <prefix>.signed.json --manifest <prefix>.manifest.json"))
+	next.WriteByte('\n')
 
 	title := fmt.Sprintf("DEMO COMPLETE · %s.%s", rep.SLD, rep.TLD)
 	meta := []report.KV{
-		{Key: "Name:", Value: fmt.Sprintf("%s.%s", rep.SLD, rep.TLD)},
-		{Key: "Provider:", Value: rep.Provider},
+		{Key: "Name", Value: fmt.Sprintf("%s.%s", rep.SLD, rep.TLD)},
+		{Key: "Provider", Value: rep.Provider},
 	}
 	if rep.RunID != "" {
-		meta = append(meta, report.KV{Key: "Run ID:", Value: rep.RunID})
+		meta = append(meta, report.KV{Key: "Run ID", Value: rep.RunID})
 	}
 
 	fmt.Fprint(g.out, g.th.Completion(title, meta, txBlock.String(), paths.String(), next.String()))

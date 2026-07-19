@@ -2,9 +2,10 @@
 
 ## Secrets
 
-- **Never** store mnemonics, private keys, or API keys in `dns-cli.json`
-- Use `signingKeyFile` paths or `mnemonicEnv` / `projectIdEnv` / `headersEnv` only
+- **Never** store mnemonics, private keys, or API keys in `config/dns-cli.json` (or any config JSON)
+- Use `signingKeyFile` paths or `mnemonicEnv` / `projectIdEnv` / `headersEnv` / `baseUrlEnv` only
 - Restrict key file permissions (`chmod 600`); Windows ACL limitations are warned at init
+- Automatic **Provider readiness** output shows only endpoint host, env-variable names, and present/missing — never secret values or full credential-bearing URLs
 
 ## Preprod demo material
 
@@ -40,4 +41,4 @@ If a key is exposed:
 
 ## Provider credentials
 
-Blockfrost project IDs, Demeter `DMTR_API_KEY`, and UTxO RPC headers are loaded from environment at runtime only.
+Blockfrost project IDs, Demeter `DMTR_API_KEY`, and UTxO RPC headers/URLs are loaded from environment at runtime only. See `config/dns-cli.example.json` for the expected variable names.

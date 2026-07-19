@@ -50,8 +50,14 @@ jobs:
                   VERSION=${GITHUB_REF_NAME#v}
                   COMMIT=$(git rev-parse --short HEAD)
                   BUILT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+                  # Prefer sibling dns-contracts when present; else fixtures path history in this repo.
+                  if [[ -d ../dns-contracts ]]; then
+                    CONTRACTS=$(git -C ../dns-contracts rev-parse --short HEAD)
+                  else
+                    CONTRACTS=$(git log -1 --format=%h -- demo/fixtures/contracts 2>/dev/null || echo unknown)
+                  fi
                   PKG=github.com/blinklabs-io/dns-cli/internal/cli
-                  go build -ldflags "-X ${PKG}.Version=${VERSION} -X ${PKG}.GitCommit=${COMMIT} -X ${PKG}.BuildDate=${BUILT}" \
+                  go build -ldflags "-X ${PKG}.Version=${VERSION} -X ${PKG}.GitCommit=${COMMIT} -X ${PKG}.BuildDate=${BUILT} -X ${PKG}.ContractRevision=${CONTRACTS}" \
                     -o dns-cli-${{ matrix.arch }}${{ matrix.ext }} ./cmd/dns-cli
             - uses: actions/upload-artifact@v4
               with:

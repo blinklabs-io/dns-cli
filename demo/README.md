@@ -15,7 +15,7 @@ Generated wallets under `runs/shared/wallets/` and any generated HNS private key
 | Mode | Purpose |
 |---|---|
 | `fresh` (default) | Create wallets, wait for faucet funding, deploy parameterized validators, run register → activate → mint SLD → update DNS |
-| `existing` | Read-only summary of local `runs/` history (each TLD + its SLD runs, confirmed tx IDs, explorer URLs). No chain writes |
+| `existing` | Numbered picker of local TLD/SLD runs by stage; resume the selected incomplete run (no tx/explorer links in the list). Use `demo history` for the read-only tx/explorer report |
 
 ## Layout
 
@@ -46,9 +46,9 @@ From the `dns-cli/` module root (after setup):
 export DNS_CLI_BLOCKFROST_PROJECT_ID=preprod...
 ./bin/dns-cli demo run                              # auto-finds demo/
 ./bin/dns-cli demo run --mode fresh --provider blockfrost
-./bin/dns-cli demo run                              # resume
-./bin/dns-cli demo history                          # auto-finds demo/runs
-./bin/dns-cli demo run --mode existing
+./bin/dns-cli demo run                              # resume latest incomplete (fresh)
+./bin/dns-cli demo history                          # read-only tx/explorer report
+./bin/dns-cli demo run --mode existing              # pick a run by number and continue
 ```
 
 ```powershell
@@ -63,7 +63,7 @@ Unset mode / provider / TLD / SLD / log level use numbered menus (or yes-no) in 
 
 ## Prerequisites (fresh mode)
 
-- Go 1.25.10+ and a built `dns-cli` (`./scripts/setup.sh` or `.\scripts\setup.ps1`)
+- Go 1.25.12+ and a built `dns-cli` (`./scripts/setup.sh` or `.\scripts\setup.ps1`)
 - Aiken CLI on `PATH`, **version ≥ 1.1.19** (matches `fixtures/contracts/aiken.toml`)
 - Provider credentials:
   - Blockfrost: `DNS_CLI_BLOCKFROST_PROJECT_ID`
@@ -75,8 +75,17 @@ Bootstrap needs **≥ 150 ADA** from the [Preprod faucet](https://docs.cardano.o
 
 ## Resume behavior
 
+**Fresh re-run**
+
 - **TLD** steps (`fund`, `deploy`, `register`, `activate`) resume from `runs/<tld>/state.json`
 - **SLD** steps: if the latest `runs/<tld>/<sld>/<runId>/` is incomplete, that run is resumed; otherwise a new `yyyyMMdd-HHmmss` run folder is created
+
+**Existing mode**
+
+- Lists all local runs with stage (including `bind` when `config/<provider>.json` is missing)
+- Selection loads the **exact** `runId` (never invents a newer folder)
+- Provider readiness is checked before submissions; failures block continuation
+- `--yes` does not auto-select a run and does not skip the submission confirm
 
 ## Provenance
 

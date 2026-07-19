@@ -28,9 +28,9 @@ func newRegisterTLDCmd(g *GlobalFlags) *cobra.Command {
 			if tld == "" || proof == "" || out == "" {
 				return WrapExit(ExitUsage, fmt.Errorf("--tld, --proof, and --out are required"))
 			}
-			eff, err := loadEffective(g)
+			eff, err := loadReadyEffective(cmd, g)
 			if err != nil {
-				return WrapExit(ExitConfig, err)
+				return err
 			}
 			artifact, err := runRegisterTLD(cmd.Context(), eff, tld, proof, out)
 			if err != nil {

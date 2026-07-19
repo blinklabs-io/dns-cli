@@ -42,7 +42,7 @@ func TestWaitModelViewContainsFields(t *testing.T) {
 		},
 	}
 	s := m.View().Content
-	for _, want := range []string{"tx.confirm", "deadbeef", "#7", "waiting", "dns-cli wait"} {
+	for _, want := range []string{"tx.confirm", "deadbeef", "poll #7", "waiting", "dns-cli wait"} {
 		if !strings.Contains(s, want) {
 			t.Fatalf("view missing %q in %q", want, s)
 		}

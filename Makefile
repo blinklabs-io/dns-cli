@@ -4,9 +4,18 @@ BINARY ?= dns-cli
 VERSION ?= dev
 GIT_COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
 BUILD_DATE ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
-LDFLAGS := -X github.com/blinklabs-io/dns-cli/internal/cli.Version=$(VERSION) \
-	-X github.com/blinklabs-io/dns-cli/internal/cli.GitCommit=$(GIT_COMMIT) \
-	-X github.com/blinklabs-io/dns-cli/internal/cli.BuildDate=$(BUILD_DATE)
+# Prefer sibling dns-contracts HEAD; else last commit that touched demo fixtures.
+CONTRACT_REV ?= $(shell \
+	if [ -d ../dns-contracts/.git ] || [ -d ../dns-contracts ]; then \
+		git -C ../dns-contracts rev-parse --short HEAD 2>/dev/null; \
+	else \
+		git log -1 --format=%h -- demo/fixtures/contracts 2>/dev/null; \
+	fi || echo unknown)
+PKG := github.com/blinklabs-io/dns-cli/internal/cli
+LDFLAGS := -X $(PKG).Version=$(VERSION) \
+	-X $(PKG).GitCommit=$(GIT_COMMIT) \
+	-X $(PKG).BuildDate=$(BUILD_DATE) \
+	-X $(PKG).ContractRevision=$(CONTRACT_REV)
 
 build:
 	go build -ldflags "$(LDFLAGS)" -o $(BINARY) ./cmd/dns-cli

@@ -44,9 +44,9 @@ func NewRoot() *cobra.Command {
 		},
 	}
 
-	root.PersistentFlags().StringVar(&g.ConfigPath, "config", "", "path to dns-cli JSON config")
-	root.PersistentFlags().StringVar(&g.Network, "network", "", "network profile override (preview|preprod)")
-	root.PersistentFlags().StringVar(&g.Provider, "provider", "", "provider override (utxorpc|blockfrost)")
+	root.PersistentFlags().StringVar(&g.ConfigPath, "config", "", "path to dns-cli JSON config (default config/dns-cli.json)")
+	root.PersistentFlags().StringVar(&g.Network, "network", "", "network profile override (profile name)")
+	root.PersistentFlags().StringVar(&g.Provider, "provider", "", "provider type override only (utxorpc|blockfrost)")
 	root.PersistentFlags().StringVar(&g.Output, "output", "human", "output format (human|json)")
 	root.PersistentFlags().DurationVar(&g.Timeout, "timeout", 20*time.Minute, "operation timeout")
 	root.PersistentFlags().IntVarP(&g.Verbose, "verbose", "v", 2, "log verbosity 0-4 (error|warn|info|debug|trace)")

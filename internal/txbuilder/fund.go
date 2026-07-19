@@ -121,6 +121,15 @@ func FundActors(ctx context.Context, bctx *Context, fromActor string, allocation
 		return BuildOutput{}, err
 	}
 
+	var totalAlloc int64
+	for _, alloc := range allocations {
+		totalAlloc += alloc.Lovelace
+	}
+	needed := totalAlloc + feeBufferLovelace
+	// Faucet / prior funding can be confirmed while the address API still 404s.
+	if err := chainquery.EnsureFundingVisible(ctx, bctx.Provider, fromAddr, needed); err != nil {
+		return BuildOutput{}, fmt.Errorf("bootstrap funding: %w", err)
+	}
 	funding, err := chainquery.LoadFundingUTxOs(ctx, bctx.Provider, fromAddr)
 	if err != nil {
 		return BuildOutput{}, fmt.Errorf("load funding utxos: %w", err)
@@ -129,11 +138,6 @@ func FundActors(ctx context.Context, bctx *Context, fromActor string, allocation
 	for _, u := range funding {
 		available += u.Output.Amount().Int64()
 	}
-	var totalAlloc int64
-	for _, alloc := range allocations {
-		totalAlloc += alloc.Lovelace
-	}
-	needed := totalAlloc + feeBufferLovelace
 	if available < needed {
 		return BuildOutput{}, fmt.Errorf("insufficient bootstrap funds: need at least %d lovelace (allocations %d + fees), have %d", needed, totalAlloc, available)
 	}

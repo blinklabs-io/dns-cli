@@ -12,6 +12,10 @@ import (
 
 const SchemaVersion = 1
 
+// DefaultConfigPath is the default on-disk config location relative to the
+// process working directory when --config is omitted.
+const DefaultConfigPath = "config/dns-cli.json"
+
 // Document is the on-disk JSON configuration root.
 type Document struct {
 	Version        int                `json:"version"`
@@ -169,6 +173,8 @@ func resolveAgainst(baseDir, p string) string {
 }
 
 // DefaultDocument builds a starter config for a network/provider pair.
+// Call ApplyStarterRelativePaths before writing so blueprint/key/artifact
+// paths resolve correctly for the chosen config file location.
 func DefaultDocument(network, provider string) (*Document, error) {
 	net, err := networkDefaults(network)
 	if err != nil {
@@ -190,12 +196,12 @@ func DefaultDocument(network, provider string) (*Document, error) {
 			},
 		},
 		Actors: map[string]ActorConfig{
-			"registrar": {Address: "addr_test1...", SigningKeyFile: "keys/registrar.skey"},
-			"tldOwner":  {Address: "addr_test1...", MnemonicEnv: "DNS_CLI_TLD_OWNER_MNEMONIC"},
-			"sldOwner":  {Address: "addr_test1...", SigningKeyFile: "keys/sld-owner.skey"},
+			"registrar": {Address: "addr_test1...registrar", SigningKeyFile: "keys/registrar.skey"},
+			"tldOwner":  {Address: "addr_test1...tldOwner", MnemonicEnv: "DNS_CLI_TLD_OWNER_MNEMONIC"},
+			"sldOwner":  {Address: "addr_test1...sldOwner", SigningKeyFile: "keys/sld-owner.skey"},
 		},
 		Transaction: TransactionConfig{
-			TTLSlots:            300,
+			TTLSlots:            900, // ~15m on 1s slots; short TTLs expire while waiting on UTxO RPC
 			ConfirmationTimeout: "20m",
 			PollInterval:        "5s",
 			ArtifactDir:         "artifacts",
@@ -207,6 +213,74 @@ func DefaultDocument(network, provider string) (*Document, error) {
 		DefaultProfile: network,
 		Profiles:       map[string]Profile{network: profile},
 	}, nil
+}
+
+// ProjectRootForConfig returns the dns-cli project root implied by a config path.
+// When the config lives under a directory named "config", the project root is
+// that directory's parent; otherwise it is the config file's directory.
+func ProjectRootForConfig(configPath string) string {
+	dir := filepath.Dir(configPath)
+	if dir == "" || dir == "." {
+		return "."
+	}
+	if filepath.Base(dir) == "config" {
+		parent := filepath.Dir(dir)
+		if parent == "" || parent == "." {
+			return "."
+		}
+		return parent
+	}
+	return dir
+}
+
+// ApplyStarterRelativePaths rewrites blueprint, signing-key, and artifact paths
+// so they target the same project assets regardless of whether the config file
+// is written at the project root or under config/.
+func ApplyStarterRelativePaths(doc *Document, configPath string) error {
+	if doc == nil {
+		return fmt.Errorf("nil document")
+	}
+	baseDir := filepath.Dir(configPath)
+	if baseDir == "" {
+		baseDir = "."
+	}
+	projectRoot := ProjectRootForConfig(configPath)
+	blueprintAbs := filepath.Clean(filepath.Join(projectRoot, "..", "dns-contracts", "onchain", "plutus.json"))
+	artifactsAbs := filepath.Clean(filepath.Join(projectRoot, "artifacts"))
+	keysDir := filepath.Clean(filepath.Join(projectRoot, "keys"))
+
+	rel := func(abs string) (string, error) {
+		r, err := filepath.Rel(baseDir, abs)
+		if err != nil {
+			return "", err
+		}
+		return filepath.ToSlash(r), nil
+	}
+	blueprintRel, err := rel(blueprintAbs)
+	if err != nil {
+		return err
+	}
+	artifactsRel, err := rel(artifactsAbs)
+	if err != nil {
+		return err
+	}
+	for name, prof := range doc.Profiles {
+		prof.Contracts.BlueprintPath = blueprintRel
+		prof.Transaction.ArtifactDir = artifactsRel
+		for actorName, actor := range prof.Actors {
+			if strings.TrimSpace(actor.SigningKeyFile) != "" {
+				keyName := filepath.Base(actor.SigningKeyFile)
+				keyRel, err := rel(filepath.Join(keysDir, keyName))
+				if err != nil {
+					return err
+				}
+				actor.SigningKeyFile = keyRel
+				prof.Actors[actorName] = actor
+			}
+		}
+		doc.Profiles[name] = prof
+	}
+	return nil
 }
 
 func networkDefaults(name string) (NetworkConfig, error) {

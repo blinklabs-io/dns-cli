@@ -13,7 +13,7 @@ import (
 // LoadConfig loads and applies overrides (same as CLI loadEffective).
 func LoadConfig(path string, o config.Overrides) (*config.Effective, error) {
 	if strings.TrimSpace(path) == "" {
-		path = "dns-cli.json"
+		path = config.DefaultConfigPath
 	}
 	return config.Load(path, o)
 }

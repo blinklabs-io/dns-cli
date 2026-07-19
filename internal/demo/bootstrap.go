@@ -93,7 +93,7 @@ func (r *Runner) writeBootstrapConfig() error {
 					},
 				},
 				"transaction": map[string]any{
-					"ttlSlots":            300,
+					"ttlSlots":            900,
 					"confirmationTimeout": "20m",
 					"pollInterval":        "5s",
 					"artifactDir":         "../artifacts",

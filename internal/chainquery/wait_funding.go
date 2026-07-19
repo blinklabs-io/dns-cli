@@ -12,6 +12,9 @@ import (
 	"github.com/blinklabs-io/gouroboros/ledger/common"
 )
 
+// MinActorFundingLovelace is enough for script collateral (5 ADA) plus fees.
+const MinActorFundingLovelace int64 = 10_000_000
+
 // WaitFundingOpts controls WaitFundingUTxOsSynced.
 type WaitFundingOpts struct {
 	// ExcludeRefs are "txidhex#index" inputs that must no longer appear.
@@ -22,6 +25,32 @@ type WaitFundingOpts struct {
 	Poll time.Duration
 	// Timeout (default 2m). Zero uses default; negative means no deadline beyond ctx.
 	Timeout time.Duration
+}
+
+// EnsureFundingVisible waits until address UTxOs show at least minLovelace.
+// Use after a fund tx (or faucet) when the next build loads actor funding via
+// the address API, which can lag behind tx-output confirmation.
+func EnsureFundingVisible(ctx context.Context, p provider.Provider, addr common.Address, minLovelace int64) error {
+	if minLovelace <= 0 {
+		minLovelace = MinActorFundingLovelace
+	}
+	return WaitFundingUTxOsSynced(ctx, p, addr, WaitFundingOpts{
+		MinLovelace: minLovelace,
+		Poll:        2 * time.Second,
+		Timeout:     3 * time.Minute,
+	})
+}
+
+// SyncFundingAfterSpend waits until spent inputs disappear from the address API
+// and at least one UTxO remains. Call after AwaitOutputs: providers can keep
+// listing spent inputs (or omit change) briefly after tx confirmation.
+func SyncFundingAfterSpend(ctx context.Context, p provider.Provider, addr common.Address, spentRefs []string) error {
+	return WaitFundingUTxOsSynced(ctx, p, addr, WaitFundingOpts{
+		ExcludeRefs: spentRefs,
+		MinLovelace: 0,
+		Poll:        2 * time.Second,
+		Timeout:     3 * time.Minute,
+	})
 }
 
 // WaitFundingUTxOsSynced polls address UTxOs until spent inputs disappear and

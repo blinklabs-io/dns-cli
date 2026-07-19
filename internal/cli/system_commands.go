@@ -127,9 +127,9 @@ func newSystemInitCmd(g *GlobalFlags) *cobra.Command {
 			if configPath != "" {
 				g.ConfigPath = configPath
 			}
-			eff, err := loadEffective(g)
+			eff, err := loadReadyEffective(cmd, g)
 			if err != nil {
-				return WrapExit(ExitConfig, err)
+				return err
 			}
 			dep, err := system.LoadDeploymentJSON(deploymentPath)
 			if err != nil {

@@ -12,7 +12,7 @@
 ## Preparation (manual)
 
 1. Deploy contract reference scripts with `dns-cli system prepare` + `system init` + `system bind`
-2. Fill `dns-cli.json` with policy IDs, addresses, and reference UTxOs
+2. Fill `config/dns-cli.json` (from `config/dns-cli.example.json`) with policy IDs, addresses, and reference UTxOs
 3. Fund actors with ADA for fees and collateral (≥ 5 ADA ADA-only collateral each)
 4. Prepare Handshake proof JSON (`dns-cli proof generate` or a hand-built bundle)
 

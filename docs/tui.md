@@ -7,12 +7,12 @@ Interactive Bubble Tea dashboard for operators. Cobra commands remain the automa
 ```powershell
 go build -o bin/dns-cli.exe ./cmd/dns-cli
 .\bin\dns-cli.exe dashboard
-.\bin\dns-cli.exe dashboard --config path\to\dns-cli.json
+.\bin\dns-cli.exe dashboard --config path\to\config\dns-cli.json
 ```
 
 ```bash
 go build -o bin/dns-cli ./cmd/dns-cli
-./bin/dns-cli dashboard --config dns-cli.json
+./bin/dns-cli dashboard --config config/dns-cli.json
 ```
 
 Without `--config`, the workbench shows a path picker. No network/actions run until a config is loaded.

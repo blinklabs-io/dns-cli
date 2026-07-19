@@ -15,18 +15,35 @@ import (
 // UpdateSLD builds an unsigned SLD DNS record replacement transaction.
 func UpdateSLD(ctx context.Context, bctx *Context, tld, sld domain.Label, records []domain.ParsedRecord, outPrefix, contractRevision string) (BuildOutput, error) {
 	slog.Info("Building update-sld transaction", "tld", tld.Canonical, "sld", sld.Canonical, "records", len(records))
+	sldOwner, err := actorAddress(bctx.Eff, "sldOwner")
+	if err != nil {
+		return BuildOutput{}, err
+	}
+	refTN := protocol.CreateReferenceTokenTN(sld.Bytes)
+	userTN := protocol.CreateUserTokenTN(sld.Bytes)
+	if err := chainquery.WaitByAsset(ctx, bctx.Provider, bctx.Contracts.SLDReferenceAddr, chainquery.AssetID{
+		PolicyID: bctx.Contracts.SLDReferencePolicyID,
+		Name:     refTN,
+	}, chainquery.WaitByAssetOpts{}); err != nil {
+		return BuildOutput{}, err
+	}
+	if err := chainquery.WaitByAsset(ctx, bctx.Provider, sldOwner, chainquery.AssetID{
+		PolicyID: bctx.Contracts.SLDReferencePolicyID,
+		Name:     userTN,
+	}, chainquery.WaitByAssetOpts{}); err != nil {
+		return BuildOutput{}, fmt.Errorf("sld user token: %w", err)
+	}
 	node, err := chainquery.FindSLDNode(ctx, bctx.Provider, bctx.Contracts, tld, sld)
 	if err != nil {
 		return BuildOutput{}, err
 	}
 
-	sldOwner, err := actorAddress(bctx.Eff, "sldOwner")
-	if err != nil {
-		return BuildOutput{}, err
-	}
 	sldOwnerPKH, err := loadActorKeyHash(bctx.Eff, "sldOwner")
 	if err != nil {
 		return BuildOutput{}, err
+	}
+	if err := chainquery.EnsureFundingVisible(ctx, bctx.Provider, sldOwner, chainquery.MinActorFundingLovelace); err != nil {
+		return BuildOutput{}, fmt.Errorf("sldOwner funding: %w", err)
 	}
 	funding, err := chainquery.LoadFundingUTxOs(ctx, bctx.Provider, sldOwner)
 	if err != nil {

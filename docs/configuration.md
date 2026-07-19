@@ -1,12 +1,27 @@
 # Configuration
 
-dns-cli uses versioned JSON profiles. Generate a starter file:
+dns-cli uses versioned JSON profiles. The default config path is **`config/dns-cli.json`**
+(explicit `--config` always wins).
+
+Copy the dual-provider example, or generate a starter:
 
 ```bash
-dns-cli config init --network preprod --provider blockfrost --config dns-cli.json
+cp config/dns-cli.example.json config/dns-cli.json
+# or:
+dns-cli config init --network preprod --provider blockfrost
 ```
 
-`config init` writes the full schema (network, provider, contracts placeholders, actors, transaction defaults). Demo bind templates live under `demo/config/` (`blockfrost.template.json`, `utxorpc.template.json`); DNS record samples are in `demo/config/records.json`.
+`config/dns-cli.example.json` contains two Preprod profiles:
+
+| Profile | Provider | Select with |
+|---|---|---|
+| `preprod-blockfrost` (default) | Blockfrost | `--network preprod-blockfrost` or leave `defaultProfile` |
+| `preprod-utxorpc` | UTxO RPC | `--network preprod-utxorpc` |
+
+Do **not** rely on `--provider` alone to switch profiles: that flag only overrides
+`provider.type`, not URL/env fields. Prefer separate profiles as in the example.
+
+`config init` writes the full schema (network, provider, contracts placeholders, actors, transaction defaults) and adjusts relative paths so blueprint/keys/artifacts still resolve from the project root when the file lives under `config/`. Demo bind templates live under `demo/config/` (`blockfrost.template.json`, `utxorpc.template.json`); DNS record samples are in `demo/config/records.json`.
 
 ## Profiles
 
@@ -44,11 +59,13 @@ Or supply the URL via environment:
 }
 ```
 
-Exactly one of `baseURL` or `baseUrlEnv` must resolve. For Demeter-hosted
-endpoints, set `DMTR_API_KEY` (applied as the `dmtr-api-key` header, matching
-the [utxorpc go-sdk](https://github.com/utxorpc/go-sdk) convention). Optional
-extra headers are `Key=Value,...` in `DNS_CLI_UTXORPC_HEADERS`; an explicit
-`dmtr-api-key` there wins over `DMTR_API_KEY`.
+Exactly one of `baseURL` or `baseUrlEnv` must resolve.
+
+**Authentication rules (UTxO RPC readiness):**
+
+- A generic endpoint with **no** `headersEnv` may run without auth.
+- When `headersEnv` is configured **or** the host looks like Demeter (`demeter` / `dmtr`), auth is required via a non-empty `headersEnv` value **or** `DMTR_API_KEY`.
+- `DMTR_API_KEY` is applied as the `dmtr-api-key` header (matching the [utxorpc go-sdk](https://github.com/utxorpc/go-sdk) convention). Optional extra headers are `Key=Value,...` in `DNS_CLI_UTXORPC_HEADERS`; an explicit `dmtr-api-key` there wins over `DMTR_API_KEY`.
 
 ### Blockfrost
 
@@ -82,11 +99,26 @@ For Preprod demos, generate actors with `dns-cli wallet create --network preprod
 
 Empty flags do not erase valid config values.
 
+## Provider readiness (automatic)
+
+There is **no** separate `config check` command. Whenever a command needs the
+chain provider, dns-cli loads the config and prints a secret-safe **Provider readiness**
+summary (provider, network, endpoint **host**, endpoint source / env names,
+credential present/missing, health ready/failed). Secrets and full URLs are never printed.
+
+Missing credentials or failed health **block** the operation (`exit 3` config / `exit 5` provider).
+
+Offline commands (`config init`, `config show`, offline `config validate`, `tx inspect`,
+`tx sign`, `wallet create`, `proof generate`, `system prepare`, `system bind`) do **not**
+require credentials or network access.
+
 ## Validation
 
 ```bash
-dns-cli config validate --config dns-cli.json
-dns-cli config validate --config dns-cli.json --online
+dns-cli config validate                          # default: config/dns-cli.json
+dns-cli config validate --config config/dns-cli.json --online
+dns-cli config validate --config config/dns-cli.example.json --network preprod-utxorpc
 ```
 
-`--online` constructs the provider, checks tip health, and confirms every configured reference UTxO exists on-chain.
+Offline validate checks schema only. `--online` first runs the automatic readiness
+check, then confirms every configured reference UTxO exists on-chain.

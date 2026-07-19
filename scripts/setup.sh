@@ -91,9 +91,16 @@ fi
 echo "Building -> ${BIN_OUT}"
 COMMIT="$(git -C "${ROOT}" rev-parse --short HEAD 2>/dev/null || echo unknown)"
 BUILT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+CONTRACTS="unknown"
+if [[ -d "${ROOT}/../dns-contracts" ]]; then
+  CONTRACTS="$(git -C "${ROOT}/../dns-contracts" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+fi
+if [[ "${CONTRACTS}" == "unknown" || -z "${CONTRACTS}" ]]; then
+  CONTRACTS="$(git -C "${ROOT}" log -1 --format=%h -- demo/fixtures/contracts 2>/dev/null || echo unknown)"
+fi
 PKG="github.com/blinklabs-io/dns-cli/internal/cli"
-LDFLAGS="-X ${PKG}.GitCommit=${COMMIT} -X ${PKG}.BuildDate=${BUILT}"
-echo "ldflags: commit=${COMMIT} built=${BUILT}"
+LDFLAGS="-X ${PKG}.GitCommit=${COMMIT} -X ${PKG}.BuildDate=${BUILT} -X ${PKG}.ContractRevision=${CONTRACTS}"
+echo "ldflags: commit=${COMMIT} built=${BUILT} contracts=${CONTRACTS}"
 (cd "${ROOT}" && go build -ldflags "${LDFLAGS}" -o "${BIN_OUT}" ./cmd/dns-cli)
 
 "${BIN_OUT}" version

@@ -1,14 +1,13 @@
 module github.com/blinklabs-io/dns-cli
 
-go 1.25.10
-
-toolchain go1.25.12
+go 1.25.12
 
 require (
 	charm.land/bubbles/v2 v2.1.1
 	charm.land/bubbletea/v2 v2.0.8
 	charm.land/huh/v2 v2.0.3
 	charm.land/lipgloss/v2 v2.0.5
+	connectrpc.com/connect v1.20.0
 	github.com/Salvionied/apollo/v2 v2.0.0-20260624181525-b2f56d0c6e9d
 	github.com/atotto/clipboard v0.1.4
 	github.com/blinklabs-io/bursa v0.16.0
@@ -20,12 +19,13 @@ require (
 	github.com/mattn/go-colorable v0.1.15
 	github.com/mattn/go-isatty v0.0.22
 	github.com/spf13/cobra v1.10.2
+	github.com/utxorpc/go-codegen v0.19.2
+	github.com/utxorpc/go-sdk v0.0.4
 	golang.org/x/crypto v0.52.0
 	golang.org/x/net v0.55.0
 )
 
 require (
-	connectrpc.com/connect v1.20.0 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20251001021608-1fe7b43fc4d6 // indirect
 	github.com/bits-and-blooms/bitset v1.24.4 // indirect
@@ -62,8 +62,6 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sahilm/fuzzy v0.1.3 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
-	github.com/utxorpc/go-codegen v0.19.2 // indirect
-	github.com/utxorpc/go-sdk v0.0.4 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	golang.org/x/sync v0.21.0 // indirect
@@ -72,4 +70,4 @@ require (
 	google.golang.org/protobuf v1.36.11 // indirect
 )
 
-replace github.com/Salvionied/apollo/v2 => github.com/MIxAxIM/apollo/v2 v2.0.0-20260717012746-2754803864d2
+replace github.com/Salvionied/apollo/v2 => github.com/MIxAxIM/apollo/v2 v2.0.0-20260719093548-bc2d772a5fca

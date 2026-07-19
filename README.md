@@ -10,15 +10,17 @@ Human stdout uses colored panels and step roadmaps by default. Use `--no-color` 
 
 ## Quick start
 
-Requires **Go 1.25.10+** (module pins toolchain `go1.25.12`). Apollo resolves via
+Requires **Go 1.25.12+** (module pins toolchain `go1.25.12`). Apollo resolves via
 `go.mod` `replace` — no local sibling checkout needed for a normal build.
 
 ```bash
 ./scripts/setup.sh
 ./bin/dns-cli version
-./bin/dns-cli config init --network preprod --provider blockfrost
-./bin/dns-cli config validate
-./bin/dns-cli dashboard --config dns-cli.json
+cp config/dns-cli.example.json config/dns-cli.json   # or: dns-cli config init --network preprod --provider blockfrost
+# Edit config/dns-cli.json (choose defaultProfile, fill placeholders)
+export DNS_CLI_BLOCKFROST_PROJECT_ID=preprod...      # or UTxO RPC envs for preprod-utxorpc
+./bin/dns-cli config validate                        # default path: config/dns-cli.json
+./bin/dns-cli dashboard                              # provider-dependent commands auto-check readiness
 ```
 
 Windows:
@@ -26,7 +28,9 @@ Windows:
 ```powershell
 .\scripts\setup.ps1
 .\bin\dns-cli.exe version
-.\bin\dns-cli.exe dashboard --config dns-cli.json
+Copy-Item config\dns-cli.example.json config\dns-cli.json
+$env:DNS_CLI_BLOCKFROST_PROJECT_ID = 'preprod...'
+.\bin\dns-cli.exe dashboard
 ```
 
 `scripts/setup.*` checks Go, creates `bin/`, and builds the binary. Interactive dashboard: [docs/tui.md](docs/tui.md).
@@ -72,8 +76,8 @@ End-to-end Preprod orchestration is `dns-cli demo run`. Quickstart: [`demo/READM
 ./scripts/setup.sh
 export DNS_CLI_BLOCKFROST_PROJECT_ID=preprod...
 ./bin/dns-cli demo run                    # auto-finds demo/; prompts for unset options
-./bin/dns-cli demo history                # auto-finds demo/runs
-./bin/dns-cli demo run --mode existing
+./bin/dns-cli demo history                # read-only tx/explorer report
+./bin/dns-cli demo run --mode existing    # numbered resume picker (no explorer links)
 ```
 
 Starter DNS records live in `demo/config/records.json`. Run history and shared

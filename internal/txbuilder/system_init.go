@@ -54,6 +54,10 @@ func SystemInit(ctx context.Context, bctx *Context, opts SystemInitOptions) (Bui
 	if err != nil {
 		return BuildOutput{}, err
 	}
+	// After wallet fund, bootstrap change can lag on the address API.
+	if err := chainquery.EnsureFundingVisible(ctx, bctx.Provider, bootstrap, chainquery.MinActorFundingLovelace); err != nil {
+		return BuildOutput{}, fmt.Errorf("bootstrap funding: %w", err)
+	}
 	funding, err := chainquery.LoadFundingUTxOs(ctx, bctx.Provider, bootstrap)
 	if err != nil {
 		return BuildOutput{}, err

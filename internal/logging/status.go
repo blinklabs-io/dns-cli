@@ -79,14 +79,15 @@ func isWriterTTY(w io.Writer) bool {
 func (b *StatusBox) Tick(p WaitProgress) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
+	if b.interactive {
+		SuspendQuietLogs()
+	}
 	th := report.New(b.color)
 	if b.interactive {
-		b.redrawLocked(th, p, false, nil)
-		if p.Poll > 0 && p.Poll%b.explorerEvery == 0 && p.ExplorerURL != "" {
-			// Commit the current box to scrollback, then print a copyable explorer URL.
-			b.lastLines = 0
-			fmt.Fprint(b.w, th.Kv("explorer", p.ExplorerURL))
-		}
+		// Keep the live panel narrow so wrapped URLs cannot desync cursor clears.
+		live := p
+		live.ExplorerURL = ""
+		b.redrawLocked(th, live, false, nil)
 		return
 	}
 	// Non-TTY: periodic newline so CI/demo pipes still show progress.
@@ -102,6 +103,7 @@ func (b *StatusBox) Tick(p WaitProgress) {
 func (b *StatusBox) Done(p WaitProgress, err error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
+	defer ResumeQuietLogs()
 	th := report.New(b.color)
 	if b.interactive {
 		b.clearLocked()

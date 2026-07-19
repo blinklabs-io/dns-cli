@@ -37,7 +37,7 @@ flowchart TB
 | Mode | Behavior |
 |---|---|
 | `fresh` | Live Preprod submissions. Creates/updates `runs/` layout, prompts for missing credentials, waits for faucet funds. |
-| `existing` | **Read-only** history viewer (same as `demo history`). Prints confirmed tx IDs and Preprod explorer URLs. Does **not** create run folders or submit transactions. |
+| `existing` | Numbered resume picker over local `runs/` (stage only). Selects an incomplete TLD/SLD run by number, checks provider readiness, and continues that exact `runId`. Use `demo history` for the read-only tx/explorer report. |
 
 ## Directory layout
 
@@ -81,7 +81,7 @@ Schemas live under `runs/states/` and are versioned with the rest of `demo/runs/
 
 | Item | Notes |
 |---|---|
-| Go **1.25.10+** | Required by setup / build (Apollo via `go.mod` replace) |
+| Go **1.25.12+** | Required by setup / build (Apollo via `go.mod` replace) |
 | Aiken CLI **≥ 1.1.19** | Must match `fixtures/contracts/aiken.toml` compiler |
 | Provider credentials | See below |
 | ≥ **150 ADA** on bootstrap | Preprod faucet; runner polls until funded |
@@ -134,24 +134,36 @@ Optional labels:
 ./bin/dns-cli demo run --mode fresh --provider blockfrost --tld mytld --sld www
 ```
 
-### Resume after interruption
+### Resume after interruption (fresh re-run)
 
-Re-run without flags (or with the same mode/provider/tld/sld). Confirmed steps are skipped.
+Re-run without flags (or with the same mode/provider/tld/sld). Confirmed steps are skipped; a new SLD run folder is created only when the latest run is complete.
 
 ```bash
 ./bin/dns-cli demo run
 ```
 
-### Existing (history viewer)
+### History vs existing resume
+
+| Command | Behavior |
+|---|---|
+| `demo history` | Read-only report with tx IDs + explorer URLs |
+| `demo run --mode existing` | Numbered local resume picker (stage only, no explorer/tx links) → continue exact run |
 
 ```bash
 ./bin/dns-cli demo history
 ./bin/dns-cli demo run --mode existing
 ```
 
-If no TLD folders exist under `runs/` yet, the viewer prints:
+Existing mode:
 
-`no demo history yet (run a fresh demo first)`
+1. Scans `demo/runs/**/state.json` (local only; no chain discovery)
+2. Lists every TLD/SLD run with provider + first incomplete stage (`fund`, `deploy`, `bind`, `register`, `activate`, `mint-sld`, `update-sld`, or `complete`)
+3. Completed rows are visible but not selectable
+4. You pick a number; the runner loads that exact `runId`, checks provider readiness, asks to proceed, and resumes without creating a new run folder
+
+If no SLD runs exist yet:
+
+`no local TLD/SLD demo runs found under … (run a fresh demo first)`
 
 `demo history` auto-finds `demo/runs` by walking upward from the current directory. Optional override: `--runs-root /path/to/demo/runs`.
 

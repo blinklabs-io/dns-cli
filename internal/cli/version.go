@@ -7,11 +7,12 @@ import (
 	"github.com/blinklabs-io/dns-cli/internal/report"
 )
 
-// Build metadata — overridden via -ldflags at release time.
+// Build metadata — overridden via -ldflags at build/release time.
 var (
-	Version          = "1.0.0"
-	GitCommit        = "unknown"
-	BuildDate        = "unknown"
+	Version   = "1.0.0"
+	GitCommit = "unknown"
+	BuildDate = "unknown"
+	// ContractRevision is the short git SHA of dns-contracts (or fixtures path).
 	ContractRevision = "unknown"
 )
 
