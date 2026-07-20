@@ -12,7 +12,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 BIN_DIR="${ROOT}/bin"
 BIN_OUT="${BIN_DIR}/dns-cli"
-MIN_GO="1.25.10"
+MIN_GO="1.25.12"
 
 YES=0
 SKIP_BUILD=0
@@ -25,7 +25,7 @@ while [[ $# -gt 0 ]]; do
       cat <<'EOF'
 Usage: setup.sh [-y|--yes] [--skip-build]
 
-Checks Go (>= 1.25.10), creates bin/, builds dns-cli.
+Checks Go (>= 1.25.12), creates bin/, builds dns-cli.
 Does not prepare demo/ — use: bin/dns-cli demo run
 EOF
       exit 0
@@ -55,11 +55,47 @@ version_ge() {
   printf '%s\n%s\n' "$2" "$1" | sort -V | head -n1 | grep -qx "$2"
 }
 
+go_exe_version() {
+  local exe="$1"
+  local out
+  out="$("${exe}" version 2>&1 || true)"
+  sed -n 's/.*go\([0-9][0-9]*\.[0-9][0-9]*\(\.[0-9][0-9]*\)*\).*/\1/p' <<<"${out}" | head -n1
+}
+
+resolve_go_exe() {
+  # Prefer a local go-toolchains / repo .tools install over an older system Go
+  # so go.mod's toolchain pin does not trigger a download that can fail.
+  local candidates=()
+  if [[ -n "${LOCALAPPDATA:-}" ]]; then
+    candidates+=("${LOCALAPPDATA}/go-toolchains/go/bin/go")
+    candidates+=("${LOCALAPPDATA}/go-toolchains/go/bin/go.exe")
+  fi
+  candidates+=("${ROOT}/../.tools/go/bin/go")
+  candidates+=("${ROOT}/../.tools/go/bin/go.exe")
+  if command -v go >/dev/null 2>&1; then
+    candidates+=("$(command -v go)")
+  fi
+
+  local exe ver
+  for exe in "${candidates[@]}"; do
+    [[ -n "${exe}" && -x "${exe}" ]] || continue
+    ver="$(go_exe_version "${exe}")"
+    [[ -n "${ver}" ]] || continue
+    if ! version_ge "${ver}" "${MIN_GO}"; then
+      echo "Skipping ${exe} (Go ${ver} < ${MIN_GO})"
+      continue
+    fi
+    printf '%s\n' "${exe}"
+    return 0
+  done
+  return 1
+}
+
 echo "dns-cli setup (root: ${ROOT})"
 
-if ! command -v go >/dev/null 2>&1; then
+if ! GO_EXE="$(resolve_go_exe)"; then
   cat <<EOF >&2
-Go is not on PATH (need >= ${MIN_GO}).
+Go >= ${MIN_GO} not found.
 
 Install: https://go.dev/dl/
 Then re-run: ./scripts/setup.sh
@@ -67,12 +103,12 @@ EOF
   exit 1
 fi
 
-GO_VER="$(go version | sed -n 's/.*go\([0-9][0-9]*\.[0-9][0-9]*\(\.[0-9][0-9]*\)*\).*/\1/p')"
-if [[ -z "${GO_VER}" ]] || ! version_ge "${GO_VER}" "${MIN_GO}"; then
-  echo "Go ${GO_VER:-unknown} is below required ${MIN_GO}. Upgrade: https://go.dev/dl/" >&2
-  exit 1
-fi
-echo "Go ${GO_VER} OK"
+GO_VER="$(go_exe_version "${GO_EXE}")"
+# Pin GOTOOLCHAIN=local so an already-installed Go matching go.mod does not
+# attempt a toolchain download (which fails when the proxy blocks it).
+export PATH="$(dirname "${GO_EXE}"):${PATH}"
+export GOTOOLCHAIN=local
+echo "Go ${GO_VER} OK (${GO_EXE})"
 
 if command -v aiken >/dev/null 2>&1; then
   echo "aiken found: $(command -v aiken)"
@@ -101,7 +137,7 @@ fi
 PKG="github.com/blinklabs-io/dns-cli/internal/cli"
 LDFLAGS="-X ${PKG}.GitCommit=${COMMIT} -X ${PKG}.BuildDate=${BUILT} -X ${PKG}.ContractRevision=${CONTRACTS}"
 echo "ldflags: commit=${COMMIT} built=${BUILT} contracts=${CONTRACTS}"
-(cd "${ROOT}" && go build -ldflags "${LDFLAGS}" -o "${BIN_OUT}" ./cmd/dns-cli)
+(cd "${ROOT}" && "${GO_EXE}" build -ldflags "${LDFLAGS}" -o "${BIN_OUT}" ./cmd/dns-cli)
 
 "${BIN_OUT}" version
 

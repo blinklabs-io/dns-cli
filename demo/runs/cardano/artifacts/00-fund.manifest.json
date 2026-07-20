@@ -3,7 +3,7 @@
   "operation": "wallet.fund",
   "network": "preprod",
   "provider": "blockfrost",
-  "bodyHash": "c3d1d6ccd64d75c6d4e4e12cbd80e2341c51025d1a211facd491e552592b2116",
+  "bodyHash": "afafd7b6a1fd11b3c07babafe658f05186348ee70ca975dabe2292e8ceb94b22",
   "requiredSigners": [
     "d6f87f5a6adbbe3e1ae65b60a302fc8c07824f147ae1c3c6e2a1b71d"
   ],
@@ -34,13 +34,13 @@
     }
   ],
   "validityInterval": {
-    "start": 128617683,
-    "ttl": 128617983
+    "start": 128894169,
+    "ttl": 128895069
   },
-  "configDigest": "b1148327c81df2349131d598f0a6108ff1623e4cf34bfbc42967fc01a9ba5f55",
-  "apolloRevision": "v2.0.0-20260717012746-2754803864d2",
+  "configDigest": "f2dc25ea1a644c63c15a58da6d04655dd6c5e9723a7423f27126940226184261",
+  "apolloRevision": "v2.0.0-20260719093548-bc2d772a5fca",
   "contractRevision": "",
-  "createdAt": "2026-07-17T15:08:42Z",
+  "createdAt": "2026-07-20T19:56:56Z",
   "extra": {
     "allocation.0.actor": "registrar",
     "allocation.0.lovelace": "30000000",

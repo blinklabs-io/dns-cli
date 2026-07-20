@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "mode": "fresh",
+  "network": "preprod",
+  "provider": "blockfrost",
+  "tld": "ada",
+  "sld": "api",
+  "runId": "20260720-230620",
+  "createdAt": "2026-07-20T23:08:57.9698489+03:30",
+  "sharedDir": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\shared",
+  "tldDir": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\ada",
+  "sldRunDir": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\ada\\api\\20260720-230620"
+}

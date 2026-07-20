@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 2,
+  "mode": "fresh",
+  "network": "preprod",
+  "provider": "blockfrost",
+  "tld": "cardano",
+  "sld": "api",
+  "runId": "20260720-232524",
+  "confirmed": {
+    "mintSld": {
+      "txId": "df88bcae9f256c1e93f27728b8dc6ad8e0f456bf882e7314b0934bde0d64ad73",
+      "manifest": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\cardano\\api\\20260720-232524\\artifacts\\04-mint-sld.manifest.json"
+    },
+    "updateSld": {
+      "txId": "20fb60824ac5d26ea7924deaf98ae8fd480bc1b3c4573d3f3bcd08121c346175",
+      "manifest": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\cardano\\api\\20260720-232524\\artifacts\\05-update-sld.manifest.json"
+    }
+  }
+}

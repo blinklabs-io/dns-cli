@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 2,
+  "mode": "fresh",
+  "network": "preprod",
+  "provider": "blockfrost",
+  "tld": "ada",
+  "sld": "api",
+  "runId": "20260720-230620",
+  "confirmed": {
+    "mintSld": {
+      "txId": "",
+      "manifest": ""
+    },
+    "updateSld": {
+      "txId": "",
+      "manifest": ""
+    }
+  }
+}

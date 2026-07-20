@@ -3,7 +3,7 @@
   "operation": "activate-tld",
   "network": "preprod",
   "provider": "blockfrost",
-  "bodyHash": "7fd61d09f82d4f7461a35c52eaab5ece404d75292503273b32cd902a15f79999",
+  "bodyHash": "414bc887c39355381138b0c5c4cd835ebd1def52697aa6ac05fa0b6afd914237",
   "requiredSigners": [
     "4aacd384cd207ead56c7957b1d80a4f37dc60a51bf93068b111365f0"
   ],
@@ -22,13 +22,13 @@
     }
   ],
   "validityInterval": {
-    "start": 128618898,
-    "ttl": 128619198
+    "start": 128894411,
+    "ttl": 128895311
   },
-  "configDigest": "44e6bfd08afafe3edfff986c2ac53681290045fa4126c084344e33e3ff20995c",
-  "apolloRevision": "v2.0.0-20260717012746-2754803864d2",
-  "contractRevision": "unknown",
-  "createdAt": "2026-07-17T15:28:24Z",
+  "configDigest": "31bd9097e7d20b216312d843bc39631bffcb89a641cdaa64b95681391d421c1a",
+  "apolloRevision": "v2.0.0-20260719093548-bc2d772a5fca",
+  "contractRevision": "5cf26f5",
+  "createdAt": "2026-07-20T20:00:11Z",
   "extra": {
     "tld": "cardano"
   }

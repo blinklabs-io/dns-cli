@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 2,
+  "mode": "fresh",
+  "network": "preprod",
+  "provider": "blockfrost",
+  "tld": "ada",
+  "confirmed": {
+    "fund": {
+      "txId": "",
+      "manifest": ""
+    },
+    "deploy": {
+      "txId": "",
+      "manifest": ""
+    },
+    "register": {
+      "txId": "",
+      "manifest": ""
+    },
+    "activate": {
+      "txId": "",
+      "manifest": ""
+    }
+  }
+}

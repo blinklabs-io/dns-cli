@@ -3,7 +3,7 @@
   "operation": "update-sld",
   "network": "preprod",
   "provider": "blockfrost",
-  "bodyHash": "e0b538b8ddd71ce78c4be8dc58cd22f13c39b1642d204a1b9220db3f88185523",
+  "bodyHash": "20fb60824ac5d26ea7924deaf98ae8fd480bc1b3c4573d3f3bcd08121c346175",
   "requiredSigners": [
     "4ce9a0fc7d009b0acd4294bc05927be45a75f81bbff56e1314a8b24b"
   ],
@@ -18,17 +18,17 @@
     }
   ],
   "validityInterval": {
-    "start": 128618949,
-    "ttl": 128619249
+    "start": 128894536,
+    "ttl": 128895436
   },
-  "configDigest": "44e6bfd08afafe3edfff986c2ac53681290045fa4126c084344e33e3ff20995c",
-  "apolloRevision": "v2.0.0-20260717012746-2754803864d2",
-  "contractRevision": "unknown",
-  "createdAt": "2026-07-17T15:29:28Z",
+  "configDigest": "31bd9097e7d20b216312d843bc39631bffcb89a641cdaa64b95681391d421c1a",
+  "apolloRevision": "v2.0.0-20260719093548-bc2d772a5fca",
+  "contractRevision": "5cf26f5",
+  "createdAt": "2026-07-20T20:02:58Z",
   "extra": {
     "oldRecordCount": "0",
     "recordCount": "1",
-    "sld": "www",
+    "sld": "api",
     "tld": "cardano"
   }
 }

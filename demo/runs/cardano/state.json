@@ -6,19 +6,19 @@
   "tld": "cardano",
   "confirmed": {
     "fund": {
-      "txId": "c3d1d6ccd64d75c6d4e4e12cbd80e2341c51025d1a211facd491e552592b2116",
+      "txId": "afafd7b6a1fd11b3c07babafe658f05186348ee70ca975dabe2292e8ceb94b22",
       "manifest": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\cardano\\artifacts\\00-fund.manifest.json"
     },
     "deploy": {
-      "txId": "e644611f706ed566e7dcc131803d2da89df72991f0a196739290553467b3af47",
+      "txId": "67029464e58b022d4c878ba69ccb8869d3da89c7d8b4af31b224b82cc65ef9eb",
       "manifest": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\cardano\\artifacts\\01-deploy.manifest.json"
     },
     "register": {
-      "txId": "282b409de11c18b1906c89b516c8059f1dda25e29739b395585240d054cbd4ab",
+      "txId": "24cfaa7065054c112663f19d05d6f2d5da9b9afbda1eeebc7f7d2c8f9b9470e1",
       "manifest": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\cardano\\artifacts\\02-register.manifest.json"
     },
     "activate": {
-      "txId": "7fd61d09f82d4f7461a35c52eaab5ece404d75292503273b32cd902a15f79999",
+      "txId": "414bc887c39355381138b0c5c4cd835ebd1def52697aa6ac05fa0b6afd914237",
       "manifest": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\cardano\\artifacts\\03-activate.manifest.json"
     }
   }

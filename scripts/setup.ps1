@@ -19,7 +19,7 @@ $ScriptDir = $PSScriptRoot
 $Root = Split-Path -Parent $ScriptDir
 $BinDir = Join-Path $Root 'bin'
 $BinExe = Join-Path $BinDir 'dns-cli.exe'
-$MinGo = [version]'1.25.10'
+$MinGo = [version]'1.25.12'
 
 function Test-AssumeYes {
     if ($Yes) { return $true }
@@ -28,35 +28,70 @@ function Test-AssumeYes {
     return $false
 }
 
-function Get-GoVersion {
-    $cmd = Get-Command go -ErrorAction SilentlyContinue
-    if ($null -eq $cmd) {
-        return $null
-    }
-    $out = & go version 2>&1
+function Get-GoExeVersion {
+    param([Parameter(Mandatory)][string] $GoExe)
+    # `go version` can emit toolchain-download progress to stderr. With
+    # $ErrorActionPreference='Stop' that surfaces as NativeCommandError, so
+    # relax it for this call only.
+    $out = & {
+        $ErrorActionPreference = 'Continue'
+        & $GoExe version 2>&1
+    } | Out-String
     if ($out -match 'go(\d+\.\d+(?:\.\d+)?)') {
         return [version]$Matches[1]
     }
     return $null
 }
 
+function Resolve-GoExe {
+    # Prefer a local go-toolchains install over Program Files. On Windows the
+    # System PATH entry (C:\Program Files\Go) wins over User PATH, so an older
+    # system Go would otherwise keep downloading go.mod's toolchain pin and
+    # fail with "toolchain not available" when the proxy/network blocks it.
+    $candidates = @()
+    if (-not [string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
+        $candidates += (Join-Path $env:LOCALAPPDATA 'go-toolchains\go\bin\go.exe')
+    }
+    $repoTools = Join-Path (Split-Path $Root -Parent) '.tools\go\bin\go.exe'
+    $candidates += $repoTools
+    $pathGo = Get-Command go -ErrorAction SilentlyContinue
+    if ($null -ne $pathGo) {
+        $candidates += $pathGo.Source
+    }
+
+    foreach ($exe in $candidates) {
+        if ([string]::IsNullOrWhiteSpace($exe)) { continue }
+        if (-not (Test-Path -LiteralPath $exe)) { continue }
+        $ver = Get-GoExeVersion -GoExe $exe
+        if ($null -eq $ver) { continue }
+        if ($ver -lt $MinGo) {
+            Write-Host "Skipping $exe (Go $ver < $MinGo)"
+            continue
+        }
+        return @{ Exe = $exe; Version = $ver }
+    }
+    return $null
+}
+
 Write-Host "dns-cli setup (root: $Root)"
 
-$goVer = Get-GoVersion
-if ($null -eq $goVer) {
+$go = Resolve-GoExe
+if ($null -eq $go) {
     Write-Host @"
-Go is not on PATH (need >= $MinGo).
+Go >= $MinGo not found.
 
 Install: https://go.dev/dl/
+Or unpack to: $env:LOCALAPPDATA\go-toolchains\go
 Then re-run: .\scripts\setup.ps1
 "@
     exit 1
 }
-if ($goVer -lt $MinGo) {
-    Write-Host "Go $goVer is below required $MinGo. Upgrade: https://go.dev/dl/"
-    exit 1
-}
-Write-Host "Go $goVer OK"
+
+# Use the resolved binary for this session and pin GOTOOLCHAIN=local so go.mod's
+# toolchain directive does not trigger a download of an already-installed version.
+$env:PATH = "$(Split-Path -Parent $go.Exe);$env:PATH"
+$env:GOTOOLCHAIN = 'local'
+Write-Host "Go $($go.Version) OK ($($go.Exe))"
 
 $aiken = Get-Command aiken -ErrorAction SilentlyContinue
 if ($null -eq $aiken) {
@@ -94,7 +129,16 @@ try {
     $ldflags = "-X $pkg.GitCommit=$commit -X $pkg.BuildDate=$built -X $pkg.ContractRevision=$contracts"
     Write-Host "Building -> $BinExe"
     Write-Host "ldflags: commit=$commit built=$built contracts=$contracts"
-    go build -ldflags $ldflags -o $BinExe ./cmd/dns-cli
+    # Windows: an existing/locked dns-cli.exe makes `go build -o` fail with
+    # "already exists and is not an object file". Remove first when possible.
+    if (Test-Path -LiteralPath $BinExe) {
+        try {
+            Remove-Item -LiteralPath $BinExe -Force -ErrorAction Stop
+        } catch {
+            throw "cannot overwrite $BinExe (is it running?). Stop it and re-run setup."
+        }
+    }
+    & $go.Exe build -ldflags $ldflags -o $BinExe ./cmd/dns-cli
     if ($LASTEXITCODE -ne 0) {
         throw "go build failed"
     }

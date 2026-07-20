@@ -16,16 +16,16 @@
       },
       "contracts": {
         "blueprintPath": "E:\\Computer Eng\\Projects\\Handshake\\dns-cli\\demo\\runs\\cardano\\contracts\\plutus.base.json",
-        "tldRegistrarAddress": "addr_test1zrp83ww69623dttuavdzgqumpe47fe93nl07pkt5u27lzxr5ja5a992d5l469ms9yzgzljyhw36usjcsectx472k2vgsk97qwh",
-        "tldReferenceAddress": "addr_test1zrwacpceus20jvspygspl2v9s6pjk88z73gvs4efhmtx6nr5ja5a992d5l469ms9yzgzljyhw36usjcsectx472k2vgsr9c2w6",
-        "sldReferenceAddress": "addr_test1zr6p5cys5n2krrpv447z8yqfcu7r6q79lm5hmjt6m8egaan5ja5a992d5l469ms9yzgzljyhw36usjcsectx472k2vgsjwh0y8",
-        "tldRegistrarPolicyId": "c278b9da2e9516ad7ceb1a24039b0e6be4e4b19fdfe0d974e2bdf118",
-        "tldReferencePolicyId": "dddc0719e414f9320122201fa98586832b1ce2f450c85729bed66d4c",
-        "sldReferencePolicyId": "f41a6090a4d5618c2cad7c239009c73c3d03c5fee97dc97ad9f28ef6",
+        "tldRegistrarAddress": "addr_test1zq4l9aw23254k3t3zzzxgwt66zahq2d9xpfy7jvly7hqkkm5ja5a992d5l469ms9yzgzljyhw36usjcsectx472k2vgs3gxppq",
+        "tldReferenceAddress": "addr_test1zr8wyhf9ycn0rxwulwm3qq4cx404yfdcqlyrfgmuauasrkt5ja5a992d5l469ms9yzgzljyhw36usjcsectx472k2vgspgrexh",
+        "sldReferenceAddress": "addr_test1zr72a6g540h5jh9j9a3vkfk8590mgudtc0g2sr3jlqass2n5ja5a992d5l469ms9yzgzljyhw36usjcsectx472k2vgs4mp40j",
+        "tldRegistrarPolicyId": "2bf2f5ca8aa95b4571108464397ad0bb7029a530524f499f27ae0b5b",
+        "tldReferencePolicyId": "cee25d252626f199dcfbb71002b8355f5225b807c834a37cef3b01d9",
+        "sldReferencePolicyId": "fcaee914abef495cb22f62cb26c7a15fb471abc3d0a80e32f83b082a",
         "referenceUtxos": {
-          "sldReference": "e644611f706ed566e7dcc131803d2da89df72991f0a196739290553467b3af47#2",
-          "tldReference": "e644611f706ed566e7dcc131803d2da89df72991f0a196739290553467b3af47#1",
-          "tldRegistrar": "e644611f706ed566e7dcc131803d2da89df72991f0a196739290553467b3af47#0"
+          "sldReference": "67029464e58b022d4c878ba69ccb8869d3da89c7d8b4af31b224b82cc65ef9eb#2",
+          "tldReference": "67029464e58b022d4c878ba69ccb8869d3da89c7d8b4af31b224b82cc65ef9eb#1",
+          "tldRegistrar": "67029464e58b022d4c878ba69ccb8869d3da89c7d8b4af31b224b82cc65ef9eb#0"
         }
       },
       "actors": {
@@ -47,7 +47,7 @@
         }
       },
       "transaction": {
-        "ttlSlots": 300,
+        "ttlSlots": 900,
         "confirmationTimeout": "20m",
         "pollInterval": "5s",
         "artifactDir": "../artifacts",
