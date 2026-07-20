@@ -151,7 +151,8 @@ func TestFormatResumeCatalogNoExplorer(t *testing.T) {
 	if strings.Contains(out, "deadbeef") || strings.Contains(out, "explorer") || strings.Contains(out, "http") {
 		t.Fatalf("formatter leaked tx/explorer:\n%s", out)
 	}
-	if !strings.Contains(out, "www.alpha") || !strings.Contains(out, "fund") {
+	// Fund is already confirmed in the fixture, so the next resume stage is deploy.
+	if !strings.Contains(out, "www.alpha") || !strings.Contains(out, "deploy") {
 		t.Fatalf("unexpected:\n%s", out)
 	}
 }
