@@ -48,7 +48,6 @@ func RegisterTLD(ctx context.Context, bctx *Context, tld domain.Label, proof dom
 	mintRed, err := protocol.RegisterTLDRedeemer{
 		TLD:                  tld.Bytes,
 		Owner:                proof.OwnerPublicKey,
-		RegistrarSignature:   proof.RegistrarSignature,
 		TLDReferencePolicyID: tldRefPolicy,
 	}.ToPlutusData()
 	if err != nil {

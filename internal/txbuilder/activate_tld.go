@@ -57,7 +57,10 @@ func ActivateTLD(ctx context.Context, bctx *Context, tld domain.Label, proof dom
 		return BuildOutput{}, err
 	}
 
-	spendRed, err := protocol.OwnerActionRedeemer{OwnerSignature: proof.OwnerSignature}.ToPlutusData()
+	spendRed, err := protocol.OwnerActionRedeemer{
+		OwnerSignature:  proof.OwnerSignature,
+		ReceiverAddress: tldOwner,
+	}.ToPlutusData()
 	if err != nil {
 		return BuildOutput{}, err
 	}

@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/blinklabs-io/dns-cli/internal/domain"
+	"github.com/blinklabs-io/gouroboros/ledger/common"
 	"github.com/blinklabs-io/plutigo/data"
 )
 
@@ -46,11 +47,12 @@ func (d TLDRegisterDatum) ToPlutusData() (data.PlutusData, error) {
 	), nil
 }
 
-// RegisterTLDRedeemer is RegistrarRedeemer.RegisterTLD.
+// RegisterTLDRedeemer is RegistrarRedeemer.RegisterTLD. Registration
+// authority no longer comes from a signature — tld_registrar's mint
+// handler now requires the registrar NFT's policy id present in outputs.
 type RegisterTLDRedeemer struct {
 	TLD                  []byte
 	Owner                []byte
-	RegistrarSignature   []byte
 	TLDReferencePolicyID []byte
 }
 
@@ -58,18 +60,28 @@ func (r RegisterTLDRedeemer) ToPlutusData() (data.PlutusData, error) {
 	return data.NewConstr(ConstrRegisterTLD,
 		data.NewByteString(r.TLD),
 		data.NewByteString(r.Owner),
-		data.NewByteString(r.RegistrarSignature),
 		data.NewByteString(r.TLDReferencePolicyID),
 	), nil
 }
 
-// OwnerActionRedeemer is RegistrarRedeemer.OwnerAction.
+// OwnerActionRedeemer is RegistrarRedeemer.OwnerAction. ReceiverAddress
+// must match the actual destination of the newly minted "u" token
+// byte-for-byte, or tld_registrar's destination_correct check rejects
+// the transaction — the owner's signature is bound to it.
 type OwnerActionRedeemer struct {
-	OwnerSignature []byte
+	OwnerSignature  []byte
+	ReceiverAddress common.Address
 }
 
 func (r OwnerActionRedeemer) ToPlutusData() (data.PlutusData, error) {
-	return data.NewConstr(ConstrOwnerAction, data.NewByteString(r.OwnerSignature)), nil
+	addrPD := r.ReceiverAddress.ToPlutusData()
+	if addrPD == nil {
+		return nil, fmt.Errorf("receiver address has no Plutus Data representation")
+	}
+	return data.NewConstr(ConstrOwnerAction,
+		data.NewByteString(r.OwnerSignature),
+		addrPD,
+	), nil
 }
 
 // DNSRecord mirrors types.DNSRecord.
