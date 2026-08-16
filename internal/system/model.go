@@ -34,16 +34,19 @@ const (
 const RegistrarTokenAssetName = "registrar"
 
 // DeploymentJSON is written by system prepare and consumed by init/bind.
+// mint-registrar-token runs before prepare (tld_registrar is parameterized
+// by the registrar NFT's policy id, which only exists once minted) and
+// bootstraps this same file with just the registrarToken validator entry;
+// prepare then loads and extends it.
 type DeploymentJSON struct {
-	Version         int                          `json:"version"`
-	Network         string                       `json:"network"`
-	NetworkID       uint8                        `json:"networkId"`
-	Magic           int                          `json:"magic"`
-	StakeKeyHash    string                       `json:"stakeKeyHash"`
-	RegistrarHNSKey string                       `json:"registrarHnsKey"`
-	BlueprintPath   string                       `json:"blueprintPath,omitempty"`
-	OutDir          string                       `json:"outDir,omitempty"`
-	Validators      map[string]ValidatorArtifact `json:"validators"`
+	Version       int                          `json:"version"`
+	Network       string                       `json:"network"`
+	NetworkID     uint8                        `json:"networkId"`
+	Magic         int                          `json:"magic"`
+	StakeKeyHash  string                       `json:"stakeKeyHash,omitempty"`
+	BlueprintPath string                       `json:"blueprintPath,omitempty"`
+	OutDir        string                       `json:"outDir,omitempty"`
+	Validators    map[string]ValidatorArtifact `json:"validators"`
 }
 
 // ValidatorArtifact describes one applied validator deployment unit.
@@ -75,6 +78,25 @@ func LoadDeploymentJSON(path string) (*DeploymentJSON, error) {
 		d.Validators = map[string]ValidatorArtifact{}
 	}
 	return &d, nil
+}
+
+// LoadOrInitDeploymentJSON loads deployment.json at path if present,
+// otherwise initializes a fresh preprod deployment anchored to blueprint/outDir.
+func LoadOrInitDeploymentJSON(path, blueprint, outDir string) (*DeploymentJSON, error) {
+	if _, err := os.Stat(path); err == nil {
+		return LoadDeploymentJSON(path)
+	} else if !os.IsNotExist(err) {
+		return nil, err
+	}
+	return &DeploymentJSON{
+		Version:       1,
+		Network:       "preprod",
+		NetworkID:     0,
+		Magic:         1,
+		BlueprintPath: blueprint,
+		OutDir:        outDir,
+		Validators:    map[string]ValidatorArtifact{},
+	}, nil
 }
 
 // SaveDeploymentJSON writes deployment.json.

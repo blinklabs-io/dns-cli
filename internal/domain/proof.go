@@ -14,24 +14,20 @@ import (
 )
 
 // ProofBundle hands the owner's public key to whoever runs register-tld.
-// It no longer carries a signature: RegisterTLD dropped its signature
-// field (registrar authority now comes from holding the registrar NFT),
-// and OwnerAction's signature can't be pre-generated — it's bound to the
-// registration UTxO, only known at activation time (see activate-tld's
-// just-in-time signing).
+// It carries no signature: RegisterTLD dropped its registrar-signature
+// field (registrar authority now comes from holding the registrar NFT,
+// spent and recreated by register-tld), and OwnerAction's signature
+// can't be pre-generated — it's bound to the registration UTxO, only
+// known at activation time (see activate-tld's just-in-time signing).
 type ProofBundle struct {
-	TLD                string `json:"tld"`
-	OwnerPublicKey     string `json:"ownerPublicKey"`
-	RegistrarPublicKey string `json:"registrarPublicKey,omitempty"`
-	RegistrarSignature string `json:"registrarSignature"`
+	TLD            string `json:"tld"`
+	OwnerPublicKey string `json:"ownerPublicKey"`
 }
 
 // ParsedProof holds decoded proof bytes.
 type ParsedProof struct {
-	TLD                Label
-	OwnerPublicKey     []byte
-	RegistrarPublicKey []byte
-	RegistrarSignature []byte
+	TLD            Label
+	OwnerPublicKey []byte
 }
 
 // LoadProofBundle loads and validates a proof JSON file.
@@ -61,35 +57,11 @@ func LoadProofBundle(path string, expectedTLD string) (ParsedProof, error) {
 	if err != nil {
 		return ParsedProof{}, err
 	}
-	regSig, err := decodeSig(b.RegistrarSignature, "registrarSignature")
-	if err != nil {
-		return ParsedProof{}, err
-	}
-	var regPK []byte
-	if b.RegistrarPublicKey != "" {
-		regPK, err = decodeKey(b.RegistrarPublicKey, "registrarPublicKey")
-		if err != nil {
-			return ParsedProof{}, err
-		}
-	}
 	p := ParsedProof{
-		TLD:                label,
-		OwnerPublicKey:     ownerPK,
-		RegistrarPublicKey: regPK,
-		RegistrarSignature: regSig,
+		TLD:            label,
+		OwnerPublicKey: ownerPK,
 	}
 	return p, nil
-}
-
-// ValidateProofForRegistration checks registrar proof fields required for register-tld.
-func ValidateProofForRegistration(p ParsedProof, tld []byte) error {
-	if len(p.RegistrarPublicKey) == 0 {
-		return fmt.Errorf("registrarPublicKey is required for registration")
-	}
-	if err := VerifyTLDSignature(p.RegistrarPublicKey, tld, p.RegistrarSignature); err != nil {
-		return fmt.Errorf("invalid registrar signature: %w", err)
-	}
-	return nil
 }
 
 // VerifyTLDSignature mirrors utils.verify_tld_signature: ECDSA-secp256k1(pk, blake2b_256(tld), sig).
@@ -130,17 +102,6 @@ func decodeKey(s, field string) ([]byte, error) {
 	// Compressed secp256k1 pubkey is 33 bytes; some fixtures include uncompressed (65).
 	if len(b) != 33 && len(b) != 65 {
 		return nil, fmt.Errorf("%s: want 33 or 65 bytes, got %d", field, len(b))
-	}
-	return b, nil
-}
-
-func decodeSig(s, field string) ([]byte, error) {
-	b, err := hex.DecodeString(strings.TrimPrefix(strings.TrimSpace(s), "0x"))
-	if err != nil {
-		return nil, fmt.Errorf("%s: invalid hex", field)
-	}
-	if len(b) < 64 {
-		return nil, fmt.Errorf("%s: too short (%d)", field, len(b))
 	}
 	return b, nil
 }

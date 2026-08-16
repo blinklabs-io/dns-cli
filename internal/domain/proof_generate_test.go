@@ -113,11 +113,11 @@ func TestLoadHNSKeyFileRoundTrip(t *testing.T) {
 
 func TestGenerateProofBundle(t *testing.T) {
 	dir := t.TempDir()
-	out, err := GenerateProofBundle("hello-handshake", dir, "", "")
+	out, err := GenerateProofBundle("hello-handshake", dir, "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, p := range []string{out.RegistrarHNSPath, out.OwnerHNSPath, out.ProofBundlePath} {
+	for _, p := range []string{out.OwnerHNSPath, out.ProofBundlePath} {
 		if _, err := os.Stat(p); err != nil {
 			t.Fatalf("missing %s: %v", p, err)
 		}
@@ -126,26 +126,7 @@ func TestGenerateProofBundle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := ValidateProofForRegistration(proof, proof.TLD.Bytes); err != nil {
-		t.Fatalf("registration proof: %v", err)
+	if len(proof.OwnerPublicKey) == 0 {
+		t.Fatal("expected ownerPublicKey")
 	}
-}
-
-func TestValidateProofForRegistrationRequiresRegistrarKey(t *testing.T) {
-	p := ParsedProof{
-		OwnerPublicKey:     mustDecodeHex(t, helloHandshakePubHex),
-		RegistrarSignature: mustDecodeHex(t, helloHandshakeSigHex),
-	}
-	if err := ValidateProofForRegistration(p, []byte("hello-handshake")); err == nil {
-		t.Fatal("expected error without registrarPublicKey")
-	}
-}
-
-func mustDecodeHex(t *testing.T, s string) []byte {
-	t.Helper()
-	b, err := hex.DecodeString(s)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return b
 }

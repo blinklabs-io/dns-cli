@@ -22,9 +22,8 @@ type HNSKeyFile struct {
 
 // ProofBundleOutput lists paths written by GenerateProofBundle.
 type ProofBundleOutput struct {
-	RegistrarHNSPath string
-	OwnerHNSPath     string
-	ProofBundlePath  string
+	OwnerHNSPath    string
+	ProofBundlePath string
 }
 
 // GenerateHNSKey creates a new secp256k1 key pair.
@@ -99,45 +98,33 @@ func SignedHNSKeyFile(privateKey *secp256k1.PrivateKey, tldBytes []byte) (HNSKey
 	}, nil
 }
 
-// GenerateProofBundle signs tld with registrar and owner keys and writes registrar.hns,
-// owner.hns, and proof-bundle.json into outDir. Empty key paths generate fresh keys.
-func GenerateProofBundle(tld, outDir, registrarKeyPath, ownerKeyPath string) (ProofBundleOutput, error) {
+// GenerateProofBundle signs tld with the owner key and writes owner.hns and
+// proof-bundle.json into outDir. An empty key path generates a fresh key.
+// Registrar authority is proven on-chain by holding the registrar NFT, not
+// by a signature, so no registrar key is involved.
+func GenerateProofBundle(tld, outDir, ownerKeyPath string) (ProofBundleOutput, error) {
 	label, err := ParseLabel(tld)
 	if err != nil {
 		return ProofBundleOutput{}, err
 	}
-	registrarPriv, err := loadOrGenerateHNSKey(registrarKeyPath)
-	if err != nil {
-		return ProofBundleOutput{}, fmt.Errorf("registrar key: %w", err)
-	}
 	ownerPriv, err := loadOrGenerateHNSKey(ownerKeyPath)
 	if err != nil {
 		return ProofBundleOutput{}, fmt.Errorf("owner key: %w", err)
-	}
-	registrarFile, err := SignedHNSKeyFile(registrarPriv, label.Bytes)
-	if err != nil {
-		return ProofBundleOutput{}, err
 	}
 	ownerFile, err := SignedHNSKeyFile(ownerPriv, label.Bytes)
 	if err != nil {
 		return ProofBundleOutput{}, err
 	}
 	bundle := ProofBundle{
-		TLD:                label.Canonical,
-		OwnerPublicKey:     ownerFile.PublicKey,
-		RegistrarPublicKey: registrarFile.PublicKey,
-		RegistrarSignature: registrarFile.Signature,
+		TLD:            label.Canonical,
+		OwnerPublicKey: ownerFile.PublicKey,
 	}
 	if err := os.MkdirAll(outDir, 0o700); err != nil {
 		return ProofBundleOutput{}, err
 	}
 	out := ProofBundleOutput{
-		RegistrarHNSPath: filepath.Join(outDir, "registrar.hns"),
-		OwnerHNSPath:     filepath.Join(outDir, "owner.hns"),
-		ProofBundlePath:  filepath.Join(outDir, "proof-bundle.json"),
-	}
-	if err := writeHNSKeyFile(out.RegistrarHNSPath, registrarFile); err != nil {
-		return ProofBundleOutput{}, err
+		OwnerHNSPath:    filepath.Join(outDir, "owner.hns"),
+		ProofBundlePath: filepath.Join(outDir, "proof-bundle.json"),
 	}
 	if err := writeHNSKeyFile(out.OwnerHNSPath, ownerFile); err != nil {
 		return ProofBundleOutput{}, err

@@ -94,12 +94,10 @@ func (r *Runner) runExisting() error {
 		g.Note("Skip faucet wait — fund already confirmed in TLD state.")
 	}
 
-	if needsProofOrPrepare(entry.Stage) {
-		g.Step("Proof + system prepare",
-			"Ensure Handshake proof keys and parameterized validators exist.")
-		if err := r.ensureProofAndPrepare(); err != nil {
-			return err
-		}
+	g.Step("Proof",
+		"Ensure the owner's Handshake proof keys exist.")
+	if err := r.ensureProof(); err != nil {
+		return err
 	}
 
 	if err := r.ensureReadinessConfig(entry.Stage); err != nil {
@@ -121,15 +119,6 @@ func (r *Runner) runExisting() error {
 	}
 	r.showSuccess()
 	return nil
-}
-
-func needsProofOrPrepare(stage ResumeStage) bool {
-	switch stage {
-	case StageFund:
-		return false
-	default:
-		return true
-	}
 }
 
 func (r *Runner) loadSelectedLayout(entry ResumeEntry) error {

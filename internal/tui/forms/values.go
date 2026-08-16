@@ -15,24 +15,23 @@ type ActionValues struct {
 	Actor      string
 
 	// Proof / protocol
-	TLD          string
-	SLD          string
-	Proof        string
-	RegistrarKey string
-	OwnerKey     string
-	Records      string
-	SLDOwner     string
+	TLD      string
+	SLD      string
+	Proof    string
+	OwnerKey string
+	Records  string
+	SLDOwner string
 
 	// System
-	Blueprint    string
-	RegistrarHNS string
-	StakeKey     string
-	Aiken        string
-	Deployment   string
-	BaseConfig   string
-	TxID         string
-	ActorDir     string
-	Provider     string
+	Blueprint            string
+	RegistrarTokenPolicy string
+	StakeKey             string
+	Aiken                string
+	Deployment           string
+	BaseConfig           string
+	TxID                 string
+	ActorDir             string
+	Provider             string
 
 	// Tx
 	TxPath     string

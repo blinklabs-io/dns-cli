@@ -62,20 +62,26 @@ For builders (`wallet fund`, `registrar`, `owner`, `system init`), `--out` is a 
 dns-cli proof generate --tld demo-name --out-dir runtime/proofs
 ```
 
-Writes `registrar.hns`, `owner.hns`, and `proof-bundle.json` with secp256k1 compact signatures over `blake2b_256(tld)`. Optional `--registrar-key` / `--owner-key` reuse existing `.hns` files. `--registrar-hns-key` is an alias for `--registrar-key`.
+Writes `owner.hns` and `proof-bundle.json` with a secp256k1 compact signature over `blake2b_256(tld)`. Optional `--owner-key` reuses an existing `.hns` file. Registrar authority no longer runs through a signature — register-tld proves it on-chain by holding the registrar NFT (see `system mint-registrar-token` below) — so no registrar key is generated here.
 
 ## System bootstrap
 
 ```bash
+dns-cli system mint-registrar-token --config bootstrap.json \
+  --blueprint demo/fixtures/contracts/plutus.json \
+  --out-dir runtime/contracts \
+  --funding-actor bootstrap --destination-actor registrar --out artifacts/00-mint-registrar-token
+
+dns-cli tx apply --config bootstrap.json --tx artifacts/00-mint-registrar-token.unsigned.json \
+  --actor bootstrap --signed artifacts/00-mint-registrar-token.signed.json \
+  --manifest artifacts/00-mint-registrar-token.manifest.json
+
 dns-cli system prepare \
   --blueprint demo/fixtures/contracts/plutus.json \
-  --registrar-hns-key runtime/proofs/registrar.hns \
+  --registrar-token-policy-id <policyId from mint-registrar-token> \
   --stake-key runtime/wallets/bootstrap/stake.vkey \
   --network preprod \
   --out-dir runtime/contracts
-
-dns-cli system mint-registrar-token --config bootstrap.json --deployment runtime/contracts/deployment.json \
-  --funding-actor bootstrap --destination-actor registrar --out artifacts/00-mint-registrar-token
 
 dns-cli system init --config bootstrap.json --deployment runtime/contracts/deployment.json \
   --actor bootstrap --out artifacts/01-deploy
@@ -89,9 +95,9 @@ dns-cli system bind \
   --out runtime/config/blockfrost.json
 ```
 
-`system prepare` invokes Aiken to apply validator parameters in order: registrar key → registrar policy → TLD policy → SLD policy. `--registrar-key` is an alias for `--registrar-hns-key`.
+`system mint-registrar-token` parameterizes `registrar_token` (a one-shot minting policy) against whichever UTxO the funding actor happens to hold, spends that same UTxO in the mint, and pays the resulting NFT to the destination actor. It runs first and needs no prior deployment: it bootstraps `deployment.json` itself (or extends it if already present) with just the `registrarToken` validator entry. The minted policy id must be confirmed on-chain (via `tx apply`) before `system prepare` runs, since `tld_registrar` is parameterized by it.
 
-`system mint-registrar-token` parameterizes `registrar_token` (a one-shot minting policy) against whichever UTxO the funding actor happens to hold, spends that same UTxO in the mint, and pays the resulting NFT to the destination actor. It doesn't depend on `system init`/`system bind` and can run before or after them; the minted policy id is recorded back into `deployment.json` and later carried into the bound config by `system bind`.
+`system prepare` invokes Aiken to apply validator parameters in order: registrar NFT policy id → registrar policy → TLD policy → SLD policy. It loads and extends the same `deployment.json` that `mint-registrar-token` bootstrapped, adding the `tldRegistrar`/`tldReference`/`sldReference` entries alongside the existing `registrarToken` one.
 
 ## Protocol flow
 

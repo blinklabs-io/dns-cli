@@ -17,10 +17,10 @@ func newProofCmd(g *GlobalFlags) *cobra.Command {
 }
 
 func newProofGenerateCmd(g *GlobalFlags) *cobra.Command {
-	var tld, out, registrarKey, registrarKeyAlias, ownerKey string
+	var tld, out, ownerKey string
 	cmd := &cobra.Command{
 		Use:   "generate",
-		Short: "Generate registrar/owner HNS keys and a proof bundle for a TLD",
+		Short: "Generate an owner HNS key and a proof bundle for a TLD",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			p, err := printerFromFlags(g, cmd)
 			if err != nil {
@@ -29,11 +29,7 @@ func newProofGenerateCmd(g *GlobalFlags) *cobra.Command {
 			if tld == "" || out == "" {
 				return WrapExit(ExitUsage, fmt.Errorf("--tld and --out-dir are required"))
 			}
-			regKey := firstNonEmptyFlag(registrarKey, registrarKeyAlias)
-			if registrarKey != "" && registrarKeyAlias != "" && registrarKey != registrarKeyAlias {
-				return WrapExit(ExitUsage, fmt.Errorf("--registrar-key and --registrar-hns-key must match when both are set"))
-			}
-			bundleOut, err := domain.GenerateProofBundle(tld, out, regKey, ownerKey)
+			bundleOut, err := domain.GenerateProofBundle(tld, out, ownerKey)
 			if err != nil {
 				return WrapExit(ExitValidation, err)
 			}
@@ -42,21 +38,17 @@ func newProofGenerateCmd(g *GlobalFlags) *cobra.Command {
 				Operation: "proof.generate",
 				Message:   fmt.Sprintf("wrote proof bundle for %s", tld),
 				Data: map[string]any{
-					"tld":            tld,
-					"outDir":         out,
-					"registrarHns":   bundleOut.RegistrarHNSPath,
-					"ownerHns":       bundleOut.OwnerHNSPath,
-					"proofBundle":    bundleOut.ProofBundlePath,
-					"registrarKeyIn": regKey,
-					"ownerKeyIn":     ownerKey,
+					"tld":         tld,
+					"outDir":      out,
+					"ownerHns":    bundleOut.OwnerHNSPath,
+					"proofBundle": bundleOut.ProofBundlePath,
+					"ownerKeyIn":  ownerKey,
 				},
 			})
 		},
 	}
 	cmd.Flags().StringVar(&tld, "tld", "", "top-level domain label to sign")
-	cmd.Flags().StringVar(&out, "out-dir", "", "output directory for registrar.hns, owner.hns, and proof-bundle.json")
-	cmd.Flags().StringVar(&registrarKey, "registrar-key", "", "existing registrar HNS key JSON (generates a new key when omitted)")
-	cmd.Flags().StringVar(&registrarKeyAlias, "registrar-hns-key", "", "alias for --registrar-key")
+	cmd.Flags().StringVar(&out, "out-dir", "", "output directory for owner.hns and proof-bundle.json")
 	cmd.Flags().StringVar(&ownerKey, "owner-key", "", "existing owner HNS key JSON (generates a new key when omitted)")
 	return cmd
 }

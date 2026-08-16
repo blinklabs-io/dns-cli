@@ -10,7 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/blinklabs-io/dns-cli/internal/domain"
 	"github.com/blinklabs-io/dns-cli/internal/protocol"
 	"github.com/blinklabs-io/dns-cli/internal/system"
 	"github.com/blinklabs-io/dns-cli/internal/wallet"
@@ -146,15 +145,7 @@ func TestPrepareDeploymentWithFakeAiken(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, hns, err := domain.GenerateHNSKey()
-	if err != nil {
-		t.Fatal(err)
-	}
-	hnsPath := filepath.Join(tmp, "registrar.hns")
-	hnsRaw, _ := json.MarshalIndent(hns, "", "  ")
-	if err := os.WriteFile(hnsPath, hnsRaw, 0o600); err != nil {
-		t.Fatal(err)
-	}
+	registrarTokenPolicyID := strings.Repeat("dd", 28)
 
 	stakePub := make([]byte, 32)
 	for i := range stakePub {
@@ -177,13 +168,13 @@ func TestPrepareDeploymentWithFakeAiken(t *testing.T) {
 	fake := NewFakeRunner()
 	outDir := filepath.Join(tmp, "out")
 	result, err := system.PrepareDeployment(context.Background(), system.PrepareOptions{
-		Blueprint:       blueprintPath,
-		RegistrarHNSKey: hnsPath,
-		StakeKeyPath:    stakePath,
-		Network:         "preprod",
-		OutDir:          outDir,
-		Force:           true,
-		Runner:          fake,
+		Blueprint:              blueprintPath,
+		RegistrarTokenPolicyID: registrarTokenPolicyID,
+		StakeKeyPath:           stakePath,
+		Network:                "preprod",
+		OutDir:                 outDir,
+		Force:                  true,
+		Runner:                 fake,
 	})
 	if err != nil {
 		t.Fatal(err)

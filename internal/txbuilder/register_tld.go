@@ -9,14 +9,12 @@ import (
 	"github.com/blinklabs-io/dns-cli/internal/chainquery"
 	"github.com/blinklabs-io/dns-cli/internal/domain"
 	"github.com/blinklabs-io/dns-cli/internal/protocol"
+	"github.com/blinklabs-io/dns-cli/internal/system"
 )
 
 // RegisterTLD builds an unsigned registrar registration transaction.
 func RegisterTLD(ctx context.Context, bctx *Context, tld domain.Label, proof domain.ParsedProof, outPrefix, contractRevision string) (BuildOutput, error) {
 	slog.Info("Building register-tld transaction", "tld", tld.Canonical)
-	if err := domain.ValidateProofForRegistration(proof, tld.Bytes); err != nil {
-		return BuildOutput{}, fmt.Errorf("invalid registrar proof: %w", err)
-	}
 	if _, err := chainquery.FindRegistration(ctx, bctx.Provider, bctx.Contracts, tld); err == nil {
 		return BuildOutput{}, fmt.Errorf("tld %q is already registered", tld.Canonical)
 	}
@@ -39,6 +37,17 @@ func RegisterTLD(ctx context.Context, bctx *Context, tld domain.Label, proof dom
 	collateral, err := chainquery.FindCollateral(ctx, bctx.Provider, registrar, chainquery.MinCollateralLovelace)
 	if err != nil {
 		return BuildOutput{}, err
+	}
+	// Registrar authority is proven on-chain by the registrar NFT appearing
+	// in the mint transaction's outputs (tld_registrar's RegisterTLD mint
+	// check), not by a signature. The only way to move that NFT into an
+	// output is to spend the UTxO holding it and recreate it.
+	registrarNFT, err := chainquery.FindByAsset(ctx, bctx.Provider, registrar, chainquery.AssetID{
+		PolicyID: bctx.Contracts.RegistrarTokenPolicyID,
+		Name:     bctx.Contracts.RegistrarTokenAssetName,
+	})
+	if err != nil {
+		return BuildOutput{}, fmt.Errorf("registrar nft: %w", err)
 	}
 
 	tldRefPolicy, err := policyBytes(bctx.Contracts.TLDReferencePolicyID)
@@ -64,6 +73,7 @@ func RegisterTLD(ctx context.Context, bctx *Context, tld domain.Label, proof dom
 	datum := plutusDatum(datumPD)
 
 	a := bctx.newApollo(registrar)
+	a.AddInput(registrarNFT.Utxo)
 	a.AddLoadedUTxOs(funding...)
 	a.AddCollateral(collateral)
 	if err := bctx.addReferenceInput(a, "tldRegistrar"); err != nil {
@@ -85,9 +95,15 @@ func RegisterTLD(ctx context.Context, bctx *Context, tld domain.Label, proof dom
 	a.Mint(regAsset, &rd, nil)
 	a.PayToContract(bctx.Contracts.RegistrarAddr, datum, 0, regAsset)
 
+	registrarNFTUnit := unit(bctx.Contracts.RegistrarTokenPolicyID, bctx.Contracts.RegistrarTokenAssetName, 1)
+	a.PayToAddress(registrar, 1, registrarNFTUnit)
+
 	return bctx.finalize(a, "register-tld", "unsigned register-tld", outPrefix, contractRevision,
 		[]string{registrarPKH},
-		[]artifact.ExpectedOutput{{Role: "registrar-registration", Index: 0}},
+		[]artifact.ExpectedOutput{
+			{Role: "registrar-registration", Index: 0},
+			{Role: system.RoleRegistrarToken, Index: 1},
+		},
 		map[string]string{"tld": tld.Canonical},
 	)
 }

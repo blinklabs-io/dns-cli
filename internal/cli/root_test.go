@@ -261,7 +261,7 @@ func TestSystemPrepareHelp(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"--blueprint", "--registrar-hns-key", "--stake-key", "--out-dir"} {
+	for _, want := range []string{"--blueprint", "--registrar-token-policy-id", "--stake-key", "--out-dir"} {
 		if !bytes.Contains([]byte(out), []byte(want)) {
 			t.Fatalf("expected %s in help: %s", want, out)
 		}

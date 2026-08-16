@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/blinklabs-io/dns-cli/internal/domain"
 	"github.com/blinklabs-io/dns-cli/internal/protocol"
 	"github.com/blinklabs-io/dns-cli/internal/wallet"
 	"github.com/blinklabs-io/gouroboros/ledger/common"
@@ -16,14 +15,14 @@ import (
 
 // PrepareOptions configures PrepareDeployment.
 type PrepareOptions struct {
-	Blueprint       string
-	RegistrarHNSKey string
-	StakeKeyPath    string
-	Network         string
-	OutDir          string
-	AikenBin        string
-	Force           bool
-	Runner          Runner
+	Blueprint              string
+	RegistrarTokenPolicyID string
+	StakeKeyPath           string
+	Network                string
+	OutDir                 string
+	AikenBin               string
+	Force                  bool
+	Runner                 Runner
 }
 
 // PrepareResult summarizes prepare outputs.
@@ -47,21 +46,25 @@ func PrepareDeployment(ctx context.Context, opts PrepareOptions) (*PrepareResult
 		return nil, fmt.Errorf("create out-dir: %w", err)
 	}
 	depPath := filepath.Join(opts.OutDir, "deployment.json")
-	if _, err := os.Stat(depPath); err == nil && !opts.Force {
+	existing, err := LoadOrInitDeploymentJSON(depPath, opts.Blueprint, opts.OutDir)
+	if err != nil {
+		return nil, err
+	}
+	if _, alreadyPrepared := existing.Validators[RoleTLDRegistrar]; alreadyPrepared && !opts.Force {
 		return nil, fmt.Errorf("deployment already exists at %s (use --force to overwrite)", depPath)
 	}
 
-	hnsPub, err := loadRegistrarHNSPublicKey(opts.RegistrarHNSKey)
+	registrarTokenPolicy, err := protocol.HexPolicyID(opts.RegistrarTokenPolicyID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("registrar token policy id: %w", err)
 	}
 	stakeHash, err := LoadStakeKeyHash(opts.StakeKeyPath)
 	if err != nil {
 		return nil, err
 	}
-	hnsCBOR, err := protocol.EncodeByteArrayCBORHex(hnsPub)
+	registrarTokenPolicyCBOR, err := protocol.EncodePolicyIDCBORHex(registrarTokenPolicy)
 	if err != nil {
-		return nil, fmt.Errorf("encode registrar hns key: %w", err)
+		return nil, fmt.Errorf("encode registrar token policy id: %w", err)
 	}
 	stakeCBOR, err := protocol.EncodeStakeKeyHashCredentialCBORHex(stakeHash)
 	if err != nil {
@@ -78,13 +81,13 @@ func PrepareDeployment(ctx context.Context, opts PrepareOptions) (*PrepareResult
 		return nil, err
 	}
 
-	// 1) Apply registrar_hns_key + stake_cred to tld_registrar
+	// 1) Apply registrar_nft_policy_id + stake_cred to tld_registrar
 	regBP := filepath.Join(opts.OutDir, "plutus.tld_registrar.json")
 	if err := copyFileRaw(baseBP, regBP); err != nil {
 		return nil, err
 	}
-	if err := runner.Apply(ctx, opts.OutDir, filepath.Base(regBP), filepath.Base(regBP), ModuleTLDRegistrar, ValidatorTLDRegistrar, hnsCBOR); err != nil {
-		return nil, fmt.Errorf("apply registrar hns key: %w", err)
+	if err := runner.Apply(ctx, opts.OutDir, filepath.Base(regBP), filepath.Base(regBP), ModuleTLDRegistrar, ValidatorTLDRegistrar, registrarTokenPolicyCBOR); err != nil {
+		return nil, fmt.Errorf("apply registrar nft policy id: %w", err)
 	}
 	if err := runner.Apply(ctx, opts.OutDir, filepath.Base(regBP), filepath.Base(regBP), ModuleTLDRegistrar, ValidatorTLDRegistrar, stakeCBOR); err != nil {
 		return nil, fmt.Errorf("apply registrar stake cred: %w", err)
@@ -160,47 +163,46 @@ func PrepareDeployment(ctx context.Context, opts PrepareOptions) (*PrepareResult
 		}
 	}
 
-	dep := &DeploymentJSON{
-		Version:         1,
-		Network:         "preprod",
-		NetworkID:       networkID,
-		Magic:           1,
-		StakeKeyHash:    hex.EncodeToString(stakeHash),
-		RegistrarHNSKey: hex.EncodeToString(hnsPub),
-		BlueprintPath:   baseBP,
-		OutDir:          opts.OutDir,
-		Validators: map[string]ValidatorArtifact{
-			RoleTLDRegistrar: {
-				Role:          RoleTLDRegistrar,
-				Module:        ModuleTLDRegistrar,
-				Validator:     ValidatorTLDRegistrar,
-				PolicyID:      regPolicy,
-				ScriptHash:    regPolicy,
-				Address:       addrs[RoleTLDRegistrar],
-				PlutusFile:    regPlutus,
-				BlueprintFile: regBP,
-			},
-			RoleTLDReference: {
-				Role:          RoleTLDReference,
-				Module:        ModuleTLDReference,
-				Validator:     ValidatorTLDReference,
-				PolicyID:      tldPolicy,
-				ScriptHash:    tldPolicy,
-				Address:       addrs[RoleTLDReference],
-				PlutusFile:    tldPlutus,
-				BlueprintFile: tldBP,
-			},
-			RoleSLDReference: {
-				Role:          RoleSLDReference,
-				Module:        ModuleSLDReference,
-				Validator:     ValidatorSLDReference,
-				PolicyID:      sldPolicy,
-				ScriptHash:    sldPolicy,
-				Address:       addrs[RoleSLDReference],
-				PlutusFile:    sldPlutus,
-				BlueprintFile: sldBP,
-			},
-		},
+	dep := existing
+	dep.Version = 1
+	dep.Network = "preprod"
+	dep.NetworkID = networkID
+	dep.Magic = 1
+	dep.StakeKeyHash = hex.EncodeToString(stakeHash)
+	dep.BlueprintPath = baseBP
+	dep.OutDir = opts.OutDir
+	if dep.Validators == nil {
+		dep.Validators = map[string]ValidatorArtifact{}
+	}
+	dep.Validators[RoleTLDRegistrar] = ValidatorArtifact{
+		Role:          RoleTLDRegistrar,
+		Module:        ModuleTLDRegistrar,
+		Validator:     ValidatorTLDRegistrar,
+		PolicyID:      regPolicy,
+		ScriptHash:    regPolicy,
+		Address:       addrs[RoleTLDRegistrar],
+		PlutusFile:    regPlutus,
+		BlueprintFile: regBP,
+	}
+	dep.Validators[RoleTLDReference] = ValidatorArtifact{
+		Role:          RoleTLDReference,
+		Module:        ModuleTLDReference,
+		Validator:     ValidatorTLDReference,
+		PolicyID:      tldPolicy,
+		ScriptHash:    tldPolicy,
+		Address:       addrs[RoleTLDReference],
+		PlutusFile:    tldPlutus,
+		BlueprintFile: tldBP,
+	}
+	dep.Validators[RoleSLDReference] = ValidatorArtifact{
+		Role:          RoleSLDReference,
+		Module:        ModuleSLDReference,
+		Validator:     ValidatorSLDReference,
+		PolicyID:      sldPolicy,
+		ScriptHash:    sldPolicy,
+		Address:       addrs[RoleSLDReference],
+		PlutusFile:    sldPlutus,
+		BlueprintFile: sldBP,
 	}
 	if err := SaveDeploymentJSON(depPath, dep); err != nil {
 		return nil, err
@@ -271,8 +273,8 @@ func validatePrepareOpts(opts PrepareOptions) error {
 	if strings.TrimSpace(opts.Blueprint) == "" {
 		return fmt.Errorf("--blueprint is required")
 	}
-	if strings.TrimSpace(opts.RegistrarHNSKey) == "" {
-		return fmt.Errorf("--registrar-hns-key is required")
+	if strings.TrimSpace(opts.RegistrarTokenPolicyID) == "" {
+		return fmt.Errorf("--registrar-token-policy-id is required")
 	}
 	if strings.TrimSpace(opts.StakeKeyPath) == "" {
 		return fmt.Errorf("--stake-key is required")
@@ -288,22 +290,6 @@ func validatePrepareOpts(opts PrepareOptions) error {
 		return fmt.Errorf("system prepare supports preprod only (got %q)", opts.Network)
 	}
 	return nil
-}
-
-func loadRegistrarHNSPublicKey(path string) ([]byte, error) {
-	_, f, err := domain.LoadHNSKeyFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("load registrar hns key: %w", err)
-	}
-	pubHex := strings.TrimPrefix(strings.TrimSpace(f.PublicKey), "0x")
-	pub, err := hex.DecodeString(pubHex)
-	if err != nil {
-		return nil, fmt.Errorf("registrar publicKey: invalid hex")
-	}
-	if len(pub) != 33 {
-		return nil, fmt.Errorf("registrar publicKey: want 33 compressed bytes, got %d", len(pub))
-	}
-	return pub, nil
 }
 
 // LoadStakeKeyHash loads blake2b-224 of a Cardano stake verification key.
