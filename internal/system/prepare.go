@@ -16,7 +16,7 @@ import (
 
 // PrepareOptions configures PrepareDeployment.
 type PrepareOptions struct {
-	BlueprintDir    string
+	Blueprint       string
 	RegistrarHNSKey string
 	StakeKeyPath    string
 	Network         string
@@ -32,7 +32,8 @@ type PrepareResult struct {
 	Deployment     *DeploymentJSON
 }
 
-// PrepareDeployment builds, parameterizes, and packages system validators.
+// PrepareDeployment parameterizes and packages system validators from a
+// pre-built blueprint.
 func PrepareDeployment(ctx context.Context, opts PrepareOptions) (*PrepareResult, error) {
 	if err := validatePrepareOpts(opts); err != nil {
 		return nil, err
@@ -67,12 +68,9 @@ func PrepareDeployment(ctx context.Context, opts PrepareOptions) (*PrepareResult
 		return nil, fmt.Errorf("encode stake credential: %w", err)
 	}
 
-	if err := runner.Build(ctx, opts.BlueprintDir); err != nil {
-		return nil, fmt.Errorf("aiken build: %w", err)
-	}
-	srcBlueprint := filepath.Join(opts.BlueprintDir, "plutus.json")
+	srcBlueprint := opts.Blueprint
 	if _, err := os.Stat(srcBlueprint); err != nil {
-		return nil, fmt.Errorf("blueprint missing after build: %w", err)
+		return nil, fmt.Errorf("blueprint not found: %w", err)
 	}
 
 	baseBP, err := copyFile(srcBlueprint, filepath.Join(opts.OutDir, "plutus.base.json"))
@@ -270,7 +268,7 @@ func findValidatorByName(bp *protocol.Blueprint, name string) (*protocol.Bluepri
 }
 
 func validatePrepareOpts(opts PrepareOptions) error {
-	if strings.TrimSpace(opts.BlueprintDir) == "" {
+	if strings.TrimSpace(opts.Blueprint) == "" {
 		return fmt.Errorf("--blueprint is required")
 	}
 	if strings.TrimSpace(opts.RegistrarHNSKey) == "" {

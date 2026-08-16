@@ -2,10 +2,10 @@ package cli
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/blinklabs-io/dns-cli/internal/prereq"
 	"github.com/blinklabs-io/dns-cli/internal/system"
 	"github.com/blinklabs-io/dns-cli/internal/txbuilder"
 	"github.com/spf13/cobra"
@@ -27,7 +27,7 @@ func newSystemPrepareCmd(g *GlobalFlags) *cobra.Command {
 	var force bool
 	cmd := &cobra.Command{
 		Use:   "prepare",
-		Short: "Build and parameterize system validators into deployment.json",
+		Short: "Parameterize system validators into deployment.json",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			p, err := printerFromFlags(g, cmd)
 			if err != nil {
@@ -43,23 +43,11 @@ func newSystemPrepareCmd(g *GlobalFlags) *cobra.Command {
 			if network == "" {
 				network = "preprod"
 			}
-			resolvedBlueprint, err := prereq.EnsureBlueprintDir(blueprint, prereq.Options{
-				StartDir:   firstNonEmptyPath(blueprint, "."),
-				AssumeYes:  false,
-				Stdout:     cmd.OutOrStdout(),
-				Stderr:     cmd.ErrOrStderr(),
-				ConfirmYes: nil, // non-interactive prepare: only auto-use existing clone
-			})
-			if err != nil {
-				// If blueprint already exists on disk, use it; otherwise surface prereq error.
-				if !prereq.ContractsOK(blueprint) {
-					return WrapExit(ExitBuild, err)
-				}
-				resolvedBlueprint = blueprint
+			if _, err := os.Stat(blueprint); err != nil {
+				return WrapExit(ExitUsage, fmt.Errorf("--blueprint: %w", err))
 			}
-			blueprint = resolvedBlueprint
 			result, err := system.PrepareDeployment(cmd.Context(), system.PrepareOptions{
-				BlueprintDir:    blueprint,
+				Blueprint:       blueprint,
 				RegistrarHNSKey: registrarKey,
 				StakeKeyPath:    stakeKey,
 				Network:         network,
@@ -94,7 +82,7 @@ func newSystemPrepareCmd(g *GlobalFlags) *cobra.Command {
 			})
 		},
 	}
-	cmd.Flags().StringVar(&blueprint, "blueprint", "", "Aiken project directory containing aiken.toml")
+	cmd.Flags().StringVar(&blueprint, "blueprint", "", "path to a pre-built plutus.json blueprint")
 	cmd.Flags().StringVar(&registrarHNS, "registrar-hns-key", "", "registrar HNS key JSON (registrar.hns)")
 	cmd.Flags().StringVar(&registrarKeyAlias, "registrar-key", "", "alias for --registrar-hns-key")
 	cmd.Flags().StringVar(&stakeKey, "stake-key", "", "stake.vkey envelope or wallet directory containing stake.vkey")
@@ -243,13 +231,4 @@ func newSystemBindCmd(g *GlobalFlags) *cobra.Command {
 	_ = cmd.MarkFlagRequired("provider")
 	_ = cmd.MarkFlagRequired("out")
 	return cmd
-}
-
-func firstNonEmptyPath(vals ...string) string {
-	for _, v := range vals {
-		if strings.TrimSpace(v) != "" {
-			return v
-		}
-	}
-	return "."
 }

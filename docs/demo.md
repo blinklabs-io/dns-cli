@@ -49,7 +49,7 @@ demo/
     utxorpc.template.json
     records.json               # DNS records template → copied into each SLD run
   fixtures/
-    contracts/                 # Aiken project + plutus.json for system prepare
+    contracts/                 # vendored plutus.json blueprint for system prepare
   runs/
     .gitkeep
     states/                    # tracked schemas (tld / sld / run / index)
@@ -82,7 +82,7 @@ Schemas live under `runs/states/` and are versioned with the rest of `demo/runs/
 | Item | Notes |
 |---|---|
 | Go **1.25.12+** | Required by setup / build (Apollo via `go.mod` replace) |
-| Aiken CLI **≥ 1.1.19** | Must match `fixtures/contracts/aiken.toml` compiler |
+| Aiken CLI **≥ 1.1.19** | Applies/converts the vendored blueprint; not used to build it |
 | Provider credentials | See below |
 | ≥ **150 ADA** on bootstrap | Preprod faucet; runner polls until funded |
 
@@ -287,7 +287,7 @@ Safe operator customizations:
 
 | Item | Why |
 |---|---|
-| `fixtures/contracts/` compiler pin / blueprint | Must stay aligned with Aiken ≥ 1.1.19 and prepare/init |
+| `fixtures/contracts/plutus.json` | Must stay in sync with `dns-contracts/onchain/plutus.json`; copy it over by hand when contracts change |
 | `runs/states/*.schema.json` version fields | Runners expect `schemaVersion: 2` for TLD/SLD state |
 | Relative paths inside generated bootstrap/bound configs | Resolved against `runs/<tld>/config/`; rewriting by hand breaks signing |
 | Deleting `runs/<tld>/state.json` while keeping on-chain UTxOs | Resume will try to rebuild/resubmit and can fail against already-spent outputs |

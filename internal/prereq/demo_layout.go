@@ -14,9 +14,7 @@ var RequiredDemoRelPaths = []string{
 	"config/records.json",
 	"config/blockfrost.template.json",
 	"config/utxorpc.template.json",
-	"fixtures/contracts/aiken.toml",
-	"fixtures/contracts/validators",
-	"fixtures/contracts/lib",
+	"fixtures/contracts/plutus.json",
 }
 
 // MissingDemoAssets returns relative paths under demoRoot that are missing.
@@ -63,7 +61,7 @@ func EnsureDemoLayout(opts Options) error {
 		printDemoGuide(opts)
 		return fmt.Errorf("demo assets missing and --skip-install was set")
 	}
-	if !opts.askYes("Create/pull missing demo files and contracts now?") {
+	if !opts.askYes("Create missing demo config files now?") {
 		printDemoGuide(opts)
 		return fmt.Errorf("demo assets are required before fresh run")
 	}
@@ -77,24 +75,13 @@ func EnsureDemoLayout(opts Options) error {
 		}
 	}
 
-	// Contracts first (general prereq).
-	onchain, err := EnsureDNSContracts(opts)
-	if err != nil {
-		return err
-	}
-	fixtures := filepath.Join(abs, "fixtures", "contracts")
-	if !ContractsOK(fixtures) {
-		if err := SyncDemoContracts(onchain, fixtures); err != nil {
-			return err
-		}
-	}
-
 	if err := writeMissingConfigFiles(abs); err != nil {
 		return err
 	}
 
 	still := MissingDemoAssets(abs)
 	if len(still) > 0 {
+		printDemoGuide(opts)
 		return fmt.Errorf("demo assets still missing after repair: %s", strings.Join(still, ", "))
 	}
 	fmt.Fprintln(opts.out(), opts.theme().Dim("Demo layout ready."))
@@ -135,9 +122,9 @@ func printDemoGuide(opts Options) {
 	fmt.Fprint(opts.out(), opts.theme().Guide(
 		"Self-serve: restore the dns-cli demo tree",
 		"1. Use a full dns-cli checkout that includes demo/",
-		"2. Clone contracts: git clone "+DNSContractsRepoURL,
-		"3. Sync onchain → demo/fixtures/contracts (aiken.toml, validators, lib, …)",
-		"4. Ensure demo/config/{records.json,blockfrost.template.json,utxorpc.template.json}",
+		"2. demo/fixtures/contracts/plutus.json is a tracked repo file — "+
+			"restore it with git (e.g. git checkout -- demo/fixtures/contracts/plutus.json)",
+		"3. Ensure demo/config/{records.json,blockfrost.template.json,utxorpc.template.json}",
 	))
 }
 

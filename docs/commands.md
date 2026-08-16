@@ -68,7 +68,7 @@ Writes `registrar.hns`, `owner.hns`, and `proof-bundle.json` with secp256k1 comp
 
 ```bash
 dns-cli system prepare \
-  --blueprint demo/fixtures/contracts \
+  --blueprint demo/fixtures/contracts/plutus.json \
   --registrar-hns-key runtime/proofs/registrar.hns \
   --stake-key runtime/wallets/bootstrap/stake.vkey \
   --network preprod \
@@ -153,7 +153,7 @@ provider readiness, and resumes that exact run ID. Completed rows are shown but
 not selectable. The picker never shows transaction IDs or explorer links.
 `--yes` never auto-selects a run and never skips `Proceed with Preprod submissions?`.
 
-`demo run` (fresh) auto-detects `demo/` (`--demo-root` optional) and owns the full Preprod orchestration (prereq checks for demo layout + dns-contracts + Aiken, wallets, faucet wait, prepare/deploy, register → update, resume). Unset `--mode` / `--provider` / `--log-level` use numbered menus; skip-install and clipboard use yes-no when those flags were not passed. Missing contracts are cloned from `https://github.com/blinklabs-io/dns-contracts.git` when the operator agrees.
+`demo run` (fresh) auto-detects `demo/` (`--demo-root` optional) and owns the full Preprod orchestration (prereq checks for demo layout + Aiken, wallets, faucet wait, prepare/deploy, register → update, resume). Unset `--mode` / `--provider` / `--log-level` use numbered menus; skip-install and clipboard use yes-no when those flags were not passed. The demo's `plutus.json` blueprint is a tracked repo file, not cloned or built at run time.
 
 ## End-to-end demo
 

@@ -27,7 +27,7 @@ demo/
     utxorpc.template.json
     records.json              # DNS records template (copied into each SLD run)
   fixtures/
-    contracts/                # Aiken sources + plutus.json for system prepare
+    contracts/                # vendored plutus.json blueprint for system prepare
   runs/                       # full Preprod demo history + shared test wallets (tracked)
     .gitkeep
     states/                   # tracked JSON schemas
@@ -64,12 +64,12 @@ Unset mode / provider / TLD / SLD / log level use numbered menus (or yes-no) in 
 ## Prerequisites (fresh mode)
 
 - Go 1.25.12+ and a built `dns-cli` (`./scripts/setup.sh` or `.\scripts\setup.ps1`)
-- Aiken CLI on `PATH`, **version ≥ 1.1.19** (matches `fixtures/contracts/aiken.toml`)
+- Aiken CLI on `PATH`, **version ≥ 1.1.19** (used to apply/convert the vendored blueprint, not to build it)
 - Provider credentials:
   - Blockfrost: `DNS_CLI_BLOCKFROST_PROJECT_ID`
   - UTxO RPC: `DNS_CLI_UTXORPC_URL`, optional `DMTR_API_KEY` / `DNS_CLI_UTXORPC_HEADERS`
 
-The Go runner verifies the demo tree and contracts **before any run mode**. If `demo/` assets or `dns-contracts` are missing, it asks to create/pull them (or prints guides with `--skip-install`). Fresh mode also requires Aiken ≥ 1.1.19. Bootstrap faucet address is copied to the clipboard when possible (`--no-clipboard` to disable).
+The Go runner verifies the demo tree **before any run mode**. If `demo/` config files are missing, it asks to create them (or prints a guide with `--skip-install`); `fixtures/contracts/plutus.json` is a tracked repo file, so a missing/deleted copy is restored with `git checkout`, not regenerated. Fresh mode also requires Aiken ≥ 1.1.19. Bootstrap faucet address is copied to the clipboard when possible (`--no-clipboard` to disable).
 
 Bootstrap needs **≥ 150 ADA** from the [Preprod faucet](https://docs.cardano.org/cardano-testnets/tools/faucet/) before fund/deploy.
 
@@ -91,6 +91,6 @@ Bootstrap needs **≥ 150 ADA** from the [Preprod faucet](https://docs.cardano.o
 
 | Source | Destination |
 |---|---|
-| `dns-contracts/onchain/{aiken.toml,aiken.lock,plutus.json,validators,lib}` | `demo/fixtures/contracts/**` |
+| `dns-contracts/onchain/plutus.json` | `demo/fixtures/contracts/plutus.json` (manual copy when contracts change) |
 
 DNS record samples for fresh runs come from `demo/config/records.json`. `fixtures/` must not be written by runners. See [docs/demo.md](../docs/demo.md) for full operator guidance.

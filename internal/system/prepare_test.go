@@ -21,7 +21,6 @@ import (
 // FakeRunner records Aiken CLI calls and synthesizes applied blueprints.
 type FakeRunner struct {
 	Calls   []string
-	BuildN  int
 	ApplyN  int
 	hashes  map[string]string
 	scripts map[string]string // validator -> compiledCode hex
@@ -37,12 +36,6 @@ func NewFakeRunner() *FakeRunner {
 func (f *FakeRunner) Version(context.Context) (string, error) {
 	f.Calls = append(f.Calls, "version")
 	return "aiken fake", nil
-}
-
-func (f *FakeRunner) Build(_ context.Context, workdir string) error {
-	f.BuildN++
-	f.Calls = append(f.Calls, "build:"+workdir)
-	return nil
 }
 
 func (f *FakeRunner) Apply(_ context.Context, workdir, inBlueprint, outBlueprint, module, validator, cborHexParam string) error {
@@ -148,7 +141,8 @@ func TestPrepareDeploymentWithFakeAiken(t *testing.T) {
 		},
 	}
 	raw, _ := json.MarshalIndent(bp, "", "  ")
-	if err := os.WriteFile(filepath.Join(blueprintDir, "plutus.json"), raw, 0o644); err != nil {
+	blueprintPath := filepath.Join(blueprintDir, "plutus.json")
+	if err := os.WriteFile(blueprintPath, raw, 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -183,7 +177,7 @@ func TestPrepareDeploymentWithFakeAiken(t *testing.T) {
 	fake := NewFakeRunner()
 	outDir := filepath.Join(tmp, "out")
 	result, err := system.PrepareDeployment(context.Background(), system.PrepareOptions{
-		BlueprintDir:    blueprintDir,
+		Blueprint:       blueprintPath,
 		RegistrarHNSKey: hnsPath,
 		StakeKeyPath:    stakePath,
 		Network:         "preprod",
@@ -193,9 +187,6 @@ func TestPrepareDeploymentWithFakeAiken(t *testing.T) {
 	})
 	if err != nil {
 		t.Fatal(err)
-	}
-	if fake.BuildN != 1 {
-		t.Fatalf("build calls %d", fake.BuildN)
 	}
 	if fake.ApplyN != 6 {
 		t.Fatalf("apply calls %d want 6", fake.ApplyN)

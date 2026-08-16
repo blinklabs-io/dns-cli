@@ -133,9 +133,9 @@ func Run(ctx context.Context, opts Options) error {
 	}
 
 	g.Step("Proof + system prepare",
-		"Generate Handshake proof keys and parameterize validators (Aiken).",
+		"Generate Handshake proof keys and parameterize validators from the vendored blueprint.",
 		"dns-cli proof generate --tld <tld> --out-dir <tld>/proofs",
-		"dns-cli system prepare --blueprint demo/fixtures/contracts --registrar-hns-key <…>/registrar.hns --stake-key <…>/stake.vkey --out-dir <tld>/contracts")
+		"dns-cli system prepare --blueprint demo/fixtures/contracts/plutus.json --registrar-hns-key <…>/registrar.hns --stake-key <…>/stake.vkey --out-dir <tld>/contracts")
 	if err := r.ensureProofAndPrepare(); err != nil {
 		return err
 	}
@@ -248,10 +248,10 @@ func (r *Runner) ensureProofAndPrepare() error {
 		slog.Info("Deployment exists", "path", r.paths.DeploymentJSON)
 		return nil
 	}
-	slog.Info("Running system prepare (aiken build + parameterize)")
+	slog.Info("Running system prepare (parameterize)")
 	stakeKey := filepath.Join(r.paths.WalletsDir, "bootstrap", "stake.vkey")
 	_, err := r.ops.SystemPrepare(r.ctx, system.PrepareOptions{
-		BlueprintDir:    filepath.Join(r.paths.DemoRoot, "fixtures", "contracts"),
+		Blueprint:       filepath.Join(r.paths.DemoRoot, "fixtures", "contracts", "plutus.json"),
 		RegistrarHNSKey: registrarHns,
 		StakeKeyPath:    stakeKey,
 		Network:         NetworkName,
