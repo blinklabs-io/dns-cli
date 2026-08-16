@@ -3,6 +3,7 @@ package protocol
 import (
 	"encoding/hex"
 	"fmt"
+	"math/big"
 
 	"github.com/blinklabs-io/plutigo/data"
 )
@@ -13,6 +14,10 @@ const (
 	ConstrCredentialVerificationKey = 0 // Credential.VerificationKey
 	ConstrCredentialScript          = 1 // Credential.Script
 )
+
+// ConstrOutputReference is aiken/cardano/transaction.OutputReference's
+// (only) constructor index.
+const ConstrOutputReference = 0
 
 // EncodeByteArrayCBORHex encodes a Plutus bytes value as hex CBOR for aiken apply.
 func EncodeByteArrayCBORHex(b []byte) (string, error) {
@@ -36,6 +41,20 @@ func EncodeStakeKeyHashCredentialCBORHex(stakeKeyHash []byte) (string, error) {
 	cred := data.NewConstr(ConstrCredentialVerificationKey, data.NewByteString(stakeKeyHash))
 	stake := data.NewConstr(ConstrStakeInline, cred)
 	return encodePlutusCBORHex(stake)
+}
+
+// EncodeOutputRefCBORHex encodes OutputReference{transaction_id, output_index}
+// as Plutus Data CBOR, for parameterizing one-shot minting policies.
+// Matches aiken/cardano/transaction.OutputReference.
+func EncodeOutputRefCBORHex(txHash []byte, index uint32) (string, error) {
+	if len(txHash) != 32 {
+		return "", fmt.Errorf("tx hash must be 32 bytes, got %d", len(txHash))
+	}
+	ref := data.NewConstr(ConstrOutputReference,
+		data.NewByteString(txHash),
+		data.NewInteger(new(big.Int).SetUint64(uint64(index))),
+	)
+	return encodePlutusCBORHex(ref)
 }
 
 // StakeCredentialPlutusData builds Inline(VerificationKey(keyHash)).

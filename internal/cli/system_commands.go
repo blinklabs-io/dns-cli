@@ -17,6 +17,7 @@ func newSystemCmd(g *GlobalFlags) *cobra.Command {
 		Short: "Prepare, initialize, and bind Handshake DNS system validators",
 	}
 	cmd.AddCommand(newSystemPrepareCmd(g))
+	cmd.AddCommand(newSystemMintRegistrarTokenCmd(g))
 	cmd.AddCommand(newSystemInitCmd(g))
 	cmd.AddCommand(newSystemBindCmd(g))
 	return cmd
@@ -93,6 +94,95 @@ func newSystemPrepareCmd(g *GlobalFlags) *cobra.Command {
 	_ = cmd.MarkFlagRequired("blueprint")
 	_ = cmd.MarkFlagRequired("stake-key")
 	_ = cmd.MarkFlagRequired("out-dir")
+	return cmd
+}
+
+func newSystemMintRegistrarTokenCmd(g *GlobalFlags) *cobra.Command {
+	var configPath, deploymentPath, fundingActor, destActor, out string
+	cmd := &cobra.Command{
+		Use:   "mint-registrar-token",
+		Short: "Build unsigned tx minting the one-shot registrar NFT",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			p, err := printerFromFlags(g, cmd)
+			if err != nil {
+				return err
+			}
+			if fundingActor == "" {
+				fundingActor = "bootstrap"
+			}
+			if destActor == "" {
+				destActor = "registrar"
+			}
+			if out == "" {
+				return WrapExit(ExitUsage, fmt.Errorf("--out is required"))
+			}
+			if configPath != "" {
+				g.ConfigPath = configPath
+			}
+			eff, err := loadReadyEffective(cmd, g)
+			if err != nil {
+				return err
+			}
+			dep, err := system.LoadDeploymentJSON(deploymentPath)
+			if err != nil {
+				return WrapExit(ExitValidation, err)
+			}
+			bctx, err := txbuilder.NewFundingContext(cmd.Context(), eff)
+			if err != nil {
+				return mapContextErr(err)
+			}
+			outBuild, token, err := txbuilder.MintRegistrarToken(cmd.Context(), bctx, txbuilder.MintRegistrarTokenOptions{
+				Blueprint:        dep.BlueprintPath,
+				OutDir:           dep.OutDir,
+				FundingActor:     fundingActor,
+				DestinationActor: destActor,
+				OutPrefix:        out,
+				ContractRevision: ContractRevision,
+			})
+			if err != nil {
+				return WrapExit(ExitBuild, err)
+			}
+			dep.Validators[system.RoleRegistrarToken] = system.ValidatorArtifact{
+				Role:          system.RoleRegistrarToken,
+				Module:        system.ModuleRegistrarToken,
+				Validator:     system.ValidatorRegistrarToken,
+				PolicyID:      token.PolicyID,
+				ScriptHash:    token.PolicyID,
+				Address:       eff.Profile.Actors[destActor].Address,
+				PlutusFile:    token.PlutusFile,
+				BlueprintFile: token.BlueprintFile,
+				AssetNameHex:  token.AssetNameHex,
+			}
+			if err := system.SaveDeploymentJSON(deploymentPath, dep); err != nil {
+				return WrapExit(ExitBuild, fmt.Errorf("update deployment.json: %w", err))
+			}
+			return p.Success(Result{
+				Command:   "system mint-registrar-token",
+				Network:   eff.Profile.Network.Name,
+				Operation: "system.mintRegistrarToken",
+				Artifact:  outBuild.EnvelopePath,
+				Message:   "built unsigned mint-registrar-token transaction",
+				Data: map[string]any{
+					"deployment":              deploymentPath,
+					"fundingActor":            fundingActor,
+					"destinationActor":        destActor,
+					"out":                     out,
+					"bodyHash":                outBuild.BodyHash,
+					"manifest":                outBuild.ManifestPath,
+					"registrarTokenPolicyId":  token.PolicyID,
+					"registrarTokenAssetName": token.AssetNameHex,
+				},
+			})
+		},
+	}
+	cmd.Flags().StringVar(&configPath, "config", "", "dns-cli JSON config (required)")
+	cmd.Flags().StringVar(&deploymentPath, "deployment", "", "deployment.json from system prepare")
+	cmd.Flags().StringVar(&fundingActor, "funding-actor", "bootstrap", "actor funding/signing the mint tx")
+	cmd.Flags().StringVar(&destActor, "destination-actor", "registrar", "actor receiving the minted registrar NFT")
+	cmd.Flags().StringVar(&out, "out", "", "output path prefix for unsigned envelope and manifest (writes <out>.unsigned.json + <out>.manifest.json)")
+	_ = cmd.MarkFlagRequired("config")
+	_ = cmd.MarkFlagRequired("deployment")
+	_ = cmd.MarkFlagRequired("out")
 	return cmd
 }
 

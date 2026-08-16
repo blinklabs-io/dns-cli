@@ -51,14 +51,16 @@ type ProviderConfig struct {
 
 // ContractsConfig points at blueprint and deployed script references.
 type ContractsConfig struct {
-	BlueprintPath        string            `json:"blueprintPath"`
-	TLDRegistrarAddress  string            `json:"tldRegistrarAddress"`
-	TLDReferenceAddress  string            `json:"tldReferenceAddress"`
-	SLDReferenceAddress  string            `json:"sldReferenceAddress"`
-	TLDRegistrarPolicyID string            `json:"tldRegistrarPolicyId"`
-	TLDReferencePolicyID string            `json:"tldReferencePolicyId"`
-	SLDReferencePolicyID string            `json:"sldReferencePolicyId"`
-	ReferenceUtxos       map[string]string `json:"referenceUtxos"`
+	BlueprintPath           string            `json:"blueprintPath"`
+	TLDRegistrarAddress     string            `json:"tldRegistrarAddress"`
+	TLDReferenceAddress     string            `json:"tldReferenceAddress"`
+	SLDReferenceAddress     string            `json:"sldReferenceAddress"`
+	TLDRegistrarPolicyID    string            `json:"tldRegistrarPolicyId"`
+	TLDReferencePolicyID    string            `json:"tldReferencePolicyId"`
+	SLDReferencePolicyID    string            `json:"sldReferencePolicyId"`
+	RegistrarTokenPolicyID  string            `json:"registrarTokenPolicyId,omitempty"`
+	RegistrarTokenAssetName string            `json:"registrarTokenAssetName,omitempty"`
+	ReferenceUtxos          map[string]string `json:"referenceUtxos"`
 }
 
 // ActorConfig describes a signing actor. Exactly one of SigningKeyFile or MnemonicEnv may be set.

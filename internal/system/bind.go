@@ -99,6 +99,12 @@ func BindConfig(opts BindOptions) (*config.Document, error) {
 	prof.Contracts.TLDRegistrarPolicyID = reg.PolicyID
 	prof.Contracts.TLDReferencePolicyID = tld.PolicyID
 	prof.Contracts.SLDReferencePolicyID = sld.PolicyID
+	// registrarToken is optional here: mint-registrar-token may run before or
+	// after bind, since it doesn't depend on the reference-script tx id.
+	if token, ok := dep.Validators[RoleRegistrarToken]; ok {
+		prof.Contracts.RegistrarTokenPolicyID = token.PolicyID
+		prof.Contracts.RegistrarTokenAssetName = token.AssetNameHex
+	}
 	prof.Contracts.ReferenceUtxos = map[string]string{
 		RoleTLDRegistrar: fmt.Sprintf("%s#%d", txID, 0),
 		RoleTLDReference: fmt.Sprintf("%s#%d", txID, 1),

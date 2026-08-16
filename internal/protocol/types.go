@@ -189,6 +189,12 @@ func EmptyDataRedeemer() data.PlutusData {
 	return data.NewByteString(nil)
 }
 
+// RegistrarTokenMintRedeemer is registrar_token's mint redeemer: the raw
+// AssetName being minted or burned, no constructor wrapper.
+func RegistrarTokenMintRedeemer(assetName []byte) data.PlutusData {
+	return data.NewByteString(assetName)
+}
+
 func optionInt(v *int64) data.PlutusData {
 	// Aiken Option: None = Constr 1 [], Some(x) = Constr 0 [x]
 	if v == nil {

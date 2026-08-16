@@ -74,6 +74,9 @@ dns-cli system prepare \
   --network preprod \
   --out-dir runtime/contracts
 
+dns-cli system mint-registrar-token --config bootstrap.json --deployment runtime/contracts/deployment.json \
+  --funding-actor bootstrap --destination-actor registrar --out artifacts/00-mint-registrar-token
+
 dns-cli system init --config bootstrap.json --deployment runtime/contracts/deployment.json \
   --actor bootstrap --out artifacts/01-deploy
 
@@ -87,6 +90,8 @@ dns-cli system bind \
 ```
 
 `system prepare` invokes Aiken to apply validator parameters in order: registrar key → registrar policy → TLD policy → SLD policy. `--registrar-key` is an alias for `--registrar-hns-key`.
+
+`system mint-registrar-token` parameterizes `registrar_token` (a one-shot minting policy) against whichever UTxO the funding actor happens to hold, spends that same UTxO in the mint, and pays the resulting NFT to the destination actor. It doesn't depend on `system init`/`system bind` and can run before or after them; the minted policy id is recorded back into `deployment.json` and later carried into the bound config by `system bind`.
 
 ## Protocol flow
 

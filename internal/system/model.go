@@ -8,21 +8,30 @@ import (
 
 // Role names stored in DeploymentJSON.Validators.
 const (
-	RoleTLDRegistrar = "tldRegistrar"
-	RoleTLDReference = "tldReference"
-	RoleSLDReference = "sldReference"
+	RoleTLDRegistrar   = "tldRegistrar"
+	RoleTLDReference   = "tldReference"
+	RoleSLDReference   = "sldReference"
+	RoleRegistrarToken = "registrarToken"
 )
 
 // Validator names / modules within the Aiken project.
 const (
-	ModuleTLDRegistrar = "tld_registration/tld_registrar"
-	ModuleTLDReference = "tld_registration/tld_reference"
-	ModuleSLDReference = "tld_registration/sld_reference"
+	ModuleTLDRegistrar   = "tld_registration/tld_registrar"
+	ModuleTLDReference   = "tld_registration/tld_reference"
+	ModuleSLDReference   = "tld_registration/sld_reference"
+	ModuleRegistrarToken = "tld_registration/registrar_nft"
 
-	ValidatorTLDRegistrar = "tld_registrar"
-	ValidatorTLDReference = "tld_reference"
-	ValidatorSLDReference = "sld_reference"
+	ValidatorTLDRegistrar   = "tld_registrar"
+	ValidatorTLDReference   = "tld_reference"
+	ValidatorSLDReference   = "sld_reference"
+	ValidatorRegistrarToken = "registrar_token"
 )
+
+// RegistrarTokenAssetName is the fixed asset name minted for the registrar
+// NFT. tld_registrar only checks the policy id is present in outputs
+// (policy_id_present_in_outputs), not any specific asset name, so this is
+// a dns-cli convention rather than an on-chain requirement.
+const RegistrarTokenAssetName = "registrar"
 
 // DeploymentJSON is written by system prepare and consumed by init/bind.
 type DeploymentJSON struct {
@@ -47,6 +56,9 @@ type ValidatorArtifact struct {
 	Address       string `json:"address"`
 	PlutusFile    string `json:"plutusFile"`
 	BlueprintFile string `json:"blueprintFile,omitempty"`
+	// AssetNameHex is set for one-shot minting policies (e.g. registrarToken)
+	// where the artifact represents a specific minted token, not a spend address.
+	AssetNameHex string `json:"assetNameHex,omitempty"`
 }
 
 // LoadDeploymentJSON reads deployment.json from path.
@@ -92,6 +104,18 @@ func (d *DeploymentJSON) RequireRoles() error {
 		if v.PolicyID == "" || v.Address == "" || v.PlutusFile == "" {
 			return fmt.Errorf("deployment role %q incomplete", role)
 		}
+	}
+	return nil
+}
+
+// RequireRegistrarToken ensures the registrar NFT has been minted and recorded.
+func (d *DeploymentJSON) RequireRegistrarToken() error {
+	v, ok := d.Validators[RoleRegistrarToken]
+	if !ok {
+		return fmt.Errorf("deployment missing validator role %q", RoleRegistrarToken)
+	}
+	if v.PolicyID == "" || v.AssetNameHex == "" {
+		return fmt.Errorf("deployment role %q incomplete", RoleRegistrarToken)
 	}
 	return nil
 }
