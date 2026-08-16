@@ -66,8 +66,8 @@ func runRegisterTLD(ctx context.Context, eff *config.Effective, tldRaw, proofPat
 	return path, nil
 }
 
-func runActivateTLD(ctx context.Context, eff *config.Effective, tldRaw, proofPath, out string) (string, error) {
-	path, err := opsClient().ActivateTLD(ctx, eff, tldRaw, proofPath, out)
+func runActivateTLD(ctx context.Context, eff *config.Effective, tldRaw, ownerKeyPath, out string) (string, error) {
+	path, err := opsClient().ActivateTLD(ctx, eff, tldRaw, ownerKeyPath, out)
 	if err != nil {
 		return "", mapProtocolBuildErr(err)
 	}

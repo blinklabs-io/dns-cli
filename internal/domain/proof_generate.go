@@ -61,12 +61,15 @@ func LoadHNSKeyFile(path string) (*secp256k1.PrivateKey, HNSKeyFile, error) {
 	return secp256k1.PrivKeyFromBytes(privBytes), f, nil
 }
 
-// SignTLD signs blake2b_256(tld) with privateKey and returns a compact 64-byte R||S signature.
-func SignTLD(privateKey *secp256k1.PrivateKey, tldBytes []byte) ([]byte, error) {
+// SignMessage signs blake2b_256(message) with privateKey and returns a
+// compact 64-byte R||S signature. Used both for the legacy tld-alone
+// message and for OwnerAction's tld+receiver_address+output_reference
+// message — the caller decides what message means.
+func SignMessage(privateKey *secp256k1.PrivateKey, message []byte) ([]byte, error) {
 	if privateKey == nil {
 		return nil, fmt.Errorf("private key is nil")
 	}
-	hash := Blake2b256(tldBytes)
+	hash := Blake2b256(message)
 	sig := ecdsa.Sign(privateKey, hash)
 	r := sig.R()
 	s := sig.S()
@@ -83,7 +86,7 @@ func SignedHNSKeyFile(privateKey *secp256k1.PrivateKey, tldBytes []byte) (HNSKey
 	if privateKey == nil {
 		return HNSKeyFile{}, fmt.Errorf("private key is nil")
 	}
-	sig, err := SignTLD(privateKey, tldBytes)
+	sig, err := SignMessage(privateKey, tldBytes)
 	if err != nil {
 		return HNSKeyFile{}, err
 	}
@@ -122,7 +125,6 @@ func GenerateProofBundle(tld, outDir, registrarKeyPath, ownerKeyPath string) (Pr
 	bundle := ProofBundle{
 		TLD:                label.Canonical,
 		OwnerPublicKey:     ownerFile.PublicKey,
-		OwnerSignature:     ownerFile.Signature,
 		RegistrarPublicKey: registrarFile.PublicKey,
 		RegistrarSignature: registrarFile.Signature,
 	}

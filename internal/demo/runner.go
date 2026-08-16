@@ -506,7 +506,7 @@ func (r *Runner) freshSubmissions() error {
 	if r.tldState.stepTxID("activate") == "" {
 		g.Step("5/7 Activate TLD",
 			"TLD owner activates the registration (first OwnerAction).",
-			"dns-cli owner activate-tld --config "+boundHint+" --tld "+r.tld+" --proof "+quotePath(r.paths.ProofBundle)+" --out "+quotePath(filepath.Join(r.paths.TldArtifacts, "03-activate")),
+			"dns-cli owner activate-tld --config "+boundHint+" --tld "+r.tld+" --owner-key "+quotePath(r.paths.OwnerHNSKey)+" --out "+quotePath(filepath.Join(r.paths.TldArtifacts, "03-activate")),
 			"dns-cli tx apply --config "+boundHint+" --tx …/03-activate.unsigned.json --actor tldOwner --signed …/03-activate.signed.json --manifest …/03-activate.manifest.json")
 		g.Note("Waiting for registration UTxO on the address API (Blockfrost lag).")
 		eff, err := r.loadConfig(boundCfg)
@@ -514,7 +514,7 @@ func (r *Runner) freshSubmissions() error {
 			return err
 		}
 		out := filepath.Join(r.paths.TldArtifacts, "03-activate")
-		unsigned, err := r.ops.ActivateTLD(r.ctx, eff, r.tld, r.paths.ProofBundle, out)
+		unsigned, err := r.ops.ActivateTLD(r.ctx, eff, r.tld, r.paths.OwnerHNSKey, out)
 		if err != nil {
 			return fmt.Errorf("activate-tld: %w", err)
 		}

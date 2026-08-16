@@ -25,7 +25,7 @@ func TestBlake2b256HelloHandshake(t *testing.T) {
 	}
 }
 
-func TestSignTLDHelloHandshake(t *testing.T) {
+func TestSignMessageHelloHandshake(t *testing.T) {
 	privBytes, err := hex.DecodeString(helloHandshakePrivHex)
 	if err != nil {
 		t.Fatal(err)
@@ -33,7 +33,7 @@ func TestSignTLDHelloHandshake(t *testing.T) {
 	priv := secp256k1.PrivKeyFromBytes(privBytes)
 	tld := []byte("hello-handshake")
 
-	sig, err := SignTLD(priv, tld)
+	sig, err := SignMessage(priv, tld)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,7 +102,7 @@ func TestLoadHNSKeyFileRoundTrip(t *testing.T) {
 	if loaded.PrivateKey != want.PrivateKey {
 		t.Fatalf("loaded privateKey mismatch")
 	}
-	sig, err := SignTLD(priv, []byte("hello-handshake"))
+	sig, err := SignMessage(priv, []byte("hello-handshake"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,15 +129,11 @@ func TestGenerateProofBundle(t *testing.T) {
 	if err := ValidateProofForRegistration(proof, proof.TLD.Bytes); err != nil {
 		t.Fatalf("registration proof: %v", err)
 	}
-	if err := ValidateProofForActivation(proof, proof.TLD.Bytes); err != nil {
-		t.Fatalf("activation proof: %v", err)
-	}
 }
 
 func TestValidateProofForRegistrationRequiresRegistrarKey(t *testing.T) {
 	p := ParsedProof{
 		OwnerPublicKey:     mustDecodeHex(t, helloHandshakePubHex),
-		OwnerSignature:     mustDecodeHex(t, helloHandshakeSigHex),
 		RegistrarSignature: mustDecodeHex(t, helloHandshakeSigHex),
 	}
 	if err := ValidateProofForRegistration(p, []byte("hello-handshake")); err == nil {

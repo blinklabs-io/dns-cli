@@ -13,11 +13,15 @@ import (
 	"golang.org/x/crypto/blake2b"
 )
 
-// ProofBundle is the static Handshake proof for TLD registration/activation.
+// ProofBundle hands the owner's public key to whoever runs register-tld.
+// It no longer carries a signature: RegisterTLD dropped its signature
+// field (registrar authority now comes from holding the registrar NFT),
+// and OwnerAction's signature can't be pre-generated — it's bound to the
+// registration UTxO, only known at activation time (see activate-tld's
+// just-in-time signing).
 type ProofBundle struct {
 	TLD                string `json:"tld"`
 	OwnerPublicKey     string `json:"ownerPublicKey"`
-	OwnerSignature     string `json:"ownerSignature"`
 	RegistrarPublicKey string `json:"registrarPublicKey,omitempty"`
 	RegistrarSignature string `json:"registrarSignature"`
 }
@@ -26,7 +30,6 @@ type ProofBundle struct {
 type ParsedProof struct {
 	TLD                Label
 	OwnerPublicKey     []byte
-	OwnerSignature     []byte
 	RegistrarPublicKey []byte
 	RegistrarSignature []byte
 }
@@ -58,10 +61,6 @@ func LoadProofBundle(path string, expectedTLD string) (ParsedProof, error) {
 	if err != nil {
 		return ParsedProof{}, err
 	}
-	ownerSig, err := decodeSig(b.OwnerSignature, "ownerSignature")
-	if err != nil {
-		return ParsedProof{}, err
-	}
 	regSig, err := decodeSig(b.RegistrarSignature, "registrarSignature")
 	if err != nil {
 		return ParsedProof{}, err
@@ -76,7 +75,6 @@ func LoadProofBundle(path string, expectedTLD string) (ParsedProof, error) {
 	p := ParsedProof{
 		TLD:                label,
 		OwnerPublicKey:     ownerPK,
-		OwnerSignature:     ownerSig,
 		RegistrarPublicKey: regPK,
 		RegistrarSignature: regSig,
 	}
@@ -90,14 +88,6 @@ func ValidateProofForRegistration(p ParsedProof, tld []byte) error {
 	}
 	if err := VerifyTLDSignature(p.RegistrarPublicKey, tld, p.RegistrarSignature); err != nil {
 		return fmt.Errorf("invalid registrar signature: %w", err)
-	}
-	return nil
-}
-
-// ValidateProofForActivation checks owner proof fields required for activate-tld.
-func ValidateProofForActivation(p ParsedProof, tld []byte) error {
-	if err := VerifyTLDSignature(p.OwnerPublicKey, tld, p.OwnerSignature); err != nil {
-		return fmt.Errorf("invalid owner signature: %w", err)
 	}
 	return nil
 }

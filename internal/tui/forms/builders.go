@@ -103,7 +103,7 @@ func NewActionForm(action string, v *ActionValues) *huh.Form {
 	case "owner.activate":
 		groups = []*huh.Group{huh.NewGroup(
 			huh.NewInput().Title("TLD").Value(&v.TLD),
-			huh.NewInput().Title("Proof bundle").Value(&v.Proof),
+			huh.NewInput().Title("Owner key (HNS key JSON)").Value(&v.OwnerKey),
 			huh.NewInput().Title("Out prefix").Value(&v.Out),
 		)}
 	case "owner.mint":

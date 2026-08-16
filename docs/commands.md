@@ -109,7 +109,7 @@ dns-cli tx submit --tx artifacts/register.signed.json --output json
 dns-cli tx status --tx-id <TXID> --manifest artifacts/register.manifest.json --wait
 
 # 3. Activate TLD (tld owner)
-dns-cli owner activate-tld --tld NAME --proof proof.json --out artifacts/activate
+dns-cli owner activate-tld --tld NAME --owner-key owner.hns --out artifacts/activate
 
 # 4. Mint SLD
 dns-cli owner mint-sld --tld NAME --sld LABEL --sld-owner sldOwner --out artifacts/mint-sld

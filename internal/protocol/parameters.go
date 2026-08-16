@@ -47,14 +47,22 @@ func EncodeStakeKeyHashCredentialCBORHex(stakeKeyHash []byte) (string, error) {
 // as Plutus Data CBOR, for parameterizing one-shot minting policies.
 // Matches aiken/cardano/transaction.OutputReference.
 func EncodeOutputRefCBORHex(txHash []byte, index uint32) (string, error) {
-	if len(txHash) != 32 {
-		return "", fmt.Errorf("tx hash must be 32 bytes, got %d", len(txHash))
+	ref, err := OutputReferencePlutusData(txHash, index)
+	if err != nil {
+		return "", err
 	}
-	ref := data.NewConstr(ConstrOutputReference,
+	return encodePlutusCBORHex(ref)
+}
+
+// OutputReferencePlutusData builds OutputReference{transaction_id, output_index}.
+func OutputReferencePlutusData(txHash []byte, index uint32) (data.PlutusData, error) {
+	if len(txHash) != 32 {
+		return nil, fmt.Errorf("tx hash must be 32 bytes, got %d", len(txHash))
+	}
+	return data.NewConstr(ConstrOutputReference,
 		data.NewByteString(txHash),
 		data.NewInteger(new(big.Int).SetUint64(uint64(index))),
-	)
-	return encodePlutusCBORHex(ref)
+	), nil
 }
 
 // StakeCredentialPlutusData builds Inline(VerificationKey(keyHash)).

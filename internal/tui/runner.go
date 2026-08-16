@@ -53,7 +53,7 @@ type Runner interface {
 	SystemInit(ctx context.Context, eff *config.Effective, deployment, actor, out string) (string, string, error)
 	SystemBind(opts system.BindOptions) (string, error)
 	RegisterTLD(ctx context.Context, eff *config.Effective, tld, proof, out string) (string, error)
-	ActivateTLD(ctx context.Context, eff *config.Effective, tld, proof, out string) (string, error)
+	ActivateTLD(ctx context.Context, eff *config.Effective, tld, ownerKey, out string) (string, error)
 	MintSLD(ctx context.Context, eff *config.Effective, tld, sld, sldOwner, out string) (string, error)
 	UpdateSLD(ctx context.Context, eff *config.Effective, tld, sld, records, out string) (string, error)
 	TxInspect(path string) (map[string]any, error)
@@ -116,8 +116,8 @@ func (r *opsRunner) SystemBind(opts system.BindOptions) (string, error) {
 func (r *opsRunner) RegisterTLD(ctx context.Context, eff *config.Effective, tld, proof, out string) (string, error) {
 	return r.client.RegisterTLD(ctx, eff, tld, proof, out)
 }
-func (r *opsRunner) ActivateTLD(ctx context.Context, eff *config.Effective, tld, proof, out string) (string, error) {
-	return r.client.ActivateTLD(ctx, eff, tld, proof, out)
+func (r *opsRunner) ActivateTLD(ctx context.Context, eff *config.Effective, tld, ownerKey, out string) (string, error) {
+	return r.client.ActivateTLD(ctx, eff, tld, ownerKey, out)
 }
 func (r *opsRunner) MintSLD(ctx context.Context, eff *config.Effective, tld, sld, sldOwner, out string) (string, error) {
 	return r.client.MintSLD(ctx, eff, tld, sld, sldOwner, out)
@@ -252,7 +252,7 @@ func runActionCmd(runner Runner, eff *config.Effective, action string, v forms.A
 				msg.Checklist = &checklistPatch{Register: &t}
 			}
 		case "owner.activate":
-			path, err := runner.ActivateTLD(ctx, eff, v.TLD, v.Proof, v.Out)
+			path, err := runner.ActivateTLD(ctx, eff, v.TLD, v.OwnerKey, v.Out)
 			msg.Err = err
 			if err == nil {
 				msg.Artifact = path

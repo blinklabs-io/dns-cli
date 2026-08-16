@@ -18,7 +18,7 @@ func newOwnerCmd(g *GlobalFlags) *cobra.Command {
 }
 
 func newActivateTLDCmd(g *GlobalFlags) *cobra.Command {
-	var tld, proof, out string
+	var tld, ownerKey, out string
 	cmd := &cobra.Command{
 		Use:   "activate-tld",
 		Short: "Build an unsigned TLD activation (first OwnerAction) transaction",
@@ -27,14 +27,14 @@ func newActivateTLDCmd(g *GlobalFlags) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if tld == "" || proof == "" || out == "" {
-				return WrapExit(ExitUsage, fmt.Errorf("--tld, --proof, and --out are required"))
+			if tld == "" || ownerKey == "" || out == "" {
+				return WrapExit(ExitUsage, fmt.Errorf("--tld, --owner-key, and --out are required"))
 			}
 			eff, err := loadReadyEffective(cmd, g)
 			if err != nil {
 				return err
 			}
-			artifact, err := runActivateTLD(cmd.Context(), eff, tld, proof, out)
+			artifact, err := runActivateTLD(cmd.Context(), eff, tld, ownerKey, out)
 			if err != nil {
 				return err
 			}
@@ -45,14 +45,14 @@ func newActivateTLDCmd(g *GlobalFlags) *cobra.Command {
 				Artifact:  artifact,
 				Message:   "built unsigned activate-tld transaction",
 				Data: unsignedBuildData(out, map[string]any{
-					"tld":   tld,
-					"proof": proof,
+					"tld":      tld,
+					"ownerKey": ownerKey,
 				}),
 			})
 		},
 	}
 	cmd.Flags().StringVar(&tld, "tld", "", "top-level domain label to activate")
-	cmd.Flags().StringVar(&proof, "proof", "", "path to static Handshake proof JSON bundle")
+	cmd.Flags().StringVar(&ownerKey, "owner-key", "", "path to the owner's HNS key JSON file (signs just-in-time against the located registration UTxO)")
 	cmd.Flags().StringVar(&out, "out", "", "output path prefix for unsigned envelope and manifest (writes <out>.unsigned.json + <out>.manifest.json)")
 	return cmd
 }
