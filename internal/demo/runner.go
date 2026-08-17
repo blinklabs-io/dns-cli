@@ -391,6 +391,16 @@ func (r *Runner) freshSubmissions() error {
 	}
 	blueprint := filepath.Join(r.paths.DemoRoot, "fixtures", "contracts", "plutus.json")
 
+	// A run whose deploy step already confirmed without ever confirming
+	// mint-registrar-token predates this registrar-token scheme entirely
+	// (e.g. resuming a run from before this scheme existed). Its reference
+	// scripts are already on-chain against the old auth mechanism, so
+	// minting a fresh token now would just be orphaned once we refuse to
+	// proceed below — catch this before spending anything, not after.
+	if deployTx := r.tldState.stepTxID("deploy"); deployTx != "" && r.tldState.stepTxID("mintRegistrarToken") == "" {
+		return fmt.Errorf("this run's deploy step was confirmed (tx %s) before the registrar-token scheme existed for this TLD; local re-preparation can't repair that — start a new TLD run", deployTx)
+	}
+
 	// mint-registrar-token + prepare
 	g.Step("1/8 Mint registrar NFT + prepare validators",
 		"Mint the one-shot registrar NFT (registrar authority proof), then parameterize validators against its policy id.",
