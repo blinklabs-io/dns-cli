@@ -94,6 +94,8 @@ func newSLDState(tld, sld, runID, mode, provider string) *SLDState {
 
 func (st *TLDState) stepTxID(key string) string {
 	switch key {
+	case "mintRegistrarToken":
+		return strings.TrimSpace(st.Confirmed.MintRegistrarToken.TxID)
 	case "fund":
 		return strings.TrimSpace(st.Confirmed.Fund.TxID)
 	case "deploy":
@@ -109,6 +111,8 @@ func (st *TLDState) stepTxID(key string) string {
 
 func (st *TLDState) setStep(key string, step StepResult) {
 	switch key {
+	case "mintRegistrarToken":
+		st.Confirmed.MintRegistrarToken = step
 	case "fund":
 		st.Confirmed.Fund = step
 	case "deploy":
