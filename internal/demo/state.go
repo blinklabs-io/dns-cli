@@ -70,6 +70,7 @@ func newTLDState(tld, mode, provider string) *TLDState {
 		Provider:      provider,
 		TLD:           tld,
 	}
+	st.Confirmed.MintRegistrarToken = emptyStep()
 	st.Confirmed.Fund = emptyStep()
 	st.Confirmed.Deploy = emptyStep()
 	st.Confirmed.Register = emptyStep()

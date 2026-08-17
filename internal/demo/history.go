@@ -50,10 +50,11 @@ func ReadHistory(runsRoot string) (History, error) {
 			Network:  tldState.Network,
 			Provider: tldState.Provider,
 			Confirmed: map[string]HistoryTx{
-				"fund":     historyTx(tldState.Confirmed.Fund),
-				"deploy":   historyTx(tldState.Confirmed.Deploy),
-				"register": historyTx(tldState.Confirmed.Register),
-				"activate": historyTx(tldState.Confirmed.Activate),
+				"mintRegistrarToken": historyTx(tldState.Confirmed.MintRegistrarToken),
+				"fund":               historyTx(tldState.Confirmed.Fund),
+				"deploy":             historyTx(tldState.Confirmed.Deploy),
+				"register":           historyTx(tldState.Confirmed.Register),
+				"activate":           historyTx(tldState.Confirmed.Activate),
 			},
 			Runs: []HistoryRun{},
 		}
@@ -172,8 +173,12 @@ func FormatHistoryHumanAt(h History, runsRoot string, color bool) string {
 		b.WriteString(historyKV(th, "provider", tld.Provider))
 		b.WriteString(historyKV(th, "network", tld.Network))
 		b.WriteString(historyKV(th, "mode", tld.Mode))
-		for _, key := range []string{"fund", "deploy", "register", "activate"} {
-			b.WriteString(historyStepLines(th, key, tld.Confirmed[key], "  "))
+		for _, key := range []string{"mintRegistrarToken", "fund", "deploy", "register", "activate"} {
+			label := key
+			if key == "mintRegistrarToken" {
+				label = "mint-registrar-token"
+			}
+			b.WriteString(historyStepLines(th, label, tld.Confirmed[key], "  "))
 		}
 		for _, run := range tld.Runs {
 			b.WriteByte('\n')
