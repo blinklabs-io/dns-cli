@@ -62,6 +62,12 @@ type ValidatorArtifact struct {
 	// AssetNameHex is set for one-shot minting policies (e.g. registrarToken)
 	// where the artifact represents a specific minted token, not a spend address.
 	AssetNameHex string `json:"assetNameHex,omitempty"`
+	// RegistrarTokenPolicyID is set on the tldRegistrar entry to the
+	// registrar_token policy id it was parameterized against, so callers can
+	// detect a deployment.json prepared before a registrar-token rotation
+	// (or before this scheme existed at all) instead of trusting presence
+	// alone.
+	RegistrarTokenPolicyID string `json:"registrarTokenPolicyId,omitempty"`
 }
 
 // LoadDeploymentJSON reads deployment.json from path.

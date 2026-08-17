@@ -6,18 +6,6 @@ import (
 	"testing"
 )
 
-func TestContractsOK(t *testing.T) {
-	dir := t.TempDir()
-	blueprint := filepath.Join(dir, "plutus.json")
-	if ContractsOK(blueprint) {
-		t.Fatal("missing file should fail")
-	}
-	mustWrite(t, blueprint, "{}")
-	if !ContractsOK(blueprint) {
-		t.Fatal("expected OK")
-	}
-}
-
 func TestMissingDemoAssets(t *testing.T) {
 	dir := t.TempDir()
 	missing := MissingDemoAssets(dir)

@@ -226,15 +226,19 @@ func (r *Runner) ensureProof() error {
 			slog.Info("Proof bundle tld mismatch; regenerating", "tld", r.tld)
 		}
 	}
+	ownerKeyPath := filepath.Join(proofsDir, "owner.hns")
 	if !needProof {
+		if _, err := os.Stat(ownerKeyPath); err != nil {
+			return fmt.Errorf("proof bundle matches %q but owner.hns is missing at %s (delete %s to regenerate): %w", r.tld, ownerKeyPath, r.paths.ProofBundle, err)
+		}
 		return nil
 	}
-	ownerKey := filepath.Join(proofsDir, "owner.hns")
-	if _, err := os.Stat(ownerKey); err != nil {
-		ownerKey = ""
+	reuseKey := ownerKeyPath
+	if _, err := os.Stat(reuseKey); err != nil {
+		reuseKey = ""
 	}
 	slog.Info("Generating proof bundle", "tld", r.tld)
-	if _, err := r.ops.ProofGenerate(r.tld, proofsDir, ownerKey); err != nil {
+	if _, err := r.ops.ProofGenerate(r.tld, proofsDir, reuseKey); err != nil {
 		return fmt.Errorf("proof generate: %w", err)
 	}
 	return nil
@@ -328,6 +332,7 @@ func (r *Runner) showSuccess() {
 		SLDRunDir:   r.paths.SldRunDir,
 		Explorer:    ExplorerURLPrefix,
 		Steps: []ReportStep{
+			{Label: "mint-registrar-token", TxID: r.tldState.stepTxID("mintRegistrarToken")},
 			{Label: "fund", TxID: r.tldState.stepTxID("fund")},
 			{Label: "deploy", TxID: r.tldState.stepTxID("deploy")},
 			{Label: "register", TxID: r.tldState.stepTxID("register")},
@@ -412,12 +417,23 @@ func (r *Runner) freshSubmissions() error {
 	if err != nil {
 		return fmt.Errorf("load deployment.json after mint-registrar-token: %w", err)
 	}
-	if _, alreadyPrepared := dep.Validators[system.RoleTLDRegistrar]; !alreadyPrepared {
+	token, ok := dep.Validators[system.RoleRegistrarToken]
+	if !ok {
+		return fmt.Errorf("deployment.json missing registrarToken entry")
+	}
+	// A tldRegistrar entry from before this token scheme (or from a prior
+	// registrar-token rotation) still satisfies a presence-only check but
+	// enforces a different registrar_token policy id on-chain, so registrar
+	// authority checks would fail at register-tld. Compare the policy id it
+	// was actually parameterized against, not just whether it exists.
+	tldRegistrar, alreadyPrepared := dep.Validators[system.RoleTLDRegistrar]
+	if alreadyPrepared && tldRegistrar.RegistrarTokenPolicyID != token.PolicyID {
+		slog.Warn("tld_registrar was parameterized against a different registrar_token policy; re-preparing",
+			"have", tldRegistrar.RegistrarTokenPolicyID, "want", token.PolicyID)
+		alreadyPrepared = false
+	}
+	if !alreadyPrepared {
 		slog.Info("Running system prepare (parameterize)")
-		token, ok := dep.Validators[system.RoleRegistrarToken]
-		if !ok {
-			return fmt.Errorf("deployment.json missing registrarToken entry")
-		}
 		stakeKey := filepath.Join(r.paths.WalletsDir, "bootstrap", "stake.vkey")
 		if _, err := r.ops.SystemPrepare(r.ctx, system.PrepareOptions{
 			Blueprint:              blueprint,

@@ -175,14 +175,15 @@ func PrepareDeployment(ctx context.Context, opts PrepareOptions) (*PrepareResult
 		dep.Validators = map[string]ValidatorArtifact{}
 	}
 	dep.Validators[RoleTLDRegistrar] = ValidatorArtifact{
-		Role:          RoleTLDRegistrar,
-		Module:        ModuleTLDRegistrar,
-		Validator:     ValidatorTLDRegistrar,
-		PolicyID:      regPolicy,
-		ScriptHash:    regPolicy,
-		Address:       addrs[RoleTLDRegistrar],
-		PlutusFile:    regPlutus,
-		BlueprintFile: regBP,
+		Role:                   RoleTLDRegistrar,
+		Module:                 ModuleTLDRegistrar,
+		Validator:              ValidatorTLDRegistrar,
+		PolicyID:               regPolicy,
+		ScriptHash:             regPolicy,
+		Address:                addrs[RoleTLDRegistrar],
+		PlutusFile:             regPlutus,
+		BlueprintFile:          regBP,
+		RegistrarTokenPolicyID: opts.RegistrarTokenPolicyID,
 	}
 	dep.Validators[RoleTLDReference] = ValidatorArtifact{
 		Role:          RoleTLDReference,

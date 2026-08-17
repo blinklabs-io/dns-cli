@@ -197,6 +197,12 @@ func TestPrepareDeploymentWithFakeAiken(t *testing.T) {
 			t.Fatalf("bad address %s", v.Address)
 		}
 	}
+	// RegistrarTokenPolicyID lets callers detect a tldRegistrar entry
+	// prepared against a stale/rotated registrar_token policy instead of
+	// trusting the entry's mere presence.
+	if got := result.Deployment.Validators[system.RoleTLDRegistrar].RegistrarTokenPolicyID; got != registrarTokenPolicyID {
+		t.Fatalf("tldRegistrar RegistrarTokenPolicyID = %q, want %q", got, registrarTokenPolicyID)
+	}
 	wantStake := common.Blake2b224Hash(stakePub)
 	if result.Deployment.StakeKeyHash != hex.EncodeToString(wantStake[:]) {
 		t.Fatalf("stake hash %s vs %s", result.Deployment.StakeKeyHash, hex.EncodeToString(wantStake[:]))
