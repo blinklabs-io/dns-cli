@@ -175,15 +175,18 @@ func PrepareDeployment(ctx context.Context, opts PrepareOptions) (*PrepareResult
 		dep.Validators = map[string]ValidatorArtifact{}
 	}
 	dep.Validators[RoleTLDRegistrar] = ValidatorArtifact{
-		Role:                   RoleTLDRegistrar,
-		Module:                 ModuleTLDRegistrar,
-		Validator:              ValidatorTLDRegistrar,
-		PolicyID:               regPolicy,
-		ScriptHash:             regPolicy,
-		Address:                addrs[RoleTLDRegistrar],
-		PlutusFile:             regPlutus,
-		BlueprintFile:          regBP,
-		RegistrarTokenPolicyID: opts.RegistrarTokenPolicyID,
+		Role:          RoleTLDRegistrar,
+		Module:        ModuleTLDRegistrar,
+		Validator:     ValidatorTLDRegistrar,
+		PolicyID:      regPolicy,
+		ScriptHash:    regPolicy,
+		Address:       addrs[RoleTLDRegistrar],
+		PlutusFile:    regPlutus,
+		BlueprintFile: regBP,
+		// Canonical lowercase hex, not opts.RegistrarTokenPolicyID verbatim,
+		// so callers comparing against materializeValidator's own
+		// (lowercase) policy ids don't get a spurious mismatch from casing.
+		RegistrarTokenPolicyID: hex.EncodeToString(registrarTokenPolicy),
 	}
 	dep.Validators[RoleTLDReference] = ValidatorArtifact{
 		Role:          RoleTLDReference,

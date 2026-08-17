@@ -167,9 +167,14 @@ func TestPrepareDeploymentWithFakeAiken(t *testing.T) {
 
 	fake := NewFakeRunner()
 	outDir := filepath.Join(tmp, "out")
+	// Deliberately uppercase here: RegistrarTokenPolicyID must be stored
+	// canonically lowercase regardless of the casing --registrar-token-policy-id
+	// was passed in, so the stale-resume comparison in internal/demo/runner.go
+	// (against materializeValidator's always-lowercase policy ids) can't get a
+	// spurious mismatch from casing alone.
 	result, err := system.PrepareDeployment(context.Background(), system.PrepareOptions{
 		Blueprint:              blueprintPath,
-		RegistrarTokenPolicyID: registrarTokenPolicyID,
+		RegistrarTokenPolicyID: strings.ToUpper(registrarTokenPolicyID),
 		StakeKeyPath:           stakePath,
 		Network:                "preprod",
 		OutDir:                 outDir,

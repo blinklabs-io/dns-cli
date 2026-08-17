@@ -426,8 +426,21 @@ func (r *Runner) freshSubmissions() error {
 	// enforces a different registrar_token policy id on-chain, so registrar
 	// authority checks would fail at register-tld. Compare the policy id it
 	// was actually parameterized against, not just whether it exists.
+	// Case-insensitive: policy ids are hex and callers of system prepare may
+	// pass --registrar-token-policy-id with different casing than the
+	// canonical lowercase form materializeValidator always produces.
 	tldRegistrar, alreadyPrepared := dep.Validators[system.RoleTLDRegistrar]
-	if alreadyPrepared && tldRegistrar.RegistrarTokenPolicyID != token.PolicyID {
+	stale := alreadyPrepared && !strings.EqualFold(tldRegistrar.RegistrarTokenPolicyID, token.PolicyID)
+	if stale {
+		// Once deploy has published tld_registrar's reference script
+		// on-chain, re-parameterizing local artifacts alone can't fix
+		// things: the deployed script and the bound config still point at
+		// the stale validator. There's no local recovery from that; the
+		// run needs to start over under a new TLD.
+		if deployTx := r.tldState.stepTxID("deploy"); deployTx != "" {
+			return fmt.Errorf("tld_registrar was parameterized against registrar_token policy %s but the current one is %s, and this run's reference scripts are already deployed on-chain (deploy tx %s) against the stale validator; local re-preparation can't repair that — start a new TLD run",
+				tldRegistrar.RegistrarTokenPolicyID, token.PolicyID, deployTx)
+		}
 		slog.Warn("tld_registrar was parameterized against a different registrar_token policy; re-preparing",
 			"have", tldRegistrar.RegistrarTokenPolicyID, "want", token.PolicyID)
 		alreadyPrepared = false
@@ -441,6 +454,10 @@ func (r *Runner) freshSubmissions() error {
 			StakeKeyPath:           stakeKey,
 			Network:                NetworkName,
 			OutDir:                 contractsDir,
+			// Reparameterizing a stale tldRegistrar entry (or none existing
+			// yet) both fall through here; PrepareDeployment otherwise
+			// refuses to overwrite an existing tldRegistrar entry.
+			Force: true,
 		}); err != nil {
 			return fmt.Errorf("system prepare: %w", err)
 		}
