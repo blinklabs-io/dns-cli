@@ -24,7 +24,7 @@ func newSystemCmd(g *GlobalFlags) *cobra.Command {
 }
 
 func newSystemPrepareCmd(g *GlobalFlags) *cobra.Command {
-	var blueprint, registrarTokenPolicyID, stakeKey, network, outDir, aikenPath string
+	var blueprint, stakeKey, network, outDir, aikenPath string
 	var force bool
 	cmd := &cobra.Command{
 		Use:   "prepare",
@@ -34,9 +34,6 @@ func newSystemPrepareCmd(g *GlobalFlags) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if registrarTokenPolicyID == "" {
-				return WrapExit(ExitUsage, fmt.Errorf("--registrar-token-policy-id is required (run system mint-registrar-token first)"))
-			}
 			if network == "" {
 				network = "preprod"
 			}
@@ -44,13 +41,12 @@ func newSystemPrepareCmd(g *GlobalFlags) *cobra.Command {
 				return WrapExit(ExitUsage, fmt.Errorf("--blueprint: %w", err))
 			}
 			result, err := system.PrepareDeployment(cmd.Context(), system.PrepareOptions{
-				Blueprint:              blueprint,
-				RegistrarTokenPolicyID: registrarTokenPolicyID,
-				StakeKeyPath:           stakeKey,
-				Network:                network,
-				OutDir:                 outDir,
-				AikenBin:               aikenPath,
-				Force:                  force,
+				Blueprint:    blueprint,
+				StakeKeyPath: stakeKey,
+				Network:      network,
+				OutDir:       outDir,
+				AikenBin:     aikenPath,
+				Force:        force,
 			})
 			if err != nil {
 				return WrapExit(ExitBuild, err)
@@ -79,14 +75,12 @@ func newSystemPrepareCmd(g *GlobalFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&blueprint, "blueprint", "", "path to a pre-built plutus.json blueprint")
-	cmd.Flags().StringVar(&registrarTokenPolicyID, "registrar-token-policy-id", "", "registrar NFT policy id from system mint-registrar-token")
 	cmd.Flags().StringVar(&stakeKey, "stake-key", "", "stake.vkey envelope or wallet directory containing stake.vkey")
 	cmd.Flags().StringVar(&network, "network", "preprod", "network profile (preprod only)")
-	cmd.Flags().StringVar(&outDir, "out-dir", "", "output directory for plutus envelopes and deployment.json")
+	cmd.Flags().StringVar(&outDir, "out-dir", "", "output directory for plutus envelopes and deployment.json (must already contain a deployment.json from system mint-registrar-token)")
 	cmd.Flags().StringVar(&aikenPath, "aiken", "", "path to aiken binary (default: aiken on PATH)")
 	cmd.Flags().BoolVar(&force, "force", false, "overwrite existing deployment artifacts")
 	_ = cmd.MarkFlagRequired("blueprint")
-	_ = cmd.MarkFlagRequired("registrar-token-policy-id")
 	_ = cmd.MarkFlagRequired("stake-key")
 	_ = cmd.MarkFlagRequired("out-dir")
 	return cmd

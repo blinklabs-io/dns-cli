@@ -167,19 +167,34 @@ func TestPrepareDeploymentWithFakeAiken(t *testing.T) {
 
 	fake := NewFakeRunner()
 	outDir := filepath.Join(tmp, "out")
+	if err := os.MkdirAll(outDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
 	// Deliberately uppercase here: RegistrarTokenPolicyID must be stored
-	// canonically lowercase regardless of the casing --registrar-token-policy-id
-	// was passed in, so the stale-resume comparison in internal/demo/runner.go
-	// (against materializeValidator's always-lowercase policy ids) can't get a
-	// spurious mismatch from casing alone.
+	// canonically lowercase regardless of the casing recorded in
+	// deployment.json's registrarToken entry, so the stale-resume
+	// comparison in internal/demo/runner.go (against materializeValidator's
+	// always-lowercase policy ids) can't get a spurious mismatch from
+	// casing alone.
+	depPath := filepath.Join(outDir, "deployment.json")
+	seed := &system.DeploymentJSON{
+		Validators: map[string]system.ValidatorArtifact{
+			system.RoleRegistrarToken: {
+				Role:     system.RoleRegistrarToken,
+				PolicyID: strings.ToUpper(registrarTokenPolicyID),
+			},
+		},
+	}
+	if err := system.SaveDeploymentJSON(depPath, seed); err != nil {
+		t.Fatal(err)
+	}
 	result, err := system.PrepareDeployment(context.Background(), system.PrepareOptions{
-		Blueprint:              blueprintPath,
-		RegistrarTokenPolicyID: strings.ToUpper(registrarTokenPolicyID),
-		StakeKeyPath:           stakePath,
-		Network:                "preprod",
-		OutDir:                 outDir,
-		Force:                  true,
-		Runner:                 fake,
+		Blueprint:    blueprintPath,
+		StakeKeyPath: stakePath,
+		Network:      "preprod",
+		OutDir:       outDir,
+		Force:        true,
+		Runner:       fake,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -211,6 +226,39 @@ func TestPrepareDeploymentWithFakeAiken(t *testing.T) {
 	wantStake := common.Blake2b224Hash(stakePub)
 	if result.Deployment.StakeKeyHash != hex.EncodeToString(wantStake[:]) {
 		t.Fatalf("stake hash %s vs %s", result.Deployment.StakeKeyHash, hex.EncodeToString(wantStake[:]))
+	}
+}
+
+func TestPrepareDeploymentRequiresRegistrarToken(t *testing.T) {
+	tmp := t.TempDir()
+	blueprintPath := filepath.Join(tmp, "plutus.json")
+	if err := os.WriteFile(blueprintPath, []byte(`{"preamble":{},"validators":[]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	stakePub := make([]byte, 32)
+	stakeCBOR, err := cbor.Encode(stakePub)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stakePath := filepath.Join(tmp, "stake.vkey")
+	if err := wallet.WriteKeyEnvelope(stakePath, wallet.KeyEnvelope{
+		Type: wallet.TypeStakeVKey, CBORHex: hex.EncodeToString(stakeCBOR),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	outDir := filepath.Join(tmp, "out")
+	_, err = system.PrepareDeployment(context.Background(), system.PrepareOptions{
+		Blueprint:    blueprintPath,
+		StakeKeyPath: stakePath,
+		Network:      "preprod",
+		OutDir:       outDir,
+		Runner:       NewFakeRunner(),
+	})
+	if err == nil {
+		t.Fatal("expected an error when deployment.json has no registrarToken entry")
+	}
+	if !strings.Contains(err.Error(), "mint-registrar-token") {
+		t.Fatalf("error should point at mint-registrar-token, got: %v", err)
 	}
 }
 

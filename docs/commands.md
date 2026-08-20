@@ -78,7 +78,6 @@ dns-cli tx apply --config bootstrap.json --tx artifacts/00-mint-registrar-token.
 
 dns-cli system prepare \
   --blueprint demo/fixtures/contracts/plutus.json \
-  --registrar-token-policy-id <policyId from mint-registrar-token> \
   --stake-key runtime/wallets/bootstrap/stake.vkey \
   --network preprod \
   --out-dir runtime/contracts

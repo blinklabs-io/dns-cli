@@ -210,7 +210,7 @@ func runActionCmd(runner Runner, eff *config.Effective, action string, v forms.A
 			}
 		case "system.prepare":
 			path, err := runner.SystemPrepare(ctx, system.PrepareOptions{
-				Blueprint: v.Blueprint, RegistrarTokenPolicyID: v.RegistrarTokenPolicy, StakeKeyPath: v.StakeKey,
+				Blueprint: v.Blueprint, StakeKeyPath: v.StakeKey,
 				Network: v.Network, OutDir: v.OutDir, AikenBin: v.Aiken, Force: v.Force,
 			})
 			msg.Err = err

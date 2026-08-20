@@ -406,7 +406,7 @@ func (r *Runner) freshSubmissions() error {
 		"Mint the one-shot registrar NFT (registrar authority proof), then parameterize validators against its policy id.",
 		"dns-cli system mint-registrar-token --config "+quotePath(bootstrapCfg)+" --blueprint "+blueprint+" --out-dir "+quotePath(contractsDir)+" --funding-actor bootstrap --destination-actor registrar --out "+quotePath(filepath.Join(r.paths.TldArtifacts, "00-mint-registrar-token")),
 		"dns-cli tx apply --config "+quotePath(bootstrapCfg)+" --tx …/00-mint-registrar-token.unsigned.json --actor bootstrap --signed …/00-mint-registrar-token.signed.json --manifest …/00-mint-registrar-token.manifest.json",
-		"dns-cli system prepare --blueprint "+blueprint+" --registrar-token-policy-id <…> --stake-key <…>/stake.vkey --out-dir "+quotePath(contractsDir))
+		"dns-cli system prepare --blueprint "+blueprint+" --stake-key <…>/stake.vkey --out-dir "+quotePath(contractsDir))
 	if r.tldState.stepTxID("mintRegistrarToken") == "" {
 		eff, err := r.loadConfig(bootstrapCfg)
 		if err != nil {
@@ -459,11 +459,10 @@ func (r *Runner) freshSubmissions() error {
 		slog.Info("Running system prepare (parameterize)")
 		stakeKey := filepath.Join(r.paths.WalletsDir, "bootstrap", "stake.vkey")
 		if _, err := r.ops.SystemPrepare(r.ctx, system.PrepareOptions{
-			Blueprint:              blueprint,
-			RegistrarTokenPolicyID: token.PolicyID,
-			StakeKeyPath:           stakeKey,
-			Network:                NetworkName,
-			OutDir:                 contractsDir,
+			Blueprint:    blueprint,
+			StakeKeyPath: stakeKey,
+			Network:      NetworkName,
+			OutDir:       contractsDir,
 			// Reparameterizing a stale tldRegistrar entry (or none existing
 			// yet) both fall through here; PrepareDeployment otherwise
 			// refuses to overwrite an existing tldRegistrar entry.

@@ -23,15 +23,14 @@ type ActionValues struct {
 	SLDOwner string
 
 	// System
-	Blueprint            string
-	RegistrarTokenPolicy string
-	StakeKey             string
-	Aiken                string
-	Deployment           string
-	BaseConfig           string
-	TxID                 string
-	ActorDir             string
-	Provider             string
+	Blueprint  string
+	StakeKey   string
+	Aiken      string
+	Deployment string
+	BaseConfig string
+	TxID       string
+	ActorDir   string
+	Provider   string
 
 	// Tx
 	TxPath     string

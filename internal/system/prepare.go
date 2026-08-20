@@ -15,14 +15,13 @@ import (
 
 // PrepareOptions configures PrepareDeployment.
 type PrepareOptions struct {
-	Blueprint              string
-	RegistrarTokenPolicyID string
-	StakeKeyPath           string
-	Network                string
-	OutDir                 string
-	AikenBin               string
-	Force                  bool
-	Runner                 Runner
+	Blueprint    string
+	StakeKeyPath string
+	Network      string
+	OutDir       string
+	AikenBin     string
+	Force        bool
+	Runner       Runner
 }
 
 // PrepareResult summarizes prepare outputs.
@@ -54,7 +53,11 @@ func PrepareDeployment(ctx context.Context, opts PrepareOptions) (*PrepareResult
 		return nil, fmt.Errorf("deployment already exists at %s (use --force to overwrite)", depPath)
 	}
 
-	registrarTokenPolicy, err := protocol.HexPolicyID(opts.RegistrarTokenPolicyID)
+	regToken, ok := existing.Validators[RoleRegistrarToken]
+	if !ok || strings.TrimSpace(regToken.PolicyID) == "" {
+		return nil, fmt.Errorf("%s has no registrarToken entry — run system mint-registrar-token first", depPath)
+	}
+	registrarTokenPolicy, err := protocol.HexPolicyID(regToken.PolicyID)
 	if err != nil {
 		return nil, fmt.Errorf("registrar token policy id: %w", err)
 	}
@@ -183,9 +186,9 @@ func PrepareDeployment(ctx context.Context, opts PrepareOptions) (*PrepareResult
 		Address:       addrs[RoleTLDRegistrar],
 		PlutusFile:    regPlutus,
 		BlueprintFile: regBP,
-		// Canonical lowercase hex, not opts.RegistrarTokenPolicyID verbatim,
-		// so callers comparing against materializeValidator's own
-		// (lowercase) policy ids don't get a spurious mismatch from casing.
+		// Canonical lowercase hex, not regToken.PolicyID verbatim, so
+		// callers comparing against materializeValidator's own (lowercase)
+		// policy ids don't get a spurious mismatch from casing.
 		RegistrarTokenPolicyID: hex.EncodeToString(registrarTokenPolicy),
 	}
 	dep.Validators[RoleTLDReference] = ValidatorArtifact{
@@ -276,9 +279,6 @@ func findValidatorByName(bp *protocol.Blueprint, name string) (*protocol.Bluepri
 func validatePrepareOpts(opts PrepareOptions) error {
 	if strings.TrimSpace(opts.Blueprint) == "" {
 		return fmt.Errorf("--blueprint is required")
-	}
-	if strings.TrimSpace(opts.RegistrarTokenPolicyID) == "" {
-		return fmt.Errorf("--registrar-token-policy-id is required")
 	}
 	if strings.TrimSpace(opts.StakeKeyPath) == "" {
 		return fmt.Errorf("--stake-key is required")

@@ -67,7 +67,6 @@ func NewActionForm(action string, v *ActionValues) *huh.Form {
 	case "system.prepare":
 		groups = []*huh.Group{huh.NewGroup(
 			huh.NewInput().Title("Blueprint file (plutus.json)").Value(&v.Blueprint),
-			huh.NewInput().Title("Registrar token policy id").Value(&v.RegistrarTokenPolicy),
 			huh.NewInput().Title("Stake key / wallet dir").Value(&v.StakeKey),
 			huh.NewInput().Title("Network").Value(&v.Network),
 			huh.NewInput().Title("Out dir").Value(&v.OutDir),
