@@ -2,10 +2,10 @@ package cli
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/blinklabs-io/dns-cli/internal/prereq"
 	"github.com/blinklabs-io/dns-cli/internal/system"
 	"github.com/blinklabs-io/dns-cli/internal/txbuilder"
 	"github.com/spf13/cobra"
@@ -17,55 +17,36 @@ func newSystemCmd(g *GlobalFlags) *cobra.Command {
 		Short: "Prepare, initialize, and bind Handshake DNS system validators",
 	}
 	cmd.AddCommand(newSystemPrepareCmd(g))
+	cmd.AddCommand(newSystemMintRegistrarTokenCmd(g))
 	cmd.AddCommand(newSystemInitCmd(g))
 	cmd.AddCommand(newSystemBindCmd(g))
 	return cmd
 }
 
 func newSystemPrepareCmd(g *GlobalFlags) *cobra.Command {
-	var blueprint, registrarHNS, registrarKeyAlias, stakeKey, network, outDir, aikenPath string
+	var blueprint, stakeKey, network, outDir, aikenPath string
 	var force bool
 	cmd := &cobra.Command{
 		Use:   "prepare",
-		Short: "Build and parameterize system validators into deployment.json",
+		Short: "Parameterize system validators into deployment.json",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			p, err := printerFromFlags(g, cmd)
 			if err != nil {
 				return err
 			}
-			registrarKey := firstNonEmptyFlag(registrarHNS, registrarKeyAlias)
-			if registrarHNS != "" && registrarKeyAlias != "" && registrarHNS != registrarKeyAlias {
-				return WrapExit(ExitUsage, fmt.Errorf("--registrar-hns-key and --registrar-key must match when both are set"))
-			}
-			if registrarKey == "" {
-				return WrapExit(ExitUsage, fmt.Errorf("--registrar-hns-key (or --registrar-key) is required"))
-			}
 			if network == "" {
 				network = "preprod"
 			}
-			resolvedBlueprint, err := prereq.EnsureBlueprintDir(blueprint, prereq.Options{
-				StartDir:   firstNonEmptyPath(blueprint, "."),
-				AssumeYes:  false,
-				Stdout:     cmd.OutOrStdout(),
-				Stderr:     cmd.ErrOrStderr(),
-				ConfirmYes: nil, // non-interactive prepare: only auto-use existing clone
-			})
-			if err != nil {
-				// If blueprint already exists on disk, use it; otherwise surface prereq error.
-				if !prereq.ContractsOK(blueprint) {
-					return WrapExit(ExitBuild, err)
-				}
-				resolvedBlueprint = blueprint
+			if _, err := os.Stat(blueprint); err != nil {
+				return WrapExit(ExitUsage, fmt.Errorf("--blueprint: %w", err))
 			}
-			blueprint = resolvedBlueprint
 			result, err := system.PrepareDeployment(cmd.Context(), system.PrepareOptions{
-				BlueprintDir:    blueprint,
-				RegistrarHNSKey: registrarKey,
-				StakeKeyPath:    stakeKey,
-				Network:         network,
-				OutDir:          outDir,
-				AikenBin:        aikenPath,
-				Force:           force,
+				Blueprint:    blueprint,
+				StakeKeyPath: stakeKey,
+				Network:      network,
+				OutDir:       outDir,
+				AikenBin:     aikenPath,
+				Force:        force,
 			})
 			if err != nil {
 				return WrapExit(ExitBuild, err)
@@ -85,26 +66,118 @@ func newSystemPrepareCmd(g *GlobalFlags) *cobra.Command {
 				Artifact:  result.DeploymentPath,
 				Message:   "prepared parameterized system validators",
 				Data: map[string]any{
-					"deployment":      result.DeploymentPath,
-					"outDir":          outDir,
-					"stakeKeyHash":    result.Deployment.StakeKeyHash,
-					"registrarHnsKey": result.Deployment.RegistrarHNSKey,
-					"validators":      validators,
+					"deployment":   result.DeploymentPath,
+					"outDir":       outDir,
+					"stakeKeyHash": result.Deployment.StakeKeyHash,
+					"validators":   validators,
 				},
 			})
 		},
 	}
-	cmd.Flags().StringVar(&blueprint, "blueprint", "", "Aiken project directory containing aiken.toml")
-	cmd.Flags().StringVar(&registrarHNS, "registrar-hns-key", "", "registrar HNS key JSON (registrar.hns)")
-	cmd.Flags().StringVar(&registrarKeyAlias, "registrar-key", "", "alias for --registrar-hns-key")
+	cmd.Flags().StringVar(&blueprint, "blueprint", "", "path to a pre-built plutus.json blueprint")
 	cmd.Flags().StringVar(&stakeKey, "stake-key", "", "stake.vkey envelope or wallet directory containing stake.vkey")
 	cmd.Flags().StringVar(&network, "network", "preprod", "network profile (preprod only)")
-	cmd.Flags().StringVar(&outDir, "out-dir", "", "output directory for plutus envelopes and deployment.json")
+	cmd.Flags().StringVar(&outDir, "out-dir", "", "output directory for plutus envelopes and deployment.json (must already contain a deployment.json from system mint-registrar-token)")
 	cmd.Flags().StringVar(&aikenPath, "aiken", "", "path to aiken binary (default: aiken on PATH)")
 	cmd.Flags().BoolVar(&force, "force", false, "overwrite existing deployment artifacts")
 	_ = cmd.MarkFlagRequired("blueprint")
 	_ = cmd.MarkFlagRequired("stake-key")
 	_ = cmd.MarkFlagRequired("out-dir")
+	return cmd
+}
+
+func newSystemMintRegistrarTokenCmd(g *GlobalFlags) *cobra.Command {
+	var configPath, blueprint, outDir, fundingActor, destActor, out string
+	cmd := &cobra.Command{
+		Use:   "mint-registrar-token",
+		Short: "Build unsigned tx minting the one-shot registrar NFT",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			p, err := printerFromFlags(g, cmd)
+			if err != nil {
+				return err
+			}
+			if fundingActor == "" {
+				fundingActor = "bootstrap"
+			}
+			if destActor == "" {
+				destActor = "registrar"
+			}
+			if out == "" {
+				return WrapExit(ExitUsage, fmt.Errorf("--out is required"))
+			}
+			if _, err := os.Stat(blueprint); err != nil {
+				return WrapExit(ExitUsage, fmt.Errorf("--blueprint: %w", err))
+			}
+			if configPath != "" {
+				g.ConfigPath = configPath
+			}
+			eff, err := loadReadyEffective(cmd, g)
+			if err != nil {
+				return err
+			}
+			depPath := filepath.Join(outDir, "deployment.json")
+			dep, err := system.LoadOrInitDeploymentJSON(depPath, blueprint, outDir)
+			if err != nil {
+				return WrapExit(ExitValidation, err)
+			}
+			bctx, err := txbuilder.NewFundingContext(cmd.Context(), eff)
+			if err != nil {
+				return mapContextErr(err)
+			}
+			outBuild, token, err := txbuilder.MintRegistrarToken(cmd.Context(), bctx, txbuilder.MintRegistrarTokenOptions{
+				Blueprint:        blueprint,
+				OutDir:           outDir,
+				FundingActor:     fundingActor,
+				DestinationActor: destActor,
+				OutPrefix:        out,
+				ContractRevision: ContractRevision,
+			})
+			if err != nil {
+				return WrapExit(ExitBuild, err)
+			}
+			dep.Validators[system.RoleRegistrarToken] = system.ValidatorArtifact{
+				Role:          system.RoleRegistrarToken,
+				Module:        system.ModuleRegistrarToken,
+				Validator:     system.ValidatorRegistrarToken,
+				PolicyID:      token.PolicyID,
+				ScriptHash:    token.PolicyID,
+				Address:       eff.Profile.Actors[destActor].Address,
+				PlutusFile:    token.PlutusFile,
+				BlueprintFile: token.BlueprintFile,
+				AssetNameHex:  token.AssetNameHex,
+			}
+			if err := system.SaveDeploymentJSON(depPath, dep); err != nil {
+				return WrapExit(ExitBuild, fmt.Errorf("write deployment.json: %w", err))
+			}
+			return p.Success(Result{
+				Command:   "system mint-registrar-token",
+				Network:   eff.Profile.Network.Name,
+				Operation: "system.mintRegistrarToken",
+				Artifact:  outBuild.EnvelopePath,
+				Message:   "built unsigned mint-registrar-token transaction",
+				Data: map[string]any{
+					"deployment":              depPath,
+					"fundingActor":            fundingActor,
+					"destinationActor":        destActor,
+					"out":                     out,
+					"bodyHash":                outBuild.BodyHash,
+					"manifest":                outBuild.ManifestPath,
+					"registrarTokenPolicyId":  token.PolicyID,
+					"registrarTokenAssetName": token.AssetNameHex,
+				},
+			})
+		},
+	}
+	cmd.Flags().StringVar(&configPath, "config", "", "dns-cli JSON config (required)")
+	cmd.Flags().StringVar(&blueprint, "blueprint", "", "path to a pre-built plutus.json blueprint")
+	cmd.Flags().StringVar(&outDir, "out-dir", "", "output directory for plutus envelopes and deployment.json (shared with system prepare)")
+	cmd.Flags().StringVar(&fundingActor, "funding-actor", "bootstrap", "actor funding/signing the mint tx")
+	cmd.Flags().StringVar(&destActor, "destination-actor", "registrar", "actor receiving the minted registrar NFT")
+	cmd.Flags().StringVar(&out, "out", "", "output path prefix for unsigned envelope and manifest (writes <out>.unsigned.json + <out>.manifest.json)")
+	_ = cmd.MarkFlagRequired("config")
+	_ = cmd.MarkFlagRequired("blueprint")
+	_ = cmd.MarkFlagRequired("out-dir")
+	_ = cmd.MarkFlagRequired("out")
 	return cmd
 }
 
@@ -243,13 +316,4 @@ func newSystemBindCmd(g *GlobalFlags) *cobra.Command {
 	_ = cmd.MarkFlagRequired("provider")
 	_ = cmd.MarkFlagRequired("out")
 	return cmd
-}
-
-func firstNonEmptyPath(vals ...string) string {
-	for _, v := range vals {
-		if strings.TrimSpace(v) != "" {
-			return v
-		}
-	}
-	return "."
 }

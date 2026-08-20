@@ -13,7 +13,6 @@ import (
 // Runner invokes the Aiken CLI for blueprint operations.
 type Runner interface {
 	Version(ctx context.Context) (string, error)
-	Build(ctx context.Context, workdir string) error
 	Apply(ctx context.Context, workdir, inBlueprint, outBlueprint, module, validator, cborHexParam string) error
 	Convert(ctx context.Context, workdir, blueprint, module, validator string) ([]byte, error)
 	Hash(ctx context.Context, workdir, blueprint, module, validator string) (string, error)
@@ -38,11 +37,6 @@ func (r *CLIRunner) Version(ctx context.Context) (string, error) {
 		return "", err
 	}
 	return strings.TrimSpace(string(out)), nil
-}
-
-func (r *CLIRunner) Build(ctx context.Context, workdir string) error {
-	_, err := r.run(ctx, workdir, nil, "build")
-	return err
 }
 
 func (r *CLIRunner) Apply(ctx context.Context, workdir, inBlueprint, outBlueprint, module, validator, cborHexParam string) error {

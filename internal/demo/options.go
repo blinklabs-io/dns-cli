@@ -64,6 +64,7 @@ type Paths struct {
 	BoundConfig     string
 	DeploymentJSON  string
 	ProofBundle     string
+	OwnerHNSKey     string
 	TldArtifacts    string
 	SldArtifacts    string
 	WalletsDir      string
@@ -102,6 +103,7 @@ func (p *Paths) applyTLD(tld, provider string) {
 	p.BoundConfig = filepath.Join(p.TldDir, "config", provider+".json")
 	p.DeploymentJSON = filepath.Join(p.TldDir, "contracts", "deployment.json")
 	p.ProofBundle = filepath.Join(p.TldDir, "proofs", "proof-bundle.json")
+	p.OwnerHNSKey = filepath.Join(p.TldDir, "proofs", "owner.hns")
 	p.TldArtifacts = filepath.Join(p.TldDir, "artifacts")
 }
 

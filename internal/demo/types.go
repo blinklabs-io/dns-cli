@@ -17,10 +17,11 @@ type TLDState struct {
 	Provider      string `json:"provider"`
 	TLD           string `json:"tld"`
 	Confirmed     struct {
-		Fund     StepResult `json:"fund"`
-		Deploy   StepResult `json:"deploy"`
-		Register StepResult `json:"register"`
-		Activate StepResult `json:"activate"`
+		MintRegistrarToken StepResult `json:"mintRegistrarToken"`
+		Fund               StepResult `json:"fund"`
+		Deploy             StepResult `json:"deploy"`
+		Register           StepResult `json:"register"`
+		Activate           StepResult `json:"activate"`
 	} `json:"confirmed"`
 }
 

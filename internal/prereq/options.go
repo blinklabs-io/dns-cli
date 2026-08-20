@@ -8,12 +8,7 @@ import (
 	"github.com/blinklabs-io/dns-cli/internal/report"
 )
 
-const (
-	DNSContractsRepoURL = "https://github.com/blinklabs-io/dns-contracts.git"
-	DNSContractsDirName = "dns-contracts"
-	OnchainSubdir       = "onchain"
-	MinAikenVersion     = "1.1.19"
-)
+const MinAikenVersion = "1.1.19"
 
 // Options controls interactive prerequisite repair.
 type Options struct {

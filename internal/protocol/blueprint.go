@@ -58,12 +58,13 @@ func (b *Blueprint) FindValidator(title string) (*BlueprintValidator, error) {
 
 // Known validator titles from dns-contracts.
 const (
-	TitleTLDRegistrarMint  = "tld_registration/tld_registrar.tld_registrar.mint"
-	TitleTLDRegistrarSpend = "tld_registration/tld_registrar.tld_registrar.spend"
-	TitleTLDReferenceMint  = "tld_registration/tld_reference.tld_reference.mint"
-	TitleTLDReferenceSpend = "tld_registration/tld_reference.tld_reference.spend"
-	TitleSLDReferenceMint  = "tld_registration/sld_reference.sld_reference.mint"
-	TitleSLDReferenceSpend = "tld_registration/sld_reference.sld_reference.spend"
+	TitleTLDRegistrarMint   = "tld_registration/tld_registrar.tld_registrar.mint"
+	TitleTLDRegistrarSpend  = "tld_registration/tld_registrar.tld_registrar.spend"
+	TitleTLDReferenceMint   = "tld_registration/tld_reference.tld_reference.mint"
+	TitleTLDReferenceSpend  = "tld_registration/tld_reference.tld_reference.spend"
+	TitleSLDReferenceMint   = "tld_registration/sld_reference.sld_reference.mint"
+	TitleSLDReferenceSpend  = "tld_registration/sld_reference.sld_reference.spend"
+	TitleRegistrarTokenMint = "tld_registration/registrar_nft.registrar_token.mint"
 )
 
 // VerifyPolicyHash compares a configured policy id with a blueprint validator hash.

@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"testing"
 
+	"github.com/blinklabs-io/dns-cli/internal/domain"
 	"github.com/blinklabs-io/dns-cli/internal/protocol"
 	"github.com/blinklabs-io/plutigo/data"
 )
@@ -80,5 +81,28 @@ func TestEncodeStakeKeyHashCredentialCBORHex(t *testing.T) {
 	bs, ok := inner.Fields[0].(*data.ByteString)
 	if !ok || len(bs.Inner) != 28 || bs.Inner[0] != 0x11 {
 		t.Fatalf("hash field: %+v", inner.Fields[0])
+	}
+}
+
+// TestEncodeOutputRefCBORHex pins against outputReferenceCborHex from
+// decentralized-dns-contracts/hns-sig/sign.js, which encodes
+// mock_utxo_ref("0", 0) from the Aiken test suite (transaction_id =
+// blake2b_256("0"), output_index = 0). That literal is independently
+// proven correct by success_tld_owner_spend2
+// (onchain/validators/tld_registration/tests/tld_registrar.ak): it
+// verifies a signature hashed over this exact CBOR, computed inside
+// Aiken's own serialise_data, so a mismatched literal would fail there.
+func TestEncodeOutputRefCBORHex(t *testing.T) {
+	txHash := domain.Blake2b256([]byte("0"))
+	got, err := protocol.EncodeOutputRefCBORHex(txHash, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "d8799f58200fd923ca5e7218c4ba3c3801c26a617ecdbfdaebb9c76ce2eca166e7855efbb800ff"
+	if got != want {
+		t.Fatalf("got %s want %s", got, want)
+	}
+	if _, err := protocol.EncodeOutputRefCBORHex(make([]byte, 31), 0); err == nil {
+		t.Fatal("expected length error")
 	}
 }

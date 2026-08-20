@@ -36,13 +36,13 @@ func (c *Client) RegisterTLD(ctx context.Context, eff *config.Effective, tldRaw,
 }
 
 // ActivateTLD builds an unsigned TLD activation transaction.
-func (c *Client) ActivateTLD(ctx context.Context, eff *config.Effective, tldRaw, proofPath, out string) (string, error) {
+func (c *Client) ActivateTLD(ctx context.Context, eff *config.Effective, tldRaw, ownerKeyPath, out string) (string, error) {
 	slog.Info("Starting activate-tld", "tld", tldRaw, "out", out)
 	tld, err := domain.ParseLabel(tldRaw)
 	if err != nil {
 		return "", err
 	}
-	proof, err := domain.LoadProofBundle(proofPath, tldRaw)
+	ownerKey, _, err := domain.LoadHNSKeyFile(ownerKeyPath)
 	if err != nil {
 		return "", err
 	}
@@ -50,7 +50,7 @@ func (c *Client) ActivateTLD(ctx context.Context, eff *config.Effective, tldRaw,
 	if err != nil {
 		return "", err
 	}
-	outBuild, err := txbuilder.ActivateTLD(ctx, bctx, tld, proof, out, c.ContractRevision)
+	outBuild, err := txbuilder.ActivateTLD(ctx, bctx, tld, ownerKey, out, c.ContractRevision)
 	if err != nil {
 		slog.Error("activate-tld failed", "error", err)
 		return "", err

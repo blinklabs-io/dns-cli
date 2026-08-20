@@ -62,13 +62,11 @@ func NewActionForm(action string, v *ActionValues) *huh.Form {
 		groups = []*huh.Group{huh.NewGroup(
 			huh.NewInput().Title("TLD").Value(&v.TLD),
 			huh.NewInput().Title("Out dir").Value(&v.OutDir),
-			huh.NewInput().Title("Registrar key (optional)").Value(&v.RegistrarKey),
 			huh.NewInput().Title("Owner key (optional)").Value(&v.OwnerKey),
 		)}
 	case "system.prepare":
 		groups = []*huh.Group{huh.NewGroup(
-			huh.NewInput().Title("Blueprint dir").Value(&v.Blueprint),
-			huh.NewInput().Title("Registrar HNS key").Value(&v.RegistrarHNS),
+			huh.NewInput().Title("Blueprint file (plutus.json)").Value(&v.Blueprint),
 			huh.NewInput().Title("Stake key / wallet dir").Value(&v.StakeKey),
 			huh.NewInput().Title("Network").Value(&v.Network),
 			huh.NewInput().Title("Out dir").Value(&v.OutDir),
@@ -103,7 +101,7 @@ func NewActionForm(action string, v *ActionValues) *huh.Form {
 	case "owner.activate":
 		groups = []*huh.Group{huh.NewGroup(
 			huh.NewInput().Title("TLD").Value(&v.TLD),
-			huh.NewInput().Title("Proof bundle").Value(&v.Proof),
+			huh.NewInput().Title("Owner key (HNS key JSON)").Value(&v.OwnerKey),
 			huh.NewInput().Title("Out prefix").Value(&v.Out),
 		)}
 	case "owner.mint":

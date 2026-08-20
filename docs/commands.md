@@ -24,7 +24,7 @@ dns-cli version
 dns-cli config init|show|validate
 dns-cli wallet create|fund|balance|wait-funds
 dns-cli proof generate
-dns-cli system prepare|init|bind
+dns-cli system mint-registrar-token|prepare|init|bind
 dns-cli registrar register-tld
 dns-cli owner activate-tld|mint-sld|update-sld
 dns-cli tx inspect|sign|submit|status|apply
@@ -62,14 +62,22 @@ For builders (`wallet fund`, `registrar`, `owner`, `system init`), `--out` is a 
 dns-cli proof generate --tld demo-name --out-dir runtime/proofs
 ```
 
-Writes `registrar.hns`, `owner.hns`, and `proof-bundle.json` with secp256k1 compact signatures over `blake2b_256(tld)`. Optional `--registrar-key` / `--owner-key` reuse existing `.hns` files. `--registrar-hns-key` is an alias for `--registrar-key`.
+Writes `owner.hns` and `proof-bundle.json` with a secp256k1 compact signature over `blake2b_256(tld)`. Optional `--owner-key` reuses an existing `.hns` file. Registrar authority no longer runs through a signature — register-tld proves it on-chain by holding the registrar NFT (see `system mint-registrar-token` below) — so no registrar key is generated here.
 
 ## System bootstrap
 
 ```bash
+dns-cli system mint-registrar-token --config bootstrap.json \
+  --blueprint demo/fixtures/contracts/plutus.json \
+  --out-dir runtime/contracts \
+  --funding-actor bootstrap --destination-actor registrar --out artifacts/00-mint-registrar-token
+
+dns-cli tx apply --config bootstrap.json --tx artifacts/00-mint-registrar-token.unsigned.json \
+  --actor bootstrap --signed artifacts/00-mint-registrar-token.signed.json \
+  --manifest artifacts/00-mint-registrar-token.manifest.json
+
 dns-cli system prepare \
-  --blueprint demo/fixtures/contracts \
-  --registrar-hns-key runtime/proofs/registrar.hns \
+  --blueprint demo/fixtures/contracts/plutus.json \
   --stake-key runtime/wallets/bootstrap/stake.vkey \
   --network preprod \
   --out-dir runtime/contracts
@@ -86,7 +94,9 @@ dns-cli system bind \
   --out runtime/config/blockfrost.json
 ```
 
-`system prepare` invokes Aiken to apply validator parameters in order: registrar key → registrar policy → TLD policy → SLD policy. `--registrar-key` is an alias for `--registrar-hns-key`.
+`system mint-registrar-token` parameterizes `registrar_token` (a one-shot minting policy) against whichever UTxO the funding actor happens to hold, spends that same UTxO in the mint, and pays the resulting NFT to the destination actor. It runs first and needs no prior deployment: it bootstraps `deployment.json` itself (or extends it if already present) with just the `registrarToken` validator entry. The minted policy id must be confirmed on-chain (via `tx apply`) before `system prepare` runs, since `tld_registrar` is parameterized by it.
+
+`system prepare` invokes Aiken to apply validator parameters in order: registrar NFT policy id → registrar policy → TLD policy → SLD policy. It loads and extends the same `deployment.json` that `mint-registrar-token` bootstrapped, adding the `tldRegistrar`/`tldReference`/`sldReference` entries alongside the existing `registrarToken` one.
 
 ## Protocol flow
 
@@ -104,7 +114,7 @@ dns-cli tx submit --tx artifacts/register.signed.json --output json
 dns-cli tx status --tx-id <TXID> --manifest artifacts/register.manifest.json --wait
 
 # 3. Activate TLD (tld owner)
-dns-cli owner activate-tld --tld NAME --proof proof.json --out artifacts/activate
+dns-cli owner activate-tld --tld NAME --owner-key owner.hns --out artifacts/activate
 
 # 4. Mint SLD
 dns-cli owner mint-sld --tld NAME --sld LABEL --sld-owner sldOwner --out artifacts/mint-sld
@@ -153,7 +163,7 @@ provider readiness, and resumes that exact run ID. Completed rows are shown but
 not selectable. The picker never shows transaction IDs or explorer links.
 `--yes` never auto-selects a run and never skips `Proceed with Preprod submissions?`.
 
-`demo run` (fresh) auto-detects `demo/` (`--demo-root` optional) and owns the full Preprod orchestration (prereq checks for demo layout + dns-contracts + Aiken, wallets, faucet wait, prepare/deploy, register → update, resume). Unset `--mode` / `--provider` / `--log-level` use numbered menus; skip-install and clipboard use yes-no when those flags were not passed. Missing contracts are cloned from `https://github.com/blinklabs-io/dns-contracts.git` when the operator agrees.
+`demo run` (fresh) auto-detects `demo/` (`--demo-root` optional) and owns the full Preprod orchestration (prereq checks for demo layout + Aiken, wallets, faucet wait, prepare/deploy, register → update, resume). Unset `--mode` / `--provider` / `--log-level` use numbered menus; skip-install and clipboard use yes-no when those flags were not passed. The demo's `plutus.json` blueprint is a tracked repo file, not cloned or built at run time.
 
 ## End-to-end demo
 

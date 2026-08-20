@@ -42,7 +42,7 @@ dns-cli version
 dns-cli config init|show|validate
 dns-cli wallet create|fund|balance|wait-funds
 dns-cli proof generate
-dns-cli system prepare|init|bind
+dns-cli system mint-registrar-token|prepare|init|bind
 dns-cli registrar register-tld
 dns-cli owner activate-tld|mint-sld|update-sld
 dns-cli tx inspect|sign|submit|status|apply

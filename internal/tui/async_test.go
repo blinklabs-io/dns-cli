@@ -44,7 +44,7 @@ func (f fakeRunner) WalletBalance(context.Context, *config.Effective, string) (i
 	}
 	return 42, 1, nil
 }
-func (f fakeRunner) ProofGenerate(string, string, string, string) (string, error) {
+func (f fakeRunner) ProofGenerate(string, string, string) (string, error) {
 	return "proof.json", nil
 }
 func (f fakeRunner) SystemPrepare(context.Context, system.PrepareOptions) (string, error) {

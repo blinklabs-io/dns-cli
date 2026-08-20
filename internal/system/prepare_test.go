@@ -10,7 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/blinklabs-io/dns-cli/internal/domain"
 	"github.com/blinklabs-io/dns-cli/internal/protocol"
 	"github.com/blinklabs-io/dns-cli/internal/system"
 	"github.com/blinklabs-io/dns-cli/internal/wallet"
@@ -21,7 +20,6 @@ import (
 // FakeRunner records Aiken CLI calls and synthesizes applied blueprints.
 type FakeRunner struct {
 	Calls   []string
-	BuildN  int
 	ApplyN  int
 	hashes  map[string]string
 	scripts map[string]string // validator -> compiledCode hex
@@ -37,12 +35,6 @@ func NewFakeRunner() *FakeRunner {
 func (f *FakeRunner) Version(context.Context) (string, error) {
 	f.Calls = append(f.Calls, "version")
 	return "aiken fake", nil
-}
-
-func (f *FakeRunner) Build(_ context.Context, workdir string) error {
-	f.BuildN++
-	f.Calls = append(f.Calls, "build:"+workdir)
-	return nil
 }
 
 func (f *FakeRunner) Apply(_ context.Context, workdir, inBlueprint, outBlueprint, module, validator, cborHexParam string) error {
@@ -148,19 +140,12 @@ func TestPrepareDeploymentWithFakeAiken(t *testing.T) {
 		},
 	}
 	raw, _ := json.MarshalIndent(bp, "", "  ")
-	if err := os.WriteFile(filepath.Join(blueprintDir, "plutus.json"), raw, 0o644); err != nil {
+	blueprintPath := filepath.Join(blueprintDir, "plutus.json")
+	if err := os.WriteFile(blueprintPath, raw, 0o644); err != nil {
 		t.Fatal(err)
 	}
 
-	_, hns, err := domain.GenerateHNSKey()
-	if err != nil {
-		t.Fatal(err)
-	}
-	hnsPath := filepath.Join(tmp, "registrar.hns")
-	hnsRaw, _ := json.MarshalIndent(hns, "", "  ")
-	if err := os.WriteFile(hnsPath, hnsRaw, 0o600); err != nil {
-		t.Fatal(err)
-	}
+	registrarTokenPolicyID := strings.Repeat("dd", 28)
 
 	stakePub := make([]byte, 32)
 	for i := range stakePub {
@@ -182,20 +167,37 @@ func TestPrepareDeploymentWithFakeAiken(t *testing.T) {
 
 	fake := NewFakeRunner()
 	outDir := filepath.Join(tmp, "out")
+	if err := os.MkdirAll(outDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// Deliberately uppercase here: RegistrarTokenPolicyID must be stored
+	// canonically lowercase regardless of the casing recorded in
+	// deployment.json's registrarToken entry, so the stale-resume
+	// comparison in internal/demo/runner.go (against materializeValidator's
+	// always-lowercase policy ids) can't get a spurious mismatch from
+	// casing alone.
+	depPath := filepath.Join(outDir, "deployment.json")
+	seed := &system.DeploymentJSON{
+		Validators: map[string]system.ValidatorArtifact{
+			system.RoleRegistrarToken: {
+				Role:     system.RoleRegistrarToken,
+				PolicyID: strings.ToUpper(registrarTokenPolicyID),
+			},
+		},
+	}
+	if err := system.SaveDeploymentJSON(depPath, seed); err != nil {
+		t.Fatal(err)
+	}
 	result, err := system.PrepareDeployment(context.Background(), system.PrepareOptions{
-		BlueprintDir:    blueprintDir,
-		RegistrarHNSKey: hnsPath,
-		StakeKeyPath:    stakePath,
-		Network:         "preprod",
-		OutDir:          outDir,
-		Force:           true,
-		Runner:          fake,
+		Blueprint:    blueprintPath,
+		StakeKeyPath: stakePath,
+		Network:      "preprod",
+		OutDir:       outDir,
+		Force:        true,
+		Runner:       fake,
 	})
 	if err != nil {
 		t.Fatal(err)
-	}
-	if fake.BuildN != 1 {
-		t.Fatalf("build calls %d", fake.BuildN)
 	}
 	if fake.ApplyN != 6 {
 		t.Fatalf("apply calls %d want 6", fake.ApplyN)
@@ -215,9 +217,48 @@ func TestPrepareDeploymentWithFakeAiken(t *testing.T) {
 			t.Fatalf("bad address %s", v.Address)
 		}
 	}
+	// RegistrarTokenPolicyID lets callers detect a tldRegistrar entry
+	// prepared against a stale/rotated registrar_token policy instead of
+	// trusting the entry's mere presence.
+	if got := result.Deployment.Validators[system.RoleTLDRegistrar].RegistrarTokenPolicyID; got != registrarTokenPolicyID {
+		t.Fatalf("tldRegistrar RegistrarTokenPolicyID = %q, want %q", got, registrarTokenPolicyID)
+	}
 	wantStake := common.Blake2b224Hash(stakePub)
 	if result.Deployment.StakeKeyHash != hex.EncodeToString(wantStake[:]) {
 		t.Fatalf("stake hash %s vs %s", result.Deployment.StakeKeyHash, hex.EncodeToString(wantStake[:]))
+	}
+}
+
+func TestPrepareDeploymentRequiresRegistrarToken(t *testing.T) {
+	tmp := t.TempDir()
+	blueprintPath := filepath.Join(tmp, "plutus.json")
+	if err := os.WriteFile(blueprintPath, []byte(`{"preamble":{},"validators":[]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	stakePub := make([]byte, 32)
+	stakeCBOR, err := cbor.Encode(stakePub)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stakePath := filepath.Join(tmp, "stake.vkey")
+	if err := wallet.WriteKeyEnvelope(stakePath, wallet.KeyEnvelope{
+		Type: wallet.TypeStakeVKey, CBORHex: hex.EncodeToString(stakeCBOR),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	outDir := filepath.Join(tmp, "out")
+	_, err = system.PrepareDeployment(context.Background(), system.PrepareOptions{
+		Blueprint:    blueprintPath,
+		StakeKeyPath: stakePath,
+		Network:      "preprod",
+		OutDir:       outDir,
+		Runner:       NewFakeRunner(),
+	})
+	if err == nil {
+		t.Fatal("expected an error when deployment.json has no registrarToken entry")
+	}
+	if !strings.Contains(err.Error(), "mint-registrar-token") {
+		t.Fatalf("error should point at mint-registrar-token, got: %v", err)
 	}
 }
 

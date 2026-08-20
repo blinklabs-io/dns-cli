@@ -145,12 +145,14 @@ func decodeAsset(asset AssetID) (policy []byte, name []byte, err error) {
 
 // Contracts bundles configured deployment identifiers.
 type Contracts struct {
-	RegistrarAddr        common.Address
-	TLDReferenceAddr     common.Address
-	SLDReferenceAddr     common.Address
-	RegistrarPolicyID    string
-	TLDReferencePolicyID string
-	SLDReferencePolicyID string
+	RegistrarAddr           common.Address
+	TLDReferenceAddr        common.Address
+	SLDReferenceAddr        common.Address
+	RegistrarPolicyID       string
+	TLDReferencePolicyID    string
+	SLDReferencePolicyID    string
+	RegistrarTokenPolicyID  string
+	RegistrarTokenAssetName string
 }
 
 // LoadContracts parses contract addresses from config.
@@ -169,12 +171,14 @@ func LoadContracts(eff *config.Effective) (Contracts, error) {
 		return Contracts{}, fmt.Errorf("sldReferenceAddress: %w", err)
 	}
 	return Contracts{
-		RegistrarAddr:        registrar,
-		TLDReferenceAddr:     tldRef,
-		SLDReferenceAddr:     sldRef,
-		RegistrarPolicyID:    strings.ToLower(c.TLDRegistrarPolicyID),
-		TLDReferencePolicyID: strings.ToLower(c.TLDReferencePolicyID),
-		SLDReferencePolicyID: strings.ToLower(c.SLDReferencePolicyID),
+		RegistrarAddr:           registrar,
+		TLDReferenceAddr:        tldRef,
+		SLDReferenceAddr:        sldRef,
+		RegistrarPolicyID:       strings.ToLower(c.TLDRegistrarPolicyID),
+		TLDReferencePolicyID:    strings.ToLower(c.TLDReferencePolicyID),
+		SLDReferencePolicyID:    strings.ToLower(c.SLDReferencePolicyID),
+		RegistrarTokenPolicyID:  strings.ToLower(c.RegistrarTokenPolicyID),
+		RegistrarTokenAssetName: strings.ToLower(c.RegistrarTokenAssetName),
 	}, nil
 }
 

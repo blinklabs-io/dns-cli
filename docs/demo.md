@@ -10,19 +10,21 @@ The demo is a resumable, operator-driven end-to-end walkthrough of the Handshake
 
 1. Create (or reuse) actor wallets
 2. Wait for faucet funding of the bootstrap wallet
-3. Split ADA to registrar / TLD owner / SLD owner (`wallet fund`)
-4. Parameterize and deploy reference scripts (`system prepare` + `system init`)
-5. Register a TLD (`registrar register-tld`)
-6. Activate the TLD (`owner activate-tld`)
-7. Mint an SLD under that TLD (`owner mint-sld`)
-8. Publish DNS records for the SLD (`owner update-sld`)
+3. Mint the registrar NFT and parameterize validators (`system mint-registrar-token` + `system prepare`)
+4. Split ADA to registrar / TLD owner / SLD owner (`wallet fund`)
+5. Deploy reference scripts (`system init`)
+6. Register a TLD (`registrar register-tld`)
+7. Activate the TLD (`owner activate-tld`)
+8. Mint an SLD under that TLD (`owner mint-sld`)
+9. Publish DNS records for the SLD (`owner update-sld`)
 
 Orchestration is implemented in Go as `dns-cli demo run` (package `internal/demo`). Build the binary with repo-root [`scripts/setup.sh`](../scripts/setup.sh) / [`scripts/setup.ps1`](../scripts/setup.ps1). Each on-chain step is built via ops helpers, then confirmed with `tx apply` (sign → submit → wait). Faucet waiting uses `wallet wait-funds`. Progress is stored under `demo/runs/` so an interrupted run can resume without re-submitting confirmed transactions.
 
 ```mermaid
 flowchart TB
   start["dns-cli demo run"] --> wallets["shared wallets"]
-  wallets --> fund["00 fund"]
+  wallets --> mintRegistrar["00 mint-registrar-token + prepare"]
+  mintRegistrar --> fund["00 fund"]
   fund --> deploy["01 deploy"]
   deploy --> bind["system bind"]
   bind --> register["02 register-tld"]
@@ -49,7 +51,7 @@ demo/
     utxorpc.template.json
     records.json               # DNS records template → copied into each SLD run
   fixtures/
-    contracts/                 # Aiken project + plutus.json for system prepare
+    contracts/                 # vendored plutus.json blueprint for system prepare
   runs/
     .gitkeep
     states/                    # tracked schemas (tld / sld / run / index)
@@ -82,7 +84,7 @@ Schemas live under `runs/states/` and are versioned with the rest of `demo/runs/
 | Item | Notes |
 |---|---|
 | Go **1.25.12+** | Required by setup / build (Apollo via `go.mod` replace) |
-| Aiken CLI **≥ 1.1.19** | Must match `fixtures/contracts/aiken.toml` compiler |
+| Aiken CLI **≥ 1.1.19** | Applies/converts the vendored blueprint; not used to build it |
 | Provider credentials | See below |
 | ≥ **150 ADA** on bootstrap | Preprod faucet; runner polls until funded |
 
@@ -235,6 +237,7 @@ Each confirmed entry stores `txId` and an absolute `manifest` path.
 
 | Prefix | Location | Command |
 |---|---|---|
+| `00-mint-registrar-token` | `runs/<tld>/artifacts/` | `system mint-registrar-token` |
 | `00-fund` | `runs/<tld>/artifacts/` | `wallet fund` |
 | `01-deploy` | `runs/<tld>/artifacts/` | `system init` |
 | `02-register` | `runs/<tld>/artifacts/` | `registrar register-tld` |
@@ -287,7 +290,7 @@ Safe operator customizations:
 
 | Item | Why |
 |---|---|
-| `fixtures/contracts/` compiler pin / blueprint | Must stay aligned with Aiken ≥ 1.1.19 and prepare/init |
+| `fixtures/contracts/plutus.json` | Must stay in sync with `dns-contracts/onchain/plutus.json`; copy it over by hand when contracts change |
 | `runs/states/*.schema.json` version fields | Runners expect `schemaVersion: 2` for TLD/SLD state |
 | Relative paths inside generated bootstrap/bound configs | Resolved against `runs/<tld>/config/`; rewriting by hand breaks signing |
 | Deleting `runs/<tld>/state.json` while keeping on-chain UTxOs | Resume will try to rebuild/resubmit and can fail against already-spent outputs |

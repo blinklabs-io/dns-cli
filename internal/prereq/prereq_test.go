@@ -6,32 +6,16 @@ import (
 	"testing"
 )
 
-func TestContractsOK(t *testing.T) {
-	dir := t.TempDir()
-	if ContractsOK(dir) {
-		t.Fatal("empty dir should fail")
-	}
-	mustWrite(t, filepath.Join(dir, "aiken.toml"), "name = \"x\"\n")
-	mustMkdir(t, filepath.Join(dir, "validators"))
-	mustMkdir(t, filepath.Join(dir, "lib"))
-	if !ContractsOK(dir) {
-		t.Fatal("expected OK")
-	}
-}
-
 func TestMissingDemoAssets(t *testing.T) {
 	dir := t.TempDir()
 	missing := MissingDemoAssets(dir)
 	if len(missing) == 0 {
 		t.Fatal("expected missing assets")
 	}
-	// Create minimal layout without contracts validators/lib fully
 	mustWrite(t, filepath.Join(dir, "config", "records.json"), "{}")
 	mustWrite(t, filepath.Join(dir, "config", "blockfrost.template.json"), "{}")
 	mustWrite(t, filepath.Join(dir, "config", "utxorpc.template.json"), "{}")
-	mustWrite(t, filepath.Join(dir, "fixtures", "contracts", "aiken.toml"), "x")
-	mustMkdir(t, filepath.Join(dir, "fixtures", "contracts", "validators"))
-	mustMkdir(t, filepath.Join(dir, "fixtures", "contracts", "lib"))
+	mustWrite(t, filepath.Join(dir, "fixtures", "contracts", "plutus.json"), "{}")
 	if got := MissingDemoAssets(dir); len(got) != 0 {
 		t.Fatalf("expected complete, still missing %v", got)
 	}
@@ -49,13 +33,6 @@ func TestVersionAtLeast(t *testing.T) {
 	ok, err = versionAtLeast("1.2.0", "1.1.19")
 	if err != nil || !ok {
 		t.Fatalf("got %v %v", ok, err)
-	}
-}
-
-func mustMkdir(t *testing.T, path string) {
-	t.Helper()
-	if err := os.MkdirAll(path, 0o755); err != nil {
-		t.Fatal(err)
 	}
 }
 

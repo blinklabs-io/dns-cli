@@ -10,14 +10,18 @@ import (
 	"github.com/blinklabs-io/dns-cli/internal/domain"
 	"github.com/blinklabs-io/dns-cli/internal/protocol"
 	"github.com/blinklabs-io/gouroboros/ledger/common"
+	"github.com/blinklabs-io/plutigo/data"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
 // ActivateTLD builds an unsigned TLD activation (OwnerAction + InitRemoveReference) transaction.
-func ActivateTLD(ctx context.Context, bctx *Context, tld domain.Label, proof domain.ParsedProof, outPrefix, contractRevision string) (BuildOutput, error) {
+// The owner's signature can't be pre-generated: it's bound to the exact
+// registration UTxO being spent, which is only known once located on-chain
+// here, so ownerKey signs just-in-time instead of proof carrying a static
+// signature.
+func ActivateTLD(ctx context.Context, bctx *Context, tld domain.Label, ownerKey *secp256k1.PrivateKey, outPrefix, contractRevision string) (BuildOutput, error) {
 	slog.Info("Building activate-tld transaction", "tld", tld.Canonical)
-	if err := domain.ValidateProofForActivation(proof, tld.Bytes); err != nil {
-		return BuildOutput{}, fmt.Errorf("invalid owner proof: %w", err)
-	}
+	ownerPub := ownerKey.PubKey().SerializeCompressed()
 	// Register may be confirmed via tx APIs before the registrar address index catches up.
 	regAsset := chainquery.AssetID{
 		PolicyID: bctx.Contracts.RegistrarPolicyID,
@@ -33,8 +37,8 @@ func ActivateTLD(ctx context.Context, bctx *Context, tld domain.Label, proof dom
 	if reg.Datum.Minted != 0 {
 		return BuildOutput{}, fmt.Errorf("tld %q is already activated (minted=%d)", tld.Canonical, reg.Datum.Minted)
 	}
-	if string(reg.Datum.OwnerHNSKey) != string(proof.OwnerPublicKey) {
-		return BuildOutput{}, fmt.Errorf("proof owner key does not match registration datum")
+	if string(reg.Datum.OwnerHNSKey) != string(ownerPub) {
+		return BuildOutput{}, fmt.Errorf("owner key does not match registration datum")
 	}
 
 	tldOwner, err := actorAddress(bctx.Eff, "tldOwner")
@@ -57,13 +61,40 @@ func ActivateTLD(ctx context.Context, bctx *Context, tld domain.Label, proof dom
 		return BuildOutput{}, err
 	}
 
-	spendRed, err := protocol.OwnerActionRedeemer{OwnerSignature: proof.OwnerSignature}.ToPlutusData()
+	// Signed message must match tld_registrar's OwnerAction check exactly:
+	// tld ++ serialise_data(receiver_address) ++ serialise_data(output_reference).
+	receiverPD := tldOwner.ToPlutusData()
+	if receiverPD == nil {
+		return BuildOutput{}, fmt.Errorf("tldOwner address has no Plutus Data representation")
+	}
+	receiverCBOR, err := data.Encode(receiverPD)
+	if err != nil {
+		return BuildOutput{}, fmt.Errorf("encode receiver address: %w", err)
+	}
+	outputRefPD, err := protocol.OutputReferencePlutusData(reg.UTxO.Utxo.Id.Id().Bytes(), uint32(reg.UTxO.Utxo.Id.Index()))
+	if err != nil {
+		return BuildOutput{}, fmt.Errorf("encode output reference: %w", err)
+	}
+	outputRefCBOR, err := data.Encode(outputRefPD)
+	if err != nil {
+		return BuildOutput{}, fmt.Errorf("encode output reference: %w", err)
+	}
+	message := append(append(append([]byte{}, tld.Bytes...), receiverCBOR...), outputRefCBOR...)
+	ownerSig, err := domain.SignMessage(ownerKey, message)
+	if err != nil {
+		return BuildOutput{}, fmt.Errorf("sign owner action: %w", err)
+	}
+
+	spendRed, err := protocol.OwnerActionRedeemer{
+		OwnerSignature:  ownerSig,
+		ReceiverAddress: tldOwner,
+	}.ToPlutusData()
 	if err != nil {
 		return BuildOutput{}, err
 	}
 	updatedDatumPD, err := protocol.TLDRegisterDatum{
 		TLD:         tld.Bytes,
-		OwnerHNSKey: proof.OwnerPublicKey,
+		OwnerHNSKey: reg.Datum.OwnerHNSKey,
 		Minted:      1,
 	}.ToPlutusData()
 	if err != nil {

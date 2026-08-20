@@ -48,12 +48,12 @@ type Runner interface {
 	WalletCreate(opts wallet.GenerateOptions) (*wallet.GeneratedWallet, error)
 	WalletFund(ctx context.Context, eff *config.Effective, from string, alloc []txbuilder.FundAllocation, collateral int64, out string) (string, error)
 	WalletBalance(ctx context.Context, eff *config.Effective, actor string) (int64, int, error)
-	ProofGenerate(tld, outDir, registrarKey, ownerKey string) (string, error)
+	ProofGenerate(tld, outDir, ownerKey string) (string, error)
 	SystemPrepare(ctx context.Context, opts system.PrepareOptions) (string, error)
 	SystemInit(ctx context.Context, eff *config.Effective, deployment, actor, out string) (string, string, error)
 	SystemBind(opts system.BindOptions) (string, error)
 	RegisterTLD(ctx context.Context, eff *config.Effective, tld, proof, out string) (string, error)
-	ActivateTLD(ctx context.Context, eff *config.Effective, tld, proof, out string) (string, error)
+	ActivateTLD(ctx context.Context, eff *config.Effective, tld, ownerKey, out string) (string, error)
 	MintSLD(ctx context.Context, eff *config.Effective, tld, sld, sldOwner, out string) (string, error)
 	UpdateSLD(ctx context.Context, eff *config.Effective, tld, sld, records, out string) (string, error)
 	TxInspect(path string) (map[string]any, error)
@@ -85,8 +85,8 @@ func (r *opsRunner) WalletFund(ctx context.Context, eff *config.Effective, from 
 func (r *opsRunner) WalletBalance(ctx context.Context, eff *config.Effective, actor string) (int64, int, error) {
 	return r.client.WalletBalance(ctx, eff, actor)
 }
-func (r *opsRunner) ProofGenerate(tld, outDir, registrarKey, ownerKey string) (string, error) {
-	out, err := r.client.ProofGenerate(tld, outDir, registrarKey, ownerKey)
+func (r *opsRunner) ProofGenerate(tld, outDir, ownerKey string) (string, error) {
+	out, err := r.client.ProofGenerate(tld, outDir, ownerKey)
 	if err != nil {
 		return "", err
 	}
@@ -116,8 +116,8 @@ func (r *opsRunner) SystemBind(opts system.BindOptions) (string, error) {
 func (r *opsRunner) RegisterTLD(ctx context.Context, eff *config.Effective, tld, proof, out string) (string, error) {
 	return r.client.RegisterTLD(ctx, eff, tld, proof, out)
 }
-func (r *opsRunner) ActivateTLD(ctx context.Context, eff *config.Effective, tld, proof, out string) (string, error) {
-	return r.client.ActivateTLD(ctx, eff, tld, proof, out)
+func (r *opsRunner) ActivateTLD(ctx context.Context, eff *config.Effective, tld, ownerKey, out string) (string, error) {
+	return r.client.ActivateTLD(ctx, eff, tld, ownerKey, out)
 }
 func (r *opsRunner) MintSLD(ctx context.Context, eff *config.Effective, tld, sld, sldOwner, out string) (string, error) {
 	return r.client.MintSLD(ctx, eff, tld, sld, sldOwner, out)
@@ -201,7 +201,7 @@ func runActionCmd(runner Runner, eff *config.Effective, action string, v forms.A
 				msg.Balances = map[string]string{v.Actor: fmt.Sprintf("%d lovelace (%d utxos)", total, count)}
 			}
 		case "proof.generate":
-			path, err := runner.ProofGenerate(v.TLD, v.OutDir, v.RegistrarKey, v.OwnerKey)
+			path, err := runner.ProofGenerate(v.TLD, v.OutDir, v.OwnerKey)
 			msg.Err = err
 			if err == nil {
 				msg.Artifact = path
@@ -210,7 +210,7 @@ func runActionCmd(runner Runner, eff *config.Effective, action string, v forms.A
 			}
 		case "system.prepare":
 			path, err := runner.SystemPrepare(ctx, system.PrepareOptions{
-				BlueprintDir: v.Blueprint, RegistrarHNSKey: v.RegistrarHNS, StakeKeyPath: v.StakeKey,
+				Blueprint: v.Blueprint, StakeKeyPath: v.StakeKey,
 				Network: v.Network, OutDir: v.OutDir, AikenBin: v.Aiken, Force: v.Force,
 			})
 			msg.Err = err
@@ -252,7 +252,7 @@ func runActionCmd(runner Runner, eff *config.Effective, action string, v forms.A
 				msg.Checklist = &checklistPatch{Register: &t}
 			}
 		case "owner.activate":
-			path, err := runner.ActivateTLD(ctx, eff, v.TLD, v.Proof, v.Out)
+			path, err := runner.ActivateTLD(ctx, eff, v.TLD, v.OwnerKey, v.Out)
 			msg.Err = err
 			if err == nil {
 				msg.Artifact = path

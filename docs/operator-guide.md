@@ -42,7 +42,7 @@ dns-cli registrar register-tld --tld hello --proof proof.json --out artifacts/01
 dns-cli tx apply --tx artifacts/01-register.unsigned.json --actor registrar \
   --signed artifacts/01-register.signed.json --manifest artifacts/01-register.manifest.json
 
-dns-cli owner activate-tld --tld hello --proof proof.json --out artifacts/02-activate
+dns-cli owner activate-tld --tld hello --owner-key owner.hns --out artifacts/02-activate
 dns-cli tx apply --tx artifacts/02-activate.unsigned.json --actor tldOwner \
   --signed artifacts/02-activate.signed.json --manifest artifacts/02-activate.manifest.json
 

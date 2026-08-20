@@ -128,7 +128,7 @@ func (r *Runner) showWalletSummary(lovelace int64) {
 
 func (r *Runner) confirmedStepKeys() []string {
 	var keys []string
-	for _, k := range []string{"fund", "deploy", "register", "activate"} {
+	for _, k := range []string{"mintRegistrarToken", "fund", "deploy", "register", "activate"} {
 		if r.tldState != nil && r.tldState.stepTxID(k) != "" {
 			keys = append(keys, k)
 		}

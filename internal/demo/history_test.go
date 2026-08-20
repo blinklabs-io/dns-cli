@@ -34,6 +34,7 @@ func TestReadHistorySkipsSharedAndStates(t *testing.T) {
 		"provider": "blockfrost",
 		"tld": "cardano",
 		"confirmed": {
+			"mintRegistrarToken": {"txId": "zzz", "manifest": "m0"},
 			"fund": {"txId": "aaa", "manifest": "m1"},
 			"deploy": {"txId": "", "manifest": ""},
 			"register": {"txId": "", "manifest": ""},
@@ -66,6 +67,9 @@ func TestReadHistorySkipsSharedAndStates(t *testing.T) {
 	if h.TLDs[0].Confirmed["fund"].ExplorerURL != ExplorerURLPrefix+"aaa" {
 		t.Fatalf("unexpected explorer: %#v", h.TLDs[0].Confirmed["fund"])
 	}
+	if h.TLDs[0].Confirmed["mintRegistrarToken"].ExplorerURL != ExplorerURLPrefix+"zzz" {
+		t.Fatalf("unexpected mintRegistrarToken explorer: %#v", h.TLDs[0].Confirmed["mintRegistrarToken"])
+	}
 	if len(h.TLDs[0].Runs) != 1 {
 		t.Fatalf("want 1 run, got %d", len(h.TLDs[0].Runs))
 	}
@@ -75,6 +79,9 @@ func TestReadHistorySkipsSharedAndStates(t *testing.T) {
 	human := FormatHistoryHuman(h, false)
 	if !strings.Contains(human, "TLD cardano") || !strings.Contains(human, "update-sld") || !strings.Contains(human, "ccc") {
 		t.Fatalf("unexpected human output: %s", human)
+	}
+	if !strings.Contains(human, "mint-registrar-token") || !strings.Contains(human, "zzz") {
+		t.Fatalf("expected mint-registrar-token step in human output: %s", human)
 	}
 	if !strings.Contains(human, "explorer") {
 		t.Fatalf("expected explorer lines in:\n%s", human)

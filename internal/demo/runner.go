@@ -132,11 +132,10 @@ func Run(ctx context.Context, opts Options) error {
 		return err
 	}
 
-	g.Step("Proof + system prepare",
-		"Generate Handshake proof keys and parameterize validators (Aiken).",
-		"dns-cli proof generate --tld <tld> --out-dir <tld>/proofs",
-		"dns-cli system prepare --blueprint demo/fixtures/contracts --registrar-hns-key <…>/registrar.hns --stake-key <…>/stake.vkey --out-dir <tld>/contracts")
-	if err := r.ensureProofAndPrepare(); err != nil {
+	g.Step("Proof",
+		"Generate the owner's Handshake proof keys.",
+		"dns-cli proof generate --tld <tld> --out-dir <tld>/proofs")
+	if err := r.ensureProof(); err != nil {
 		return err
 	}
 	r.showPreflight()
@@ -207,13 +206,15 @@ func (r *Runner) waitForFunds() error {
 	return err
 }
 
-func (r *Runner) ensureProofAndPrepare() error {
+// ensureProof generates the owner's Handshake proof bundle if missing or
+// stale. Minting the registrar NFT and running system prepare both need an
+// on-chain submission (the registrar NFT's policy id parameterizes
+// tld_registrar), so they run later in freshSubmissions, gated behind the
+// user's confirmation prompt.
+func (r *Runner) ensureProof() error {
 	proofsDir := filepath.Join(r.paths.TldDir, "proofs")
-	contractsDir := filepath.Join(r.paths.TldDir, "contracts")
-	for _, d := range []string{proofsDir, contractsDir} {
-		if err := os.MkdirAll(d, 0o755); err != nil {
-			return err
-		}
+	if err := os.MkdirAll(proofsDir, 0o755); err != nil {
+		return err
 	}
 
 	needProof := true
@@ -225,40 +226,20 @@ func (r *Runner) ensureProofAndPrepare() error {
 			slog.Info("Proof bundle tld mismatch; regenerating", "tld", r.tld)
 		}
 	}
-	if needProof {
-		registrarKey := filepath.Join(proofsDir, "registrar.hns")
-		ownerKey := filepath.Join(proofsDir, "owner.hns")
-		if _, err := os.Stat(registrarKey); err != nil {
-			registrarKey = ""
+	ownerKeyPath := filepath.Join(proofsDir, "owner.hns")
+	if !needProof {
+		if _, err := os.Stat(ownerKeyPath); err != nil {
+			return fmt.Errorf("proof bundle matches %q but owner.hns is missing at %s (delete %s to regenerate): %w", r.tld, ownerKeyPath, r.paths.ProofBundle, err)
 		}
-		if _, err := os.Stat(ownerKey); err != nil {
-			ownerKey = ""
-		}
-		slog.Info("Generating proof bundle", "tld", r.tld)
-		if _, err := r.ops.ProofGenerate(r.tld, proofsDir, registrarKey, ownerKey); err != nil {
-			return fmt.Errorf("proof generate: %w", err)
-		}
-	}
-	registrarHns := filepath.Join(proofsDir, "registrar.hns")
-	if _, err := os.Stat(registrarHns); err != nil {
-		return fmt.Errorf("missing registrar.hns after proof generate")
-	}
-
-	if _, err := os.Stat(r.paths.DeploymentJSON); err == nil {
-		slog.Info("Deployment exists", "path", r.paths.DeploymentJSON)
 		return nil
 	}
-	slog.Info("Running system prepare (aiken build + parameterize)")
-	stakeKey := filepath.Join(r.paths.WalletsDir, "bootstrap", "stake.vkey")
-	_, err := r.ops.SystemPrepare(r.ctx, system.PrepareOptions{
-		BlueprintDir:    filepath.Join(r.paths.DemoRoot, "fixtures", "contracts"),
-		RegistrarHNSKey: registrarHns,
-		StakeKeyPath:    stakeKey,
-		Network:         NetworkName,
-		OutDir:          contractsDir,
-	})
-	if err != nil {
-		return fmt.Errorf("system prepare: %w", err)
+	reuseKey := ownerKeyPath
+	if _, err := os.Stat(reuseKey); err != nil {
+		reuseKey = ""
+	}
+	slog.Info("Generating proof bundle", "tld", r.tld)
+	if _, err := r.ops.ProofGenerate(r.tld, proofsDir, reuseKey); err != nil {
+		return fmt.Errorf("proof generate: %w", err)
 	}
 	return nil
 }
@@ -300,6 +281,7 @@ func (r *Runner) preflightRoadmap() []report.RoadmapItem {
 		detail string
 		scope  string
 	}{
+		{"mintRegistrarToken", "mint-registrar-token", "mint registrar NFT + parameterize validators", "tld"},
 		{"fund", "fund", "split ADA to registrar / tldOwner / sldOwner", "tld"},
 		{"deploy", "deploy", "publish reference scripts (system init)", "tld"},
 		{"bind", "bind", "write provider config with ref UTxOs", "bind"},
@@ -350,6 +332,7 @@ func (r *Runner) showSuccess() {
 		SLDRunDir:   r.paths.SldRunDir,
 		Explorer:    ExplorerURLPrefix,
 		Steps: []ReportStep{
+			{Label: "mint-registrar-token", TxID: r.tldState.stepTxID("mintRegistrarToken")},
 			{Label: "fund", TxID: r.tldState.stepTxID("fund")},
 			{Label: "deploy", TxID: r.tldState.stepTxID("deploy")},
 			{Label: "register", TxID: r.tldState.stepTxID("register")},
@@ -402,10 +385,98 @@ func (r *Runner) freshSubmissions() error {
 	bootstrapCfg := r.paths.BootstrapConfig
 	g := r.guide()
 	boundHint := "<bound.json>"
+	contractsDir := filepath.Join(r.paths.TldDir, "contracts")
+	if err := os.MkdirAll(contractsDir, 0o755); err != nil {
+		return err
+	}
+	blueprint := filepath.Join(r.paths.DemoRoot, "fixtures", "contracts", "plutus.json")
+
+	// A run whose deploy step already confirmed without ever confirming
+	// mint-registrar-token predates this registrar-token scheme entirely
+	// (e.g. resuming a run from before this scheme existed). Its reference
+	// scripts are already on-chain against the old auth mechanism, so
+	// minting a fresh token now would just be orphaned once we refuse to
+	// proceed below — catch this before spending anything, not after.
+	if deployTx := r.tldState.stepTxID("deploy"); deployTx != "" && r.tldState.stepTxID("mintRegistrarToken") == "" {
+		return fmt.Errorf("this run's deploy step was confirmed (tx %s) before the registrar-token scheme existed for this TLD; local re-preparation can't repair that — start a new TLD run", deployTx)
+	}
+
+	// mint-registrar-token + prepare
+	g.Step("1/8 Mint registrar NFT + prepare validators",
+		"Mint the one-shot registrar NFT (registrar authority proof), then parameterize validators against its policy id.",
+		"dns-cli system mint-registrar-token --config "+quotePath(bootstrapCfg)+" --blueprint "+blueprint+" --out-dir "+quotePath(contractsDir)+" --funding-actor bootstrap --destination-actor registrar --out "+quotePath(filepath.Join(r.paths.TldArtifacts, "00-mint-registrar-token")),
+		"dns-cli tx apply --config "+quotePath(bootstrapCfg)+" --tx …/00-mint-registrar-token.unsigned.json --actor bootstrap --signed …/00-mint-registrar-token.signed.json --manifest …/00-mint-registrar-token.manifest.json",
+		"dns-cli system prepare --blueprint "+blueprint+" --stake-key <…>/stake.vkey --out-dir "+quotePath(contractsDir))
+	if r.tldState.stepTxID("mintRegistrarToken") == "" {
+		eff, err := r.loadConfig(bootstrapCfg)
+		if err != nil {
+			return err
+		}
+		out := filepath.Join(r.paths.TldArtifacts, "00-mint-registrar-token")
+		result, err := r.ops.MintRegistrarToken(r.ctx, eff, blueprint, contractsDir, "bootstrap", "registrar", out)
+		if err != nil {
+			return fmt.Errorf("mint-registrar-token: %w", err)
+		}
+		if err := r.applyStep("tld", "mintRegistrarToken", "bootstrap", result.Build.EnvelopePath, bootstrapCfg); err != nil {
+			return err
+		}
+	} else {
+		g.Note("Skip mint-registrar-token — already confirmed in TLD state.")
+	}
+	dep, err := system.LoadDeploymentJSON(r.paths.DeploymentJSON)
+	if err != nil {
+		return fmt.Errorf("load deployment.json after mint-registrar-token: %w", err)
+	}
+	token, ok := dep.Validators[system.RoleRegistrarToken]
+	if !ok {
+		return fmt.Errorf("deployment.json missing registrarToken entry")
+	}
+	// A tldRegistrar entry from before this token scheme (or from a prior
+	// registrar-token rotation) still satisfies a presence-only check but
+	// enforces a different registrar_token policy id on-chain, so registrar
+	// authority checks would fail at register-tld. Compare the policy id it
+	// was actually parameterized against, not just whether it exists.
+	// Case-insensitive: policy ids are hex and callers of system prepare may
+	// pass --registrar-token-policy-id with different casing than the
+	// canonical lowercase form materializeValidator always produces.
+	tldRegistrar, alreadyPrepared := dep.Validators[system.RoleTLDRegistrar]
+	stale := alreadyPrepared && !strings.EqualFold(tldRegistrar.RegistrarTokenPolicyID, token.PolicyID)
+	if stale {
+		// Once deploy has published tld_registrar's reference script
+		// on-chain, re-parameterizing local artifacts alone can't fix
+		// things: the deployed script and the bound config still point at
+		// the stale validator. There's no local recovery from that; the
+		// run needs to start over under a new TLD.
+		if deployTx := r.tldState.stepTxID("deploy"); deployTx != "" {
+			return fmt.Errorf("tld_registrar was parameterized against registrar_token policy %s but the current one is %s, and this run's reference scripts are already deployed on-chain (deploy tx %s) against the stale validator; local re-preparation can't repair that — start a new TLD run",
+				tldRegistrar.RegistrarTokenPolicyID, token.PolicyID, deployTx)
+		}
+		slog.Warn("tld_registrar was parameterized against a different registrar_token policy; re-preparing",
+			"have", tldRegistrar.RegistrarTokenPolicyID, "want", token.PolicyID)
+		alreadyPrepared = false
+	}
+	if !alreadyPrepared {
+		slog.Info("Running system prepare (parameterize)")
+		stakeKey := filepath.Join(r.paths.WalletsDir, "bootstrap", "stake.vkey")
+		if _, err := r.ops.SystemPrepare(r.ctx, system.PrepareOptions{
+			Blueprint:    blueprint,
+			StakeKeyPath: stakeKey,
+			Network:      NetworkName,
+			OutDir:       contractsDir,
+			// Reparameterizing a stale tldRegistrar entry (or none existing
+			// yet) both fall through here; PrepareDeployment otherwise
+			// refuses to overwrite an existing tldRegistrar entry.
+			Force: true,
+		}); err != nil {
+			return fmt.Errorf("system prepare: %w", err)
+		}
+	} else {
+		g.Note("Skip system prepare — already parameterized in deployment.json.")
+	}
 
 	// fund
 	if r.tldState.stepTxID("fund") == "" {
-		g.Step("1/7 Fund actors",
+		g.Step("2/8 Fund actors",
 			"Move ADA (+collateral) from bootstrap to registrar, tldOwner, and sldOwner.",
 			"dns-cli wallet fund --config "+quotePath(bootstrapCfg)+" --from-actor bootstrap --allocation registrar=30000000 --allocation tldOwner=50000000 --allocation sldOwner=30000000 --collateral 5000000 --out "+quotePath(filepath.Join(r.paths.TldArtifacts, "00-fund")),
 			"dns-cli tx apply --config "+quotePath(bootstrapCfg)+" --tx …/00-fund.unsigned.json --actor bootstrap --signed …/00-fund.signed.json --manifest …/00-fund.manifest.json")
@@ -432,7 +503,7 @@ func (r *Runner) freshSubmissions() error {
 
 	// deploy
 	if r.tldState.stepTxID("deploy") == "" {
-		g.Step("2/7 Deploy reference scripts",
+		g.Step("3/8 Deploy reference scripts",
 			"Publish tldRegistrar / tldReference / sldReference scripts on-chain (system init).",
 			"dns-cli system init --config "+quotePath(bootstrapCfg)+" --deployment "+quotePath(r.paths.DeploymentJSON)+" --actor bootstrap --out "+quotePath(filepath.Join(r.paths.TldArtifacts, "01-deploy")),
 			"dns-cli tx apply --config "+quotePath(bootstrapCfg)+" --tx …/01-deploy.unsigned.json --actor bootstrap --signed …/01-deploy.signed.json --manifest …/01-deploy.manifest.json")
@@ -458,7 +529,7 @@ func (r *Runner) freshSubmissions() error {
 	}
 
 	// bind (always after deploy confirms)
-	g.Step("3/7 Bind provider config",
+	g.Step("4/8 Bind provider config",
 		"Merge deploy tx + wallets into a runnable config (reference UTxO ids).",
 		"dns-cli system bind --base-config <template.json> --deployment "+quotePath(r.paths.DeploymentJSON)+" --tx-id <deployTx> --actor-dir "+quotePath(r.paths.WalletsDir)+" --provider "+r.provider+" --out "+quotePath(r.paths.BoundConfig))
 	if err := r.ensureBoundConfig(); err != nil {
@@ -482,7 +553,7 @@ func (r *Runner) freshSubmissions() error {
 
 	// register
 	if r.tldState.stepTxID("register") == "" {
-		g.Step("4/7 Register TLD",
+		g.Step("5/8 Register TLD",
 			fmt.Sprintf("Registrar claims %q on Preprod using the Handshake proof.", r.tld),
 			"dns-cli registrar register-tld --config "+boundHint+" --tld "+r.tld+" --proof "+quotePath(r.paths.ProofBundle)+" --out "+quotePath(filepath.Join(r.paths.TldArtifacts, "02-register")),
 			"dns-cli tx apply --config "+boundHint+" --tx …/02-register.unsigned.json --actor registrar --signed …/02-register.signed.json --manifest …/02-register.manifest.json")
@@ -504,9 +575,9 @@ func (r *Runner) freshSubmissions() error {
 
 	// activate
 	if r.tldState.stepTxID("activate") == "" {
-		g.Step("5/7 Activate TLD",
+		g.Step("6/8 Activate TLD",
 			"TLD owner activates the registration (first OwnerAction).",
-			"dns-cli owner activate-tld --config "+boundHint+" --tld "+r.tld+" --proof "+quotePath(r.paths.ProofBundle)+" --out "+quotePath(filepath.Join(r.paths.TldArtifacts, "03-activate")),
+			"dns-cli owner activate-tld --config "+boundHint+" --tld "+r.tld+" --owner-key "+quotePath(r.paths.OwnerHNSKey)+" --out "+quotePath(filepath.Join(r.paths.TldArtifacts, "03-activate")),
 			"dns-cli tx apply --config "+boundHint+" --tx …/03-activate.unsigned.json --actor tldOwner --signed …/03-activate.signed.json --manifest …/03-activate.manifest.json")
 		g.Note("Waiting for registration UTxO on the address API (Blockfrost lag).")
 		eff, err := r.loadConfig(boundCfg)
@@ -514,7 +585,7 @@ func (r *Runner) freshSubmissions() error {
 			return err
 		}
 		out := filepath.Join(r.paths.TldArtifacts, "03-activate")
-		unsigned, err := r.ops.ActivateTLD(r.ctx, eff, r.tld, r.paths.ProofBundle, out)
+		unsigned, err := r.ops.ActivateTLD(r.ctx, eff, r.tld, r.paths.OwnerHNSKey, out)
 		if err != nil {
 			return fmt.Errorf("activate-tld: %w", err)
 		}
@@ -527,7 +598,7 @@ func (r *Runner) freshSubmissions() error {
 
 	// mint
 	if r.sldState.stepTxID("mintSld") == "" {
-		g.Step("6/7 Mint SLD",
+		g.Step("7/8 Mint SLD",
 			fmt.Sprintf("Mint second-level name %q under %q; token goes to sldOwner.", r.sld, r.tld),
 			"dns-cli owner mint-sld --config "+boundHint+" --tld "+r.tld+" --sld "+r.sld+" --sld-owner sldOwner --out "+quotePath(filepath.Join(r.paths.SldArtifacts, "04-mint-sld")),
 			"dns-cli tx apply --config "+boundHint+" --tx …/04-mint-sld.unsigned.json --actor tldOwner --signed …/04-mint-sld.signed.json --manifest …/04-mint-sld.manifest.json")
@@ -549,7 +620,7 @@ func (r *Runner) freshSubmissions() error {
 
 	// update (DNS records — final protocol step)
 	if r.sldState.stepTxID("updateSld") == "" {
-		g.Step("7/7 Update DNS records (SLD)",
+		g.Step("8/8 Update DNS records (SLD)",
 			"Publish the records.json set on-chain for this SLD (A/IN example by default). Edit the run’s records.json before this step to customize.",
 			"dns-cli owner update-sld --config "+boundHint+" --tld "+r.tld+" --sld "+r.sld+" --records "+quotePath(r.paths.RecordsFile)+" --out "+quotePath(filepath.Join(r.paths.SldArtifacts, "05-update-sld")),
 			"dns-cli tx apply --config "+boundHint+" --tx …/05-update-sld.unsigned.json --actor sldOwner --signed …/05-update-sld.signed.json --manifest …/05-update-sld.manifest.json")
