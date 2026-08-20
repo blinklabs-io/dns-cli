@@ -262,6 +262,41 @@ func TestPrepareDeploymentRequiresRegistrarToken(t *testing.T) {
 	}
 }
 
+func TestPrepareDeploymentAcceptsMainnet(t *testing.T) {
+	tmp := t.TempDir()
+	blueprintPath := filepath.Join(tmp, "plutus.json")
+	if err := os.WriteFile(blueprintPath, []byte(`{"preamble":{},"validators":[]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	stakePub := make([]byte, 32)
+	stakeCBOR, err := cbor.Encode(stakePub)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stakePath := filepath.Join(tmp, "stake.vkey")
+	if err := wallet.WriteKeyEnvelope(stakePath, wallet.KeyEnvelope{
+		Type: wallet.TypeStakeVKey, CBORHex: hex.EncodeToString(stakeCBOR),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	_, err = system.PrepareDeployment(context.Background(), system.PrepareOptions{
+		Blueprint:    blueprintPath,
+		StakeKeyPath: stakePath,
+		Network:      "mainnet",
+		OutDir:       filepath.Join(tmp, "out"),
+		Runner:       NewFakeRunner(),
+	})
+	if err == nil {
+		t.Fatal("expected registrar-token error, not a network rejection")
+	}
+	if strings.Contains(err.Error(), "preprod only") {
+		t.Fatalf("mainnet should be an allowed prepare network: %v", err)
+	}
+	if !strings.Contains(err.Error(), "mint-registrar-token") {
+		t.Fatalf("error should point at mint-registrar-token, got: %v", err)
+	}
+}
+
 func TestBindConfig(t *testing.T) {
 	tmp := t.TempDir()
 	depBlueprint := filepath.Join(tmp, "contracts", "plutus.base.json")
@@ -365,6 +400,87 @@ func TestBindConfig(t *testing.T) {
 	}
 	if prof.Contracts.BlueprintPath != depBlueprint {
 		t.Fatalf("blueprintPath: got %q want deployment path %q", prof.Contracts.BlueprintPath, depBlueprint)
+	}
+}
+
+func TestBindConfigPreservesMainnet(t *testing.T) {
+	tmp := t.TempDir()
+	depBlueprint := filepath.Join(tmp, "contracts", "plutus.base.json")
+	wallets := map[string]string{}
+	for _, name := range []string{"bootstrap", "registrar", "tld-owner", "sld-owner"} {
+		dir := filepath.Join(tmp, "actors", name)
+		generated, err := wallet.GenerateWallet(wallet.GenerateOptions{
+			Name: name, Network: "preprod", Format: wallet.FormatKeyEnvelope, OutDir: dir, Force: true,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		wallets[name] = generated.Address
+	}
+	dep := &system.DeploymentJSON{
+		Version:       1,
+		Network:       "mainnet",
+		NetworkID:     1,
+		Magic:         764824073,
+		StakeKeyHash:  strings.Repeat("11", 28),
+		BlueprintPath: depBlueprint,
+		Validators: map[string]system.ValidatorArtifact{
+			system.RoleTLDRegistrar: {Role: system.RoleTLDRegistrar, PolicyID: strings.Repeat("a1", 28), Address: wallets["bootstrap"], PlutusFile: "tld_registrar.plutus"},
+			system.RoleTLDReference: {Role: system.RoleTLDReference, PolicyID: strings.Repeat("b2", 28), Address: wallets["registrar"], PlutusFile: "tld_reference.plutus"},
+			system.RoleSLDReference: {Role: system.RoleSLDReference, PolicyID: strings.Repeat("c3", 28), Address: wallets["tld-owner"], PlutusFile: "sld_reference.plutus"},
+		},
+	}
+	depPath := filepath.Join(tmp, "deployment.json")
+	if err := system.SaveDeploymentJSON(depPath, dep); err != nil {
+		t.Fatal(err)
+	}
+	base := map[string]any{
+		"version":        1,
+		"defaultProfile": "mainnet",
+		"profiles": map[string]any{
+			"mainnet": map[string]any{
+				"network": map[string]any{
+					"name": "mainnet",
+				},
+				"provider": map[string]any{
+					"type": "blockfrost", "projectIdEnv": "DNS_CLI_BLOCKFROST_PROJECT_ID",
+				},
+				"contracts": map[string]any{"blueprintPath": "x", "referenceUtxos": map[string]any{}},
+				"actors": map[string]any{
+					"bootstrap": map[string]any{"address": wallets["bootstrap"], "signingKeyFile": "bootstrap.skey"},
+				},
+				"transaction": map[string]any{
+					"ttlSlots": 300, "confirmationTimeout": "10m", "pollInterval": "5s", "artifactDir": "a",
+				},
+			},
+		},
+	}
+	basePath := filepath.Join(tmp, "base.json")
+	baseRaw, _ := json.MarshalIndent(base, "", "  ")
+	if err := os.WriteFile(basePath, baseRaw, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	doc, err := system.BindConfig(system.BindOptions{
+		BaseConfigPath: basePath,
+		DeploymentPath: depPath,
+		TxID:           strings.Repeat("cd", 32),
+		ActorDir:       filepath.Join(tmp, "actors"),
+		Provider:       "blockfrost",
+		OutPath:        filepath.Join(tmp, "bound.json"),
+		Force:          true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	prof := doc.Profiles["mainnet"]
+	if prof.Network.Name != "mainnet" || prof.Network.ID != 1 || prof.Network.Magic != 764824073 {
+		t.Fatalf("preserved network: %+v", prof.Network)
+	}
+	if prof.Network.ExplorerTxURL != "https://cexplorer.io/tx/{txId}" {
+		t.Fatalf("explorer: %s", prof.Network.ExplorerTxURL)
+	}
+	if prof.Provider.BaseURL != "https://cardano-mainnet.blockfrost.io/api/v0" {
+		t.Fatalf("blockfrost url: %s", prof.Provider.BaseURL)
 	}
 }
 

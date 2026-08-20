@@ -76,7 +76,7 @@ func newSystemPrepareCmd(g *GlobalFlags) *cobra.Command {
 	}
 	cmd.Flags().StringVar(&blueprint, "blueprint", "", "path to a pre-built plutus.json blueprint")
 	cmd.Flags().StringVar(&stakeKey, "stake-key", "", "stake.vkey envelope or wallet directory containing stake.vkey")
-	cmd.Flags().StringVar(&network, "network", "preprod", "network profile (preprod only)")
+	cmd.Flags().StringVar(&network, "network", "preprod", "network profile (preview|preprod|mainnet)")
 	cmd.Flags().StringVar(&outDir, "out-dir", "", "output directory for plutus envelopes and deployment.json (must already contain a deployment.json from system mint-registrar-token)")
 	cmd.Flags().StringVar(&aikenPath, "aiken", "", "path to aiken binary (default: aiken on PATH)")
 	cmd.Flags().BoolVar(&force, "force", false, "overwrite existing deployment artifacts")
@@ -116,7 +116,7 @@ func newSystemMintRegistrarTokenCmd(g *GlobalFlags) *cobra.Command {
 				return err
 			}
 			depPath := filepath.Join(outDir, "deployment.json")
-			dep, err := system.LoadOrInitDeploymentJSON(depPath, blueprint, outDir)
+			dep, err := system.LoadOrInitDeploymentJSON(depPath, blueprint, outDir, eff.Profile.Network.Name)
 			if err != nil {
 				return WrapExit(ExitValidation, err)
 			}
@@ -282,9 +282,13 @@ func newSystemBindCmd(g *GlobalFlags) *cobra.Command {
 			}
 			profile := doc.DefaultProfile
 			prof := doc.Profiles[profile]
+			networkName := prof.Network.Name
+			if networkName == "" {
+				networkName = profile
+			}
 			return p.Success(Result{
 				Command:   "system bind",
-				Network:   "preprod",
+				Network:   networkName,
 				Operation: "system.bind",
 				Artifact:  out,
 				Message:   "wrote bound dns-cli config",

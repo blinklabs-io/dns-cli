@@ -24,7 +24,7 @@ func ValidateOffline(eff *Effective) error {
 	slog.Debug("Validating config offline", "profile", eff.Name)
 	p := eff.Profile
 	switch strings.ToLower(p.Network.Name) {
-	case "preview", "preprod":
+	case "preview", "preprod", "mainnet":
 	default:
 		return fmt.Errorf("profiles.%s.network.name: unsupported %q", eff.Name, p.Network.Name)
 	}
@@ -79,7 +79,7 @@ func ValidateOffline(eff *Effective) error {
 		if a.Address == "" {
 			return fmt.Errorf("%s.address: required", path)
 		}
-		if !strings.HasPrefix(a.Address, "addr_test1...") && !addrRe.MatchString(a.Address) {
+		if !isStarterAddressPlaceholder(a.Address) && !addrRe.MatchString(a.Address) {
 			return fmt.Errorf("%s.address: invalid bech32 address", path)
 		}
 		hasKey := strings.TrimSpace(a.SigningKeyFile) != ""
@@ -122,7 +122,7 @@ func ValidateOnline(eff *Effective) error {
 		"tldReferenceAddress":  eff.Profile.Contracts.TLDReferenceAddress,
 		"sldReferenceAddress":  eff.Profile.Contracts.SLDReferenceAddress,
 	} {
-		if val == "" || strings.HasPrefix(val, "REPLACE") || strings.HasPrefix(val, "addr_test1...") {
+		if val == "" || strings.HasPrefix(val, "REPLACE") || isStarterAddressPlaceholder(val) {
 			return fmt.Errorf("profiles.%s.contracts.%s: must be set for online validation", eff.Name, field)
 		}
 	}
@@ -147,7 +147,7 @@ func RequireContractIDs(eff *Effective) error {
 		"sldReferencePolicyId": c.SLDReferencePolicyID,
 	}
 	for k, v := range required {
-		if v == "" || strings.HasPrefix(v, "REPLACE") || strings.HasPrefix(v, "addr_test1...") {
+		if v == "" || strings.HasPrefix(v, "REPLACE") || isStarterAddressPlaceholder(v) {
 			return fmt.Errorf("profiles.%s.contracts.%s: required for domain operations", eff.Name, k)
 		}
 	}
@@ -211,6 +211,13 @@ func validateProviderBaseURL(profile string, p ProviderConfig) error {
 		return fmt.Errorf("profiles.%s.provider: exactly one of baseURL or baseUrlEnv is required", profile)
 	}
 	return nil
+}
+
+// isStarterAddressPlaceholder reports config-init dummy addresses. Testnet
+// starters use addr_test1...; mainnet starters use addr1... (literal dots,
+// which are not bech32).
+func isStarterAddressPlaceholder(addr string) bool {
+	return strings.HasPrefix(addr, "addr_test1...") || strings.HasPrefix(addr, "addr1...")
 }
 
 func looksLikeSecret(s string) bool {

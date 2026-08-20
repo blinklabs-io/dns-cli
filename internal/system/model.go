@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
+
+	"github.com/blinklabs-io/dns-cli/internal/config"
 )
 
 // Role names stored in DeploymentJSON.Validators.
@@ -87,18 +90,27 @@ func LoadDeploymentJSON(path string) (*DeploymentJSON, error) {
 }
 
 // LoadOrInitDeploymentJSON loads deployment.json at path if present,
-// otherwise initializes a fresh preprod deployment anchored to blueprint/outDir.
-func LoadOrInitDeploymentJSON(path, blueprint, outDir string) (*DeploymentJSON, error) {
+// otherwise initializes a fresh deployment anchored to blueprint/outDir
+// and the given protocol network (preview, preprod, or mainnet).
+// Empty network defaults to preprod.
+func LoadOrInitDeploymentJSON(path, blueprint, outDir, network string) (*DeploymentJSON, error) {
 	if _, err := os.Stat(path); err == nil {
 		return LoadDeploymentJSON(path)
 	} else if !os.IsNotExist(err) {
 		return nil, err
 	}
+	if strings.TrimSpace(network) == "" {
+		network = "preprod"
+	}
+	net, err := config.NetworkDefaults(network)
+	if err != nil {
+		return nil, err
+	}
 	return &DeploymentJSON{
 		Version:       1,
-		Network:       "preprod",
-		NetworkID:     0,
-		Magic:         1,
+		Network:       net.Name,
+		NetworkID:     net.ID,
+		Magic:         net.Magic,
 		BlueprintPath: blueprint,
 		OutDir:        outDir,
 		Validators:    map[string]ValidatorArtifact{},

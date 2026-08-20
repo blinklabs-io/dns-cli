@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/blinklabs-io/dns-cli/internal/config"
 	"github.com/blinklabs-io/dns-cli/internal/protocol"
 	"github.com/blinklabs-io/dns-cli/internal/wallet"
 	"github.com/blinklabs-io/gouroboros/ledger/common"
@@ -36,6 +37,9 @@ func PrepareDeployment(ctx context.Context, opts PrepareOptions) (*PrepareResult
 	if err := validatePrepareOpts(opts); err != nil {
 		return nil, err
 	}
+	if strings.TrimSpace(opts.Network) == "" {
+		opts.Network = "preprod"
+	}
 	runner := opts.Runner
 	if runner == nil {
 		runner = NewCLIRunner(opts.AikenBin)
@@ -45,7 +49,7 @@ func PrepareDeployment(ctx context.Context, opts PrepareOptions) (*PrepareResult
 		return nil, fmt.Errorf("create out-dir: %w", err)
 	}
 	depPath := filepath.Join(opts.OutDir, "deployment.json")
-	existing, err := LoadOrInitDeploymentJSON(depPath, opts.Blueprint, opts.OutDir)
+	existing, err := LoadOrInitDeploymentJSON(depPath, opts.Blueprint, opts.OutDir, opts.Network)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +152,11 @@ func PrepareDeployment(ctx context.Context, opts PrepareOptions) (*PrepareResult
 		return nil, fmt.Errorf("materialize sld_reference: %w", err)
 	}
 
-	networkID := protocol.PreprodNetworkID
+	netCfg, err := config.NetworkDefaults(opts.Network)
+	if err != nil {
+		return nil, err
+	}
+	networkID := netCfg.ID
 	addrs := map[string]string{}
 	for role, policy := range map[string]string{
 		RoleTLDRegistrar: regPolicy,
@@ -168,9 +176,9 @@ func PrepareDeployment(ctx context.Context, opts PrepareOptions) (*PrepareResult
 
 	dep := existing
 	dep.Version = 1
-	dep.Network = "preprod"
-	dep.NetworkID = networkID
-	dep.Magic = 1
+	dep.Network = netCfg.Name
+	dep.NetworkID = netCfg.ID
+	dep.Magic = netCfg.Magic
 	dep.StakeKeyHash = hex.EncodeToString(stakeHash)
 	dep.BlueprintPath = baseBP
 	dep.OutDir = opts.OutDir
@@ -290,8 +298,8 @@ func validatePrepareOpts(opts PrepareOptions) error {
 	if net == "" {
 		net = "preprod"
 	}
-	if net != "preprod" {
-		return fmt.Errorf("system prepare supports preprod only (got %q)", opts.Network)
+	if _, err := config.NetworkDefaults(net); err != nil {
+		return fmt.Errorf("system prepare: %w", err)
 	}
 	return nil
 }

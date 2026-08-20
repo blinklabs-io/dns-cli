@@ -4,7 +4,8 @@
 
 - Go **1.25.13+** (module pins toolchain `go1.25.13`)
 - Apollo v2 is pulled via `go.mod` as `github.com/Salvionied/apollo/v2` (commit pin; no fork `replace`, no local sibling checkout required)
-- Access to Cardano **preview** or **preprod** via UTxO RPC or Blockfrost
+- Access to Cardano **preview**, **preprod**, or **mainnet** via UTxO RPC or Blockfrost
+  (`wallet create` stays preprod-only; mainnet keys must come from an external wallet)
 - Bursa-compatible signing keys or mnemonics for actors (never stored inline in config)
 - For the Preprod demo (`demo/`):
   - [Aiken](https://aiken-lang.org/) on `PATH`, version **≥ 1.1.19** (`aiken --version`)

@@ -10,6 +10,7 @@ import (
 
 	"github.com/Salvionied/apollo/v2"
 	"github.com/blinklabs-io/bursa"
+	"github.com/blinklabs-io/dns-cli/internal/config"
 	"github.com/blinklabs-io/gouroboros/ledger/common"
 )
 
@@ -159,7 +160,14 @@ func validateGenerateOptions(opts GenerateOptions) error {
 	if strings.TrimSpace(opts.Name) == "" {
 		return fmt.Errorf("wallet name is required")
 	}
-	if opts.Network != "preprod" {
+	netCfg, err := config.NetworkDefaults(opts.Network)
+	if err != nil {
+		return fmt.Errorf("wallet generation: %w", err)
+	}
+	if err := config.RequirePreprod(&config.Effective{
+		Name:    "wallet create",
+		Profile: config.Profile{Network: netCfg},
+	}); err != nil {
 		return fmt.Errorf("wallet generation supports preprod only (got %q)", opts.Network)
 	}
 	switch opts.Format {

@@ -85,7 +85,7 @@ func newWalletFundCmd(g *GlobalFlags) *cobra.Command {
 	var allocations []string
 	cmd := &cobra.Command{
 		Use:   "fund",
-		Short: "Build an unsigned preprod funding transaction for actors",
+		Short: "Build an unsigned funding transaction for actors",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			p, err := printerFromFlags(g, cmd)
 			if err != nil {

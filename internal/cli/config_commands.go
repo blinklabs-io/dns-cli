@@ -76,7 +76,7 @@ func newConfigInitCmd(g *GlobalFlags) *cobra.Command {
 			})
 		},
 	}
-	cmd.Flags().StringVar(&network, "network", "preview", "network profile to initialize (preview|preprod)")
+	cmd.Flags().StringVar(&network, "network", "preview", "network profile to initialize (preview|preprod|mainnet)")
 	cmd.Flags().StringVar(&provider, "provider", "utxorpc", "default provider (utxorpc|blockfrost)")
 	cmd.Flags().BoolVar(&force, "force", false, "overwrite an existing config file")
 	return cmd

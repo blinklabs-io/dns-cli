@@ -9,6 +9,7 @@ import (
 
 	"github.com/blinklabs-io/dns-cli/internal/artifact"
 	"github.com/blinklabs-io/dns-cli/internal/chainquery"
+	"github.com/blinklabs-io/dns-cli/internal/config"
 )
 
 // FundAllocation is a destination actor and total ADA to send (lovelace).
@@ -91,8 +92,8 @@ func FundActors(ctx context.Context, bctx *Context, fromActor string, allocation
 	slog.Info("Building wallet fund transaction", "from", fromActor, "allocations", len(allocations), "collateral", collateralLovelace)
 
 	network := strings.ToLower(strings.TrimSpace(bctx.Eff.Profile.Network.Name))
-	if network != "preprod" {
-		return BuildOutput{}, fmt.Errorf("wallet fund supports preprod only (got %q)", bctx.Eff.Profile.Network.Name)
+	if _, err := config.NetworkDefaults(network); err != nil {
+		return BuildOutput{}, fmt.Errorf("wallet fund: %w", err)
 	}
 	if fromActor == "" {
 		return BuildOutput{}, fmt.Errorf("from-actor is required")

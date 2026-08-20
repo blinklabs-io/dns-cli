@@ -18,6 +18,8 @@ dns-cli config init --network preprod --provider blockfrost
 | `preprod-blockfrost` (default) | Blockfrost | `--network preprod-blockfrost` or leave `defaultProfile` |
 | `preprod-utxorpc` | UTxO RPC | `--network preprod-utxorpc` |
 
+`dns-cli config init --network mainnet --provider blockfrost` writes a mainnet profile (network id 1, magic 764824073, Blockfrost mainnet URL). `wallet create` stays preprod-only; mainnet signing keys must come from an external or hardware wallet.
+
 Do **not** rely on `--provider` alone to switch profiles: that flag only overrides
 `provider.type`, not URL/env fields. Prefer separate profiles as in the example.
 

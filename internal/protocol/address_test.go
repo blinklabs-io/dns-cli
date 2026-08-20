@@ -49,6 +49,22 @@ func TestScriptBaseAddress(t *testing.T) {
 	}
 }
 
+func TestScriptBaseAddressMainnet(t *testing.T) {
+	scriptHash := make([]byte, 28)
+	stakeHash := make([]byte, 28)
+	addr, err := protocol.ScriptBaseAddress(protocol.MainnetNetworkID, scriptHash, stakeHash)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if addr.NetworkId() != uint(protocol.MainnetNetworkID) {
+		t.Fatalf("network %d", addr.NetworkId())
+	}
+	s := addr.String()
+	if len(s) < 5 || s[:5] != "addr1" || len(s) >= 10 && s[:10] == "addr_test1" {
+		t.Fatalf("expected mainnet bech32, got %q", s)
+	}
+}
+
 func TestScriptBaseAddressRejectsBadLengths(t *testing.T) {
 	if _, err := protocol.ScriptBaseAddress(0, make([]byte, 10), make([]byte, 28)); err == nil {
 		t.Fatal("expected error")
