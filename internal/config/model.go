@@ -182,6 +182,7 @@ func DefaultDocument(network, provider string) (*Document, error) {
 	if err != nil {
 		return nil, err
 	}
+	network = net.Name
 	prov, err := providerDefaults(provider, network)
 	if err != nil {
 		return nil, err
@@ -198,9 +199,9 @@ func DefaultDocument(network, provider string) (*Document, error) {
 			},
 		},
 		Actors: map[string]ActorConfig{
-			"registrar": {Address: "addr_test1...registrar", SigningKeyFile: "keys/registrar.skey"},
-			"tldOwner":  {Address: "addr_test1...tldOwner", MnemonicEnv: "DNS_CLI_TLD_OWNER_MNEMONIC"},
-			"sldOwner":  {Address: "addr_test1...sldOwner", SigningKeyFile: "keys/sld-owner.skey"},
+			"registrar": {Address: starterActorAddress(network, "registrar"), SigningKeyFile: "keys/registrar.skey"},
+			"tldOwner":  {Address: starterActorAddress(network, "tldOwner"), MnemonicEnv: "DNS_CLI_TLD_OWNER_MNEMONIC"},
+			"sldOwner":  {Address: starterActorAddress(network, "sldOwner"), SigningKeyFile: "keys/sld-owner.skey"},
 		},
 		Transaction: TransactionConfig{
 			TTLSlots:            900, // ~15m on 1s slots; short TTLs expire while waiting on UTxO RPC
@@ -285,8 +286,20 @@ func ApplyStarterRelativePaths(doc *Document, configPath string) error {
 	return nil
 }
 
+// NetworkDefaults returns Cardano protocol parameters for preview, preprod, or mainnet.
+func NetworkDefaults(name string) (NetworkConfig, error) {
+	return networkDefaults(name)
+}
+
+func starterActorAddress(network, name string) string {
+	if strings.EqualFold(strings.TrimSpace(network), "mainnet") {
+		return "addr1..." + name
+	}
+	return "addr_test1..." + name
+}
+
 func networkDefaults(name string) (NetworkConfig, error) {
-	switch strings.ToLower(name) {
+	switch strings.ToLower(strings.TrimSpace(name)) {
 	case "preview":
 		return NetworkConfig{
 			Name:          "preview",
@@ -301,9 +314,21 @@ func networkDefaults(name string) (NetworkConfig, error) {
 			Magic:         1,
 			ExplorerTxURL: "https://preprod.cexplorer.io/tx/{txId}",
 		}, nil
+	case "mainnet":
+		return NetworkConfig{
+			Name:          "mainnet",
+			ID:            1,
+			Magic:         764824073,
+			ExplorerTxURL: "https://cexplorer.io/tx/{txId}",
+		}, nil
 	default:
-		return NetworkConfig{}, fmt.Errorf("unsupported network %q (want preview|preprod)", name)
+		return NetworkConfig{}, fmt.Errorf("unsupported network %q (want preview|preprod|mainnet)", name)
 	}
+}
+
+// ProviderDefaults returns provider settings for a network/provider pair.
+func ProviderDefaults(provider, network string) (ProviderConfig, error) {
+	return providerDefaults(provider, network)
 }
 
 func providerDefaults(provider, network string) (ProviderConfig, error) {
@@ -316,8 +341,11 @@ func providerDefaults(provider, network string) (ProviderConfig, error) {
 		}, nil
 	case "blockfrost":
 		base := "https://cardano-preview.blockfrost.io/api/v0"
-		if network == "preprod" {
+		switch strings.ToLower(strings.TrimSpace(network)) {
+		case "preprod":
 			base = "https://cardano-preprod.blockfrost.io/api/v0"
+		case "mainnet":
+			base = "https://cardano-mainnet.blockfrost.io/api/v0"
 		}
 		return ProviderConfig{
 			Type:         "blockfrost",

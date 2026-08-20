@@ -85,6 +85,23 @@ func TestConfigInitDry(t *testing.T) {
 	}
 }
 
+func TestConfigInitMainnet(t *testing.T) {
+	out := t.TempDir() + "/dns-cli.json"
+	root := NewRoot()
+	root.SetOut(&bytes.Buffer{})
+	root.SetArgs([]string{"config", "init", "--network", "mainnet", "--provider", "blockfrost", "--config", out, "--force"})
+	if err := root.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Contains(raw, []byte(`"name": "mainnet"`)) || !bytes.Contains(raw, []byte("764824073")) {
+		t.Fatalf("expected mainnet profile, got %s", raw)
+	}
+}
+
 func TestConfigInitDefaultPath(t *testing.T) {
 	dir := t.TempDir()
 	cwd, err := os.Getwd()

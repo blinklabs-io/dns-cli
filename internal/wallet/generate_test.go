@@ -159,6 +159,21 @@ func TestGenerateWalletRejectsExistingWithoutForce(t *testing.T) {
 	}
 }
 
+func TestGenerateWalletRejectsMainnet(t *testing.T) {
+	_, err := GenerateWallet(GenerateOptions{
+		Name:    "demo",
+		Network: "mainnet",
+		Format:  FormatKeyEnvelope,
+		OutDir:  t.TempDir(),
+	})
+	if err == nil {
+		t.Fatal("expected mainnet rejection")
+	}
+	if !strings.Contains(err.Error(), "preprod only") {
+		t.Fatalf("got %v", err)
+	}
+}
+
 func testPaymentKey(t *testing.T) []byte {
 	t.Helper()
 	mnemonic := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"

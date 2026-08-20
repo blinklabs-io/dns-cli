@@ -29,7 +29,7 @@ type MintRegistrarTokenResult struct {
 // parameter depends on this policy id existing first.
 func (c *Client) MintRegistrarToken(ctx context.Context, eff *config.Effective, blueprint, outDir, fundingActor, destActor, out string) (MintRegistrarTokenResult, error) {
 	depPath := filepath.Join(outDir, "deployment.json")
-	dep, err := system.LoadOrInitDeploymentJSON(depPath, blueprint, outDir)
+	dep, err := system.LoadOrInitDeploymentJSON(depPath, blueprint, outDir, eff.Profile.Network.Name)
 	if err != nil {
 		return MintRegistrarTokenResult{}, err
 	}

@@ -55,21 +55,30 @@ func BindConfig(opts BindOptions) (*config.Document, error) {
 	if err := json.Unmarshal(raw, &doc); err != nil {
 		return nil, fmt.Errorf("parse base config: %w", err)
 	}
-	if doc.DefaultProfile == "" {
+	if strings.ToLower(strings.TrimSpace(doc.DefaultProfile)) == "" {
 		doc.DefaultProfile = "preprod"
 	}
 	prof, ok := doc.Profiles[doc.DefaultProfile]
 	if !ok {
 		return nil, fmt.Errorf("base config missing profile %q", doc.DefaultProfile)
 	}
-	if strings.ToLower(prof.Network.Name) != "preprod" && prof.Network.Name != "" {
-		return nil, fmt.Errorf("system bind supports preprod only (got %q)", prof.Network.Name)
+	netName := strings.ToLower(strings.TrimSpace(prof.Network.Name))
+	if netName == "" {
+		netName = strings.ToLower(strings.TrimSpace(doc.DefaultProfile))
 	}
-	prof.Network.Name = "preprod"
-	prof.Network.ID = 0
-	prof.Network.Magic = 1
+	net, err := config.NetworkDefaults(netName)
+	if err != nil {
+		return nil, fmt.Errorf("system bind: %w", err)
+	}
+	prof.Network.Name = net.Name
+	if prof.Network.ID == 0 && net.ID != 0 {
+		prof.Network.ID = net.ID
+	}
+	if prof.Network.Magic == 0 {
+		prof.Network.Magic = net.Magic
+	}
 	if prof.Network.ExplorerTxURL == "" {
-		prof.Network.ExplorerTxURL = "https://preprod.cexplorer.io/tx/{txId}"
+		prof.Network.ExplorerTxURL = net.ExplorerTxURL
 	}
 
 	provider := strings.ToLower(strings.TrimSpace(opts.Provider))
@@ -77,7 +86,11 @@ func BindConfig(opts BindOptions) (*config.Document, error) {
 	switch provider {
 	case "blockfrost":
 		if prof.Provider.BaseURL == "" {
-			prof.Provider.BaseURL = "https://cardano-preprod.blockfrost.io/api/v0"
+			defaults, err := config.ProviderDefaults("blockfrost", prof.Network.Name)
+			if err != nil {
+				return nil, err
+			}
+			prof.Provider.BaseURL = defaults.BaseURL
 		}
 		if prof.Provider.ProjectIDEnv == "" {
 			prof.Provider.ProjectIDEnv = "DNS_CLI_BLOCKFROST_PROJECT_ID"

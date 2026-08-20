@@ -5,7 +5,7 @@
 | Flag | Description |
 |---|---|
 | `--config` | Path to JSON config (default `config/dns-cli.json`) |
-| `--network` | Profile override (profile name, e.g. `preprod`, `preprod-blockfrost`, `preprod-utxorpc`). Demo orchestration is **preprod-only** |
+| `--network` | Profile override (profile name, e.g. `preprod`, `preprod-blockfrost`, `mainnet`). Demo orchestration is **preprod-only** |
 | `--provider` | Provider **type** override only (`utxorpc` \| `blockfrost`) — does not swap URL/env fields; prefer separate profiles |
 | `--output` | `human` (default) or `json` |
 | `--timeout` | Operation timeout (default `20m`) |

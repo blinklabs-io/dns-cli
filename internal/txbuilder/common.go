@@ -41,6 +41,9 @@ type Context struct {
 func NewContext(ctx context.Context, eff *config.Effective) (*Context, error) {
 	_ = ctx
 	slog.Debug("Initializing transaction builder context", "profile", eff.Name, "network", eff.Profile.Network.Name)
+	if _, err := config.NetworkDefaults(eff.Profile.Network.Name); err != nil {
+		return nil, fmt.Errorf("transaction builder: %w", err)
+	}
 	if err := config.RequireContractIDs(eff); err != nil {
 		return nil, err
 	}
@@ -65,6 +68,9 @@ func NewContext(ctx context.Context, eff *config.Effective) (*Context, error) {
 func NewFundingContext(ctx context.Context, eff *config.Effective) (*Context, error) {
 	_ = ctx
 	slog.Debug("Initializing funding context", "profile", eff.Name, "network", eff.Profile.Network.Name)
+	if _, err := config.NetworkDefaults(eff.Profile.Network.Name); err != nil {
+		return nil, fmt.Errorf("funding context: %w", err)
+	}
 	prov, err := provider.New(eff)
 	if err != nil {
 		return nil, fmt.Errorf("provider: %w", err)

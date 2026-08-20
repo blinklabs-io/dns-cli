@@ -9,8 +9,10 @@ import (
 // PreprodNetworkID is Cardano testnet network id 0 (preprod/preview).
 const PreprodNetworkID uint8 = common.AddressNetworkTestnet
 
+// MainnetNetworkID is Cardano mainnet network id 1.
+const MainnetNetworkID uint8 = common.AddressNetworkMainnet
+
 // ScriptBaseAddress builds a script+key base address (payment script + stake key).
-// networkID must be 0 for preprod.
 func ScriptBaseAddress(networkID uint8, scriptHash, stakeKeyHash []byte) (common.Address, error) {
 	if networkID != common.AddressNetworkTestnet && networkID != common.AddressNetworkMainnet {
 		return common.Address{}, fmt.Errorf("unsupported network id %d", networkID)

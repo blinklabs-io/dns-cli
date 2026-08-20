@@ -10,6 +10,7 @@ import (
 
 	"github.com/blinklabs-io/dns-cli/internal/artifact"
 	"github.com/blinklabs-io/dns-cli/internal/chainquery"
+	"github.com/blinklabs-io/dns-cli/internal/config"
 	"github.com/blinklabs-io/dns-cli/internal/protocol"
 	"github.com/blinklabs-io/dns-cli/internal/system"
 	"github.com/blinklabs-io/gouroboros/ledger/common"
@@ -32,8 +33,8 @@ func SystemInit(ctx context.Context, bctx *Context, opts SystemInitOptions) (Bui
 		return BuildOutput{}, fmt.Errorf("nil builder context")
 	}
 	network := strings.ToLower(strings.TrimSpace(bctx.Eff.Profile.Network.Name))
-	if network != "preprod" {
-		return BuildOutput{}, fmt.Errorf("system init supports preprod only (got %q)", bctx.Eff.Profile.Network.Name)
+	if _, err := config.NetworkDefaults(network); err != nil {
+		return BuildOutput{}, fmt.Errorf("system init: %w", err)
 	}
 	dep := opts.Deployment
 	if dep == nil {

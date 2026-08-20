@@ -21,6 +21,56 @@ func TestDefaultDocument(t *testing.T) {
 	}
 }
 
+func TestDefaultDocumentCanonicalizesNetwork(t *testing.T) {
+	doc, err := DefaultDocument(" MAINNET ", "blockfrost")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc.DefaultProfile != "mainnet" {
+		t.Fatalf("DefaultProfile: got %q want mainnet", doc.DefaultProfile)
+	}
+	prof, ok := doc.Profiles["mainnet"]
+	if !ok {
+		t.Fatal("missing canonical mainnet profile key")
+	}
+	if prof.Network.Name != "mainnet" {
+		t.Fatalf("network.name: got %q", prof.Network.Name)
+	}
+	if _, ok := doc.Profiles[" MAINNET "]; ok {
+		t.Fatal("raw input must not be stored as a profile key")
+	}
+}
+
+func TestNetworkDefaultsMainnet(t *testing.T) {
+	net, err := NetworkDefaults("mainnet")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if net.Name != "mainnet" || net.ID != 1 || net.Magic != 764824073 {
+		t.Fatalf("mainnet defaults: %+v", net)
+	}
+	if net.ExplorerTxURL != "https://cexplorer.io/tx/{txId}" {
+		t.Fatalf("explorer: %s", net.ExplorerTxURL)
+	}
+	prov, err := ProviderDefaults("blockfrost", "mainnet")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if prov.BaseURL != "https://cardano-mainnet.blockfrost.io/api/v0" {
+		t.Fatalf("blockfrost mainnet url: %s", prov.BaseURL)
+	}
+	doc, err := DefaultDocument("mainnet", "blockfrost")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := doc.Profiles["mainnet"].Actors["registrar"].Address; !strings.HasPrefix(got, "addr1...") {
+		t.Fatalf("mainnet starter address: %s", got)
+	}
+	if err := ValidateOffline(&Effective{Name: "mainnet", Profile: doc.Profiles["mainnet"]}); err != nil {
+		t.Fatalf("mainnet ValidateOffline: %v", err)
+	}
+}
+
 func TestValidateOfflineRejectsBadProvider(t *testing.T) {
 	doc, err := DefaultDocument("preview", "utxorpc")
 	if err != nil {
@@ -105,6 +155,14 @@ func TestRequirePreprod(t *testing.T) {
 	eff.Profile.Network.Magic = 2
 	if err := RequirePreprod(eff); err == nil {
 		t.Fatal("expected magic mismatch rejection")
+	}
+
+	mainnet, err := DefaultDocument("mainnet", "blockfrost")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := RequirePreprod(&Effective{Name: "mainnet", Profile: mainnet.Profiles["mainnet"]}); err == nil {
+		t.Fatal("expected mainnet rejection")
 	}
 }
 
@@ -222,9 +280,11 @@ func TestRedactedViewBaseURLEnv(t *testing.T) {
 }
 
 func uniquifyActors(p Profile) Profile {
+	cloned := p
+	cloned.Actors = make(map[string]ActorConfig, len(p.Actors))
 	for name, a := range p.Actors {
 		a.Address = "addr_test1..." + name
-		p.Actors[name] = a
+		cloned.Actors[name] = a
 	}
-	return p
+	return cloned
 }
