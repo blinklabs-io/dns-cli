@@ -6,13 +6,14 @@ on:
     pull_request:
         branches: [main]
 
-# Layout historically used a local Apollo sibling checkout. go.mod now replaces
-# Apollo via a remote module pin; the checkout below is unused by the build but
-# kept so CI layout remains easy to switch back to a path replace if needed.
+# Layout historically used a local Apollo sibling checkout. go.mod now pins
+# github.com/Salvionied/apollo/v2 at a commit (no replace, no local sibling).
+# The checkout below is unused by the build but kept so CI layout remains easy
+# to switch back to a path replace if needed.
 #   $GITHUB_WORKSPACE/dns-cli
 #   $GITHUB_WORKSPACE/apollo
 env:
-    APOLLO_REF: b2f56d0c6e9d22316b6938feeb325bdbab3846d2
+    APOLLO_REF: 5bbcb363325d8377a322aa997436db7e1cb25183
 
 jobs:
     test-linux:
@@ -32,7 +33,7 @@ jobs:
             - uses: actions/setup-go@v5
               with:
                   # Match go.mod toolchain to avoid mid-run GOTOOLCHAIN downloads.
-                  go-version: "1.25.12"
+                  go-version: "1.25.13"
                   cache-dependency-path: dns-cli/go.sum
             - name: Ensure go.mod is tidy
               run: |
@@ -68,7 +69,7 @@ jobs:
                   path: apollo
             - uses: actions/setup-go@v5
               with:
-                  go-version: "1.25.12"
+                  go-version: "1.25.13"
                   cache-dependency-path: dns-cli/go.sum
             - name: Ensure go.mod is tidy
               shell: bash

@@ -10,8 +10,9 @@ Human stdout uses colored panels and step roadmaps by default. Use `--no-color` 
 
 ## Quick start
 
-Requires **Go 1.25.12+** (module pins toolchain `go1.25.12`). Apollo resolves via
-`go.mod` `replace` — no local sibling checkout needed for a normal build.
+Requires **Go 1.25.13+** (module pins toolchain `go1.25.13`). Apollo resolves via
+`go.mod` (`github.com/Salvionied/apollo/v2` commit pin) — no local sibling checkout
+and no fork `replace` needed for a normal build.
 
 ```bash
 ./scripts/setup.sh
@@ -99,7 +100,7 @@ Preprod wallets under `demo/runs/` are tracked demo material — **never use on 
 
 ## Stack
 
-- **Apollo v2** — transaction construction (`go.mod` replace)
+- **Apollo v2** — transaction construction (`github.com/Salvionied/apollo/v2` commit pin)
 - **Bursa** — wallet and signing
 - **UTxO RPC / Blockfrost** — selectable chain providers
 - **Aiken** — validator build/parameter apply for `system prepare`

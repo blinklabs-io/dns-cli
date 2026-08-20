@@ -2,8 +2,8 @@
 
 ## Prerequisites
 
-- Go **1.25.12+** (module pins toolchain `go1.25.12`)
-- Apollo v2 is pulled via the `go.mod` `replace` directive (no local sibling checkout required)
+- Go **1.25.13+** (module pins toolchain `go1.25.13`)
+- Apollo v2 is pulled via `go.mod` as `github.com/Salvionied/apollo/v2` (commit pin; no fork `replace`, no local sibling checkout required)
 - Access to Cardano **preview** or **preprod** via UTxO RPC or Blockfrost
 - Bursa-compatible signing keys or mnemonics for actors (never stored inline in config)
 - For the Preprod demo (`demo/`):

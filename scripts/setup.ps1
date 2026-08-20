@@ -19,7 +19,7 @@ $ScriptDir = $PSScriptRoot
 $Root = Split-Path -Parent $ScriptDir
 $BinDir = Join-Path $Root 'bin'
 $BinExe = Join-Path $BinDir 'dns-cli.exe'
-$MinGo = [version]'1.25.12'
+$MinGo = [version]'1.25.13'
 
 function Test-AssumeYes {
     if ($Yes) { return $true }

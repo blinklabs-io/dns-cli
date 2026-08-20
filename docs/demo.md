@@ -83,7 +83,7 @@ Schemas live under `runs/states/` and are versioned with the rest of `demo/runs/
 
 | Item | Notes |
 |---|---|
-| Go **1.25.12+** | Required by setup / build (Apollo via `go.mod` replace) |
+| Go **1.25.13+** | Required by setup / build (Apollo via `go.mod` commit pin) |
 | Aiken CLI **≥ 1.1.19** | Applies/converts the vendored blueprint; not used to build it |
 | Provider credentials | See below |
 | ≥ **150 ADA** on bootstrap | Preprod faucet; runner polls until funded |

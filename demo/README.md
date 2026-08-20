@@ -63,7 +63,7 @@ Unset mode / provider / TLD / SLD / log level use numbered menus (or yes-no) in 
 
 ## Prerequisites (fresh mode)
 
-- Go 1.25.12+ and a built `dns-cli` (`./scripts/setup.sh` or `.\scripts\setup.ps1`)
+- Go 1.25.13+ and a built `dns-cli` (`./scripts/setup.sh` or `.\scripts\setup.ps1`)
 - Aiken CLI on `PATH`, **version ≥ 1.1.19** (used to apply/convert the vendored blueprint, not to build it)
 - Provider credentials:
   - Blockfrost: `DNS_CLI_BLOCKFROST_PROJECT_ID`

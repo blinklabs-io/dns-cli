@@ -12,7 +12,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 BIN_DIR="${ROOT}/bin"
 BIN_OUT="${BIN_DIR}/dns-cli"
-MIN_GO="1.25.12"
+MIN_GO="1.25.13"
 
 YES=0
 SKIP_BUILD=0
@@ -25,7 +25,7 @@ while [[ $# -gt 0 ]]; do
       cat <<'EOF'
 Usage: setup.sh [-y|--yes] [--skip-build]
 
-Checks Go (>= 1.25.12), creates bin/, builds dns-cli.
+Checks Go (>= 1.25.13), creates bin/, builds dns-cli.
 Does not prepare demo/ — use: bin/dns-cli demo run
 EOF
       exit 0

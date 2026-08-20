@@ -10,7 +10,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/blinklabs-io/dns-cli/internal/logging"
 	"github.com/blinklabs-io/gouroboros/ledger/common"
-	submit "github.com/utxorpc/go-codegen/utxorpc/v1alpha/submit"
+	submit "github.com/utxorpc/go-codegen/utxorpc/v1beta/submit"
 	sdk "github.com/utxorpc/go-sdk"
 )
 
