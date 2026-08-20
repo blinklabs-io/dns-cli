@@ -5,10 +5,10 @@ on:
         tags:
             - "v*"
 
-# Apollo is resolved via go.mod replace (remote pin). Sibling checkout kept for
-# optional path-replace workflows; see ci.yml comment.
+# Apollo is resolved via go.mod (Salvionied/apollo/v2 commit pin, no replace).
+# Sibling checkout kept for optional path-replace workflows; see ci.yml comment.
 env:
-    APOLLO_REF: b2f56d0c6e9d22316b6938feeb325bdbab3846d2
+    APOLLO_REF: 5bbcb363325d8377a322aa997436db7e1cb25183
 
 jobs:
     release:
@@ -40,7 +40,7 @@ jobs:
                   path: apollo
             - uses: actions/setup-go@v5
               with:
-                  go-version: "1.25.12"
+                  go-version: "1.25.13"
                   cache-dependency-path: dns-cli/go.sum
             - name: Build
               env:
