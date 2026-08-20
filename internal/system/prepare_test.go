@@ -440,7 +440,7 @@ func TestBindConfigPreservesMainnet(t *testing.T) {
 		"profiles": map[string]any{
 			"mainnet": map[string]any{
 				"network": map[string]any{
-					"name": "mainnet",
+					"name": " MAINNET ",
 				},
 				"provider": map[string]any{
 					"type": "blockfrost", "projectIdEnv": "DNS_CLI_BLOCKFROST_PROJECT_ID",

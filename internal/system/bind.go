@@ -65,15 +65,12 @@ func BindConfig(opts BindOptions) (*config.Document, error) {
 	netName := strings.ToLower(strings.TrimSpace(prof.Network.Name))
 	if netName == "" {
 		netName = strings.ToLower(strings.TrimSpace(doc.DefaultProfile))
-		prof.Network.Name = netName
 	}
 	net, err := config.NetworkDefaults(netName)
 	if err != nil {
 		return nil, fmt.Errorf("system bind: %w", err)
 	}
-	if prof.Network.Name == "" {
-		prof.Network.Name = net.Name
-	}
+	prof.Network.Name = net.Name
 	if prof.Network.ID == 0 && net.ID != 0 {
 		prof.Network.ID = net.ID
 	}

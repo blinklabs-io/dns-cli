@@ -21,6 +21,26 @@ func TestDefaultDocument(t *testing.T) {
 	}
 }
 
+func TestDefaultDocumentCanonicalizesNetwork(t *testing.T) {
+	doc, err := DefaultDocument(" MAINNET ", "blockfrost")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc.DefaultProfile != "mainnet" {
+		t.Fatalf("DefaultProfile: got %q want mainnet", doc.DefaultProfile)
+	}
+	prof, ok := doc.Profiles["mainnet"]
+	if !ok {
+		t.Fatal("missing canonical mainnet profile key")
+	}
+	if prof.Network.Name != "mainnet" {
+		t.Fatalf("network.name: got %q", prof.Network.Name)
+	}
+	if _, ok := doc.Profiles[" MAINNET "]; ok {
+		t.Fatal("raw input must not be stored as a profile key")
+	}
+}
+
 func TestNetworkDefaultsMainnet(t *testing.T) {
 	net, err := NetworkDefaults("mainnet")
 	if err != nil {

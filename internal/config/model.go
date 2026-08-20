@@ -182,6 +182,7 @@ func DefaultDocument(network, provider string) (*Document, error) {
 	if err != nil {
 		return nil, err
 	}
+	network = net.Name
 	prov, err := providerDefaults(provider, network)
 	if err != nil {
 		return nil, err

@@ -66,7 +66,7 @@ func newConfigInitCmd(g *GlobalFlags) *cobra.Command {
 			}
 			return p.Success(Result{
 				Command:   "config init",
-				Network:   network,
+				Network:   doc.DefaultProfile,
 				Message:   fmt.Sprintf("wrote config to %s", out),
 				Operation: "config.init",
 				Data: map[string]any{
