@@ -33,7 +33,7 @@ jobs:
             - uses: actions/setup-go@v5
               with:
                   # Match go.mod toolchain to avoid mid-run GOTOOLCHAIN downloads.
-                  go-version: "1.25.13"
+                  go-version: "1.26.x"
                   cache-dependency-path: dns-cli/go.sum
             - name: Ensure go.mod is tidy
               run: |
@@ -69,7 +69,7 @@ jobs:
                   path: apollo
             - uses: actions/setup-go@v5
               with:
-                  go-version: "1.25.13"
+                  go-version: "1.26.x"
                   cache-dependency-path: dns-cli/go.sum
             - name: Ensure go.mod is tidy
               shell: bash
