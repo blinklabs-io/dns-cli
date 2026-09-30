@@ -125,8 +125,10 @@ func (w *wrapped) AwaitOutputs(ctx context.Context, txID common.Blake2b256, inde
 	}
 }
 
-const dmtrAPIKeyEnv = "DMTR_API_KEY"
-const dmtrAPIKeyHeader = "dmtr-api-key"
+const (
+	dmtrAPIKeyEnv    = "DMTR_API_KEY"
+	dmtrAPIKeyHeader = "dmtr-api-key"
+)
 
 func loadHeaders(envName string) (map[string]string, error) {
 	if envName == "" {
