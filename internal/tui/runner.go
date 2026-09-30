@@ -73,18 +73,23 @@ func newOpsRunner(contractRev string) Runner {
 func (r *opsRunner) Load(path string) (*config.Effective, error) {
 	return ops.LoadConfig(path, config.Overrides{})
 }
+
 func (r *opsRunner) Validate(ctx context.Context, eff *config.Effective, online bool) error {
 	return r.client.ValidateConfig(ctx, eff, online)
 }
+
 func (r *opsRunner) WalletCreate(opts wallet.GenerateOptions) (*wallet.GeneratedWallet, error) {
 	return r.client.WalletCreate(opts)
 }
+
 func (r *opsRunner) WalletFund(ctx context.Context, eff *config.Effective, from string, alloc []txbuilder.FundAllocation, collateral int64, out string) (string, error) {
 	return r.client.WalletFund(ctx, eff, from, alloc, collateral, out)
 }
+
 func (r *opsRunner) WalletBalance(ctx context.Context, eff *config.Effective, actor string) (int64, int, error) {
 	return r.client.WalletBalance(ctx, eff, actor)
 }
+
 func (r *opsRunner) ProofGenerate(tld, outDir, ownerKey string) (string, error) {
 	out, err := r.client.ProofGenerate(tld, outDir, ownerKey)
 	if err != nil {
@@ -92,6 +97,7 @@ func (r *opsRunner) ProofGenerate(tld, outDir, ownerKey string) (string, error) 
 	}
 	return out.ProofBundlePath, nil
 }
+
 func (r *opsRunner) SystemPrepare(ctx context.Context, opts system.PrepareOptions) (string, error) {
 	res, err := r.client.SystemPrepare(ctx, opts)
 	if err != nil {
@@ -99,6 +105,7 @@ func (r *opsRunner) SystemPrepare(ctx context.Context, opts system.PrepareOption
 	}
 	return res.DeploymentPath, nil
 }
+
 func (r *opsRunner) SystemInit(ctx context.Context, eff *config.Effective, deployment, actor, out string) (string, string, error) {
 	res, err := r.client.SystemInit(ctx, eff, deployment, actor, out)
 	if err != nil {
@@ -106,6 +113,7 @@ func (r *opsRunner) SystemInit(ctx context.Context, eff *config.Effective, deplo
 	}
 	return res.EnvelopePath, res.BodyHash, nil
 }
+
 func (r *opsRunner) SystemBind(opts system.BindOptions) (string, error) {
 	_, err := r.client.SystemBind(opts)
 	if err != nil {
@@ -113,25 +121,33 @@ func (r *opsRunner) SystemBind(opts system.BindOptions) (string, error) {
 	}
 	return opts.OutPath, nil
 }
+
 func (r *opsRunner) RegisterTLD(ctx context.Context, eff *config.Effective, tld, proof, out string) (string, error) {
 	return r.client.RegisterTLD(ctx, eff, tld, proof, out)
 }
+
 func (r *opsRunner) ActivateTLD(ctx context.Context, eff *config.Effective, tld, ownerKey, out string) (string, error) {
 	return r.client.ActivateTLD(ctx, eff, tld, ownerKey, out)
 }
+
 func (r *opsRunner) MintSLD(ctx context.Context, eff *config.Effective, tld, sld, sldOwner, out string) (string, error) {
 	return r.client.MintSLD(ctx, eff, tld, sld, sldOwner, out)
 }
+
 func (r *opsRunner) UpdateSLD(ctx context.Context, eff *config.Effective, tld, sld, records, out string) (string, error) {
 	return r.client.UpdateSLD(ctx, eff, tld, sld, records, out)
 }
+
 func (r *opsRunner) TxInspect(path string) (map[string]any, error) { return r.client.TxInspect(path) }
+
 func (r *opsRunner) TxSign(eff *config.Effective, txPath, actor, out string, allowExtra bool) error {
 	return r.client.TxSign(eff, txPath, actor, out, allowExtra)
 }
+
 func (r *opsRunner) TxSubmit(ctx context.Context, eff *config.Effective, txPath string) (string, string, error) {
 	return r.client.TxSubmit(ctx, eff, txPath)
 }
+
 func (r *opsRunner) TxStatus(ctx context.Context, eff *config.Effective, txID, manifest string, wait bool, timeout time.Duration, reporter logging.WaitReporter) (string, error) {
 	return r.client.TxStatus(ctx, eff, txID, manifest, wait, timeout, reporter)
 }

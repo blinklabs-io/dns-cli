@@ -17,7 +17,8 @@ import (
 func SignEnvelope(tx *conway.ConwayTransaction, w interface {
 	SignTxBody(common.Blake2b256) (common.VkeyWitness, error)
 	PubKeyHash() common.Blake2b224
-}, expectedBodyHashHex string, requiredSigners []string, allowExtra bool) error {
+}, expectedBodyHashHex string, requiredSigners []string, allowExtra bool,
+) error {
 	bodyCbor, err := cbor.Encode(&tx.Body)
 	if err != nil {
 		return fmt.Errorf("encode tx body: %w", err)
