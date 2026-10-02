@@ -1,0 +1,24 @@
+# Generated automatically by org-governance-bot. Do not edit manually.
+name: "go-test"
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  orchestrate:
+    uses: blinklabs-io/actions/.github/workflows/reuseable-go-test.yml@main
+    with:
+      build-packages: ./cmd/dns-cli
+      check-mod-tidy: true
+      forbidden-go-imports: github.com/Salvionied/apollo([^/]|$)
+      go-versions: '["1.26.x"]'
+      platforms: '["ubuntu-latest","windows-latest"]'
+      run-build: true
+      run-race-test: true
+      run-vet: true
+      verify-modules: true
