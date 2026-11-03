@@ -35,21 +35,26 @@ func (f fakeRunner) Validate(context.Context, *config.Effective, bool) error { r
 func (f fakeRunner) WalletCreate(wallet.GenerateOptions) (*wallet.GeneratedWallet, error) {
 	return &wallet.GeneratedWallet{Name: "x"}, nil
 }
+
 func (f fakeRunner) WalletFund(context.Context, *config.Effective, string, []txbuilder.FundAllocation, int64, string) (string, error) {
 	return "fund.json", nil
 }
+
 func (f fakeRunner) WalletBalance(context.Context, *config.Effective, string) (int64, int, error) {
 	if f.balanceErr != nil {
 		return 0, 0, f.balanceErr
 	}
 	return 42, 1, nil
 }
+
 func (f fakeRunner) ProofGenerate(string, string, string) (string, error) {
 	return "proof.json", nil
 }
+
 func (f fakeRunner) SystemPrepare(context.Context, system.PrepareOptions) (string, error) {
 	return "deployment.json", nil
 }
+
 func (f fakeRunner) SystemInit(context.Context, *config.Effective, string, string, string) (string, string, error) {
 	return "init.json", "hash", nil
 }
@@ -57,15 +62,19 @@ func (f fakeRunner) SystemBind(system.BindOptions) (string, error) { return "bou
 func (f fakeRunner) RegisterTLD(context.Context, *config.Effective, string, string, string) (string, error) {
 	return "reg.json", nil
 }
+
 func (f fakeRunner) ActivateTLD(context.Context, *config.Effective, string, string, string) (string, error) {
 	return "act.json", nil
 }
+
 func (f fakeRunner) MintSLD(context.Context, *config.Effective, string, string, string, string) (string, error) {
 	return "mint.json", nil
 }
+
 func (f fakeRunner) UpdateSLD(context.Context, *config.Effective, string, string, string, string) (string, error) {
 	return "upd.json", nil
 }
+
 func (f fakeRunner) TxInspect(string) (map[string]any, error) {
 	return map[string]any{"bodyHash": "hh"}, nil
 }
@@ -73,6 +82,7 @@ func (f fakeRunner) TxSign(*config.Effective, string, string, string, bool) erro
 func (f fakeRunner) TxSubmit(context.Context, *config.Effective, string) (string, string, error) {
 	return "txid", "http://x", nil
 }
+
 func (f fakeRunner) TxStatus(context.Context, *config.Effective, string, string, bool, time.Duration, logging.WaitReporter) (string, error) {
 	return "confirmed", nil
 }
