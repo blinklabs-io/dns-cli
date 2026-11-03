@@ -50,9 +50,9 @@ func (r *Runner) ensureWallets() error {
 	confirmed := r.confirmedStepKeys()
 	if len(confirmed) > 0 {
 		th := r.theme()
-		fmt.Fprintln(r.stdout, "")
-		fmt.Fprint(r.stdout, th.Warn(fmt.Sprintf("state.json already has confirmed steps (%v).", confirmed)))
-		fmt.Fprintln(r.stdout, th.Dim("New wallets will not own those prior on-chain outputs."))
+		_, _ = fmt.Fprintln(r.stdout, "")
+		_, _ = fmt.Fprint(r.stdout, th.Warn(fmt.Sprintf("state.json already has confirmed steps (%v).", confirmed)))
+		_, _ = fmt.Fprintln(r.stdout, th.Dim("New wallets will not own those prior on-chain outputs."))
 		if !r.prompt.ConfirmYes("Archive wallets and generate an entirely new set anyway?") {
 			slog.Info("Keeping existing wallets after warning")
 			return nil
@@ -122,8 +122,8 @@ func (r *Runner) showWalletSummary(lovelace int64) {
 	}
 	ada := float64(lovelace) / 1_000_000
 	rows = append(rows, report.KV{Key: "balance", Value: fmt.Sprintf("%.6f ADA (%d lovelace)", ada, lovelace)})
-	fmt.Fprintln(r.stdout, "")
-	fmt.Fprint(r.stdout, th.Panel("Shared wallets", rows))
+	_, _ = fmt.Fprintln(r.stdout, "")
+	_, _ = fmt.Fprint(r.stdout, th.Panel("Shared wallets", rows))
 }
 
 func (r *Runner) confirmedStepKeys() []string {

@@ -13,7 +13,7 @@ func (r *Runner) runExisting() error {
 	if err != nil {
 		return err
 	}
-	fmt.Fprint(r.stdout, FormatResumeCatalog(catalog, !r.opts.NoColor))
+	_, _ = fmt.Fprint(r.stdout, FormatResumeCatalog(catalog, !r.opts.NoColor))
 	if len(catalog) == 0 {
 		return fmt.Errorf("no local TLD/SLD demo runs found under %s (run a fresh demo first)", r.paths.RunsRoot)
 	}
@@ -40,14 +40,14 @@ func (r *Runner) runExisting() error {
 	}
 
 	name := r.sld + "." + r.tld
-	fmt.Fprint(r.stdout, r.theme().Splash(
+	_, _ = fmt.Fprint(r.stdout, r.theme().Splash(
 		"Handshake DNS on Cardano · Preprod demo",
 		"existing",
 		r.provider,
 		name,
 		string(entry.Stage),
 	))
-	fmt.Fprintln(r.stdout, "")
+	_, _ = fmt.Fprintln(r.stdout, "")
 
 	g := r.guide()
 	g.Step("Prerequisites",

@@ -91,13 +91,13 @@ func Run(ctx context.Context, opts Options) error {
 
 	// Single brand splash after options are known (mode / provider / name).
 	g := r.guide()
-	fmt.Fprint(r.stdout, r.theme().Splash(
+	_, _ = fmt.Fprint(r.stdout, r.theme().Splash(
 		"Handshake DNS on Cardano · Preprod demo",
 		r.mode,
 		r.provider,
 		r.sld+"."+r.tld,
 	))
-	fmt.Fprintln(r.stdout, "")
+	_, _ = fmt.Fprintln(r.stdout, "")
 	g.Step("Prerequisites",
 		"Check demo layout, dns-contracts fixtures, and Aiken ≥ 1.1.19.")
 	if err := r.ensureFreshPrereqs(); err != nil {
@@ -186,8 +186,8 @@ func (r *Runner) waitForFunds() error {
 	addr, err := readPaymentAddr(filepath.Join(r.paths.WalletsDir, "bootstrap"))
 	if err == nil {
 		th := r.theme()
-		fmt.Fprintln(r.stdout, "")
-		fmt.Fprint(r.stdout, th.Panel("Faucet funding", []report.KV{
+		_, _ = fmt.Fprintln(r.stdout, "")
+		_, _ = fmt.Fprint(r.stdout, th.Panel("Faucet funding", []report.KV{
 			{Key: "faucet", Value: FaucetURL},
 			{Key: "address", Value: addr},
 			{Key: "min ADA", Value: "150"},
@@ -196,11 +196,11 @@ func (r *Runner) waitForFunds() error {
 			if err := prereq.CopyToClipboard(addr); err != nil {
 				slog.Warn("Could not copy address to clipboard", "error", err)
 			} else {
-				fmt.Fprint(r.stdout, th.Dim("(copied to clipboard)"))
-				fmt.Fprintln(r.stdout, "")
+				_, _ = fmt.Fprint(r.stdout, th.Dim("(copied to clipboard)"))
+				_, _ = fmt.Fprintln(r.stdout, "")
 			}
 		}
-		fmt.Fprintln(r.stdout, "")
+		_, _ = fmt.Fprintln(r.stdout, "")
 	}
 	_, err = r.ops.WalletWaitFunds(r.ctx, eff, "bootstrap", MinBootstrapLovelace, PollSeconds*time.Second, 0)
 	return err
@@ -247,8 +247,8 @@ func (r *Runner) ensureProof() error {
 func (r *Runner) showPreflight() {
 	th := r.theme()
 	w := r.stdout
-	fmt.Fprintln(w, "")
-	fmt.Fprint(w, th.Panel(fmt.Sprintf("Preflight · %s.%s", r.sld, r.tld), []report.KV{
+	_, _ = fmt.Fprintln(w, "")
+	_, _ = fmt.Fprint(w, th.Panel(fmt.Sprintf("Preflight · %s.%s", r.sld, r.tld), []report.KV{
 		{Key: "mode", Value: r.mode},
 		{Key: "provider", Value: r.provider},
 		{Key: "network", Value: NetworkName},
@@ -265,13 +265,13 @@ func (r *Runner) showPreflight() {
 		{Key: "sld state", Value: r.paths.SldStateFile},
 		{Key: "funding", Value: "registrar=30 ADA, tldOwner=50 ADA, sldOwner=30 ADA (+5 ADA collateral each)"},
 	}))
-	fmt.Fprintln(w, "")
-	fmt.Fprint(w, th.Roadmap(
+	_, _ = fmt.Fprintln(w, "")
+	_, _ = fmt.Fprint(w, th.Roadmap(
 		"Submission roadmap",
 		"skips steps already confirmed in state.json",
 		r.preflightRoadmap(),
 	))
-	fmt.Fprintln(w, "")
+	_, _ = fmt.Fprintln(w, "")
 }
 
 func (r *Runner) preflightRoadmap() []report.RoadmapItem {
@@ -384,7 +384,6 @@ func (r *Runner) freshSubmissions() error {
 	}
 	bootstrapCfg := r.paths.BootstrapConfig
 	g := r.guide()
-	boundHint := "<bound.json>"
 	contractsDir := filepath.Join(r.paths.TldDir, "contracts")
 	if err := os.MkdirAll(contractsDir, 0o755); err != nil {
 		return err
@@ -536,7 +535,7 @@ func (r *Runner) freshSubmissions() error {
 		return err
 	}
 	boundCfg := r.paths.BoundConfig
-	boundHint = quotePath(boundCfg)
+	boundHint := quotePath(boundCfg)
 
 	// Deploy tx-output confirmation can race Blockfrost address UTxOs used to
 	// resolve reference scripts during register/activate/mint builds.

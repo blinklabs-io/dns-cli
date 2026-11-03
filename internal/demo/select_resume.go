@@ -25,7 +25,7 @@ func SelectResumeEntry(in io.Reader, out io.Writer, entries []ResumeEntry, color
 	reader := bufio.NewReader(mustReader(in))
 	w := mustWriter(out)
 	for {
-		fmt.Fprint(w, th.PromptCursor(fmt.Sprintf("Select run number (1-%d, or q to cancel): ", len(entries))))
+		_, _ = fmt.Fprint(w, th.PromptCursor(fmt.Sprintf("Select run number (1-%d, or q to cancel): ", len(entries))))
 		line, err := reader.ReadString('\n')
 		if err != nil {
 			if errors.Is(err, io.EOF) && strings.TrimSpace(line) == "" {
@@ -37,7 +37,7 @@ func SelectResumeEntry(in io.Reader, out io.Writer, entries []ResumeEntry, color
 		}
 		line = strings.TrimSpace(line)
 		if line == "" {
-			fmt.Fprint(w, th.Warn("Enter a number to continue."))
+			_, _ = fmt.Fprint(w, th.Warn("Enter a number to continue."))
 			continue
 		}
 		if strings.EqualFold(line, "q") || strings.EqualFold(line, "quit") {
@@ -45,12 +45,12 @@ func SelectResumeEntry(in io.Reader, out io.Writer, entries []ResumeEntry, color
 		}
 		n, err := strconv.Atoi(line)
 		if err != nil || n < 1 || n > len(entries) {
-			fmt.Fprint(w, th.Warn(fmt.Sprintf("Invalid choice %q; enter a number between 1 and %d.", line, len(entries))))
+			_, _ = fmt.Fprint(w, th.Warn(fmt.Sprintf("Invalid choice %q; enter a number between 1 and %d.", line, len(entries))))
 			continue
 		}
 		entry := entries[n-1]
 		if !entry.Resumable {
-			fmt.Fprint(w, th.Warn("Run is complete and cannot be resumed; choose another."))
+			_, _ = fmt.Fprint(w, th.Warn("Run is complete and cannot be resumed; choose another."))
 			continue
 		}
 		return entry, nil

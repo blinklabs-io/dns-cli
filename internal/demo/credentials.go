@@ -38,7 +38,7 @@ func (r *Runner) ensureBlockfrostCredentials() error {
 		endpointSrc = urlEnv
 	}
 
-	fmt.Fprint(r.stdout, r.theme().Panel("Provider credentials · blockfrost", []report.KV{
+	_, _ = fmt.Fprint(r.stdout, r.theme().Panel("Provider credentials · blockfrost", []report.KV{
 		{Key: "dashboard", Value: blockfrostDashboardURL},
 		{Key: "endpoint", Value: endpoint},
 		{Key: "endpointSrc", Value: endpointSrc},
@@ -65,7 +65,7 @@ func (r *Runner) ensureUTxORPCCredentials() error {
 	headers := strings.TrimSpace(os.Getenv(headersEnv))
 	apiKey := strings.TrimSpace(os.Getenv(keyEnv))
 
-	fmt.Fprint(r.stdout, r.theme().Panel("Provider credentials · utxorpc", []report.KV{
+	_, _ = fmt.Fprint(r.stdout, r.theme().Panel("Provider credentials · utxorpc", []report.KV{
 		{Key: "docs", Value: utxorpcDocsURL},
 		{Key: "urlEnv", Value: urlEnv},
 		{Key: "url", Value: displayOrUnset(url)},
@@ -123,7 +123,7 @@ func (r *Runner) promptSecretVar(envKey, label, current string, required bool) e
 		}
 		// Guides-only: do not write new secrets; keep whatever is already loaded.
 		if current != "" {
-			fmt.Fprint(r.stdout, r.theme().Note(fmt.Sprintf("skip-install set — keeping existing %s", envKey)))
+			_, _ = fmt.Fprint(r.stdout, r.theme().Note(fmt.Sprintf("skip-install set — keeping existing %s", envKey)))
 		}
 		return nil
 	}
@@ -222,7 +222,7 @@ func (r *Runner) resolveSettings() error {
 	}
 	assumeYes := r.opts.Yes || envTruthy("DEMO_ASSUME_YES")
 	if needAsk && !assumeYes {
-		fmt.Fprint(r.stdout, r.theme().SectionOpen("Demo run options"))
+		_, _ = fmt.Fprint(r.stdout, r.theme().SectionOpen("Demo run options"))
 	}
 
 	if modeFlag == "" && modeEnv == "" {
@@ -241,7 +241,7 @@ func (r *Runner) resolveSettings() error {
 			return err
 		}
 		if needAsk && !assumeYes {
-			fmt.Fprint(r.stdout, r.theme().SectionClose())
+			_, _ = fmt.Fprint(r.stdout, r.theme().SectionClose())
 		}
 		slog.Info("Demo settings", "mode", r.mode,
 			"logLevel", r.opts.LogLevel, "skipInstall", r.opts.SkipInstall)
@@ -257,7 +257,7 @@ func (r *Runner) resolveSettings() error {
 		return err
 	}
 	if needAsk && !assumeYes {
-		fmt.Fprint(r.stdout, r.theme().SectionClose())
+		_, _ = fmt.Fprint(r.stdout, r.theme().SectionClose())
 	}
 
 	mode = strings.ToLower(strings.TrimSpace(mode))
@@ -281,7 +281,7 @@ func (r *Runner) resolveSettings() error {
 }
 
 func settingPrompt(name, value, prior, builtin string) string {
-	src := "default"
+	var src string
 	switch {
 	case prior != "" && value == prior:
 		src = "last run"

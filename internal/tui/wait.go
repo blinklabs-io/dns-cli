@@ -256,5 +256,5 @@ func (r *bubbleWaitReporter) Done(p logging.WaitProgress, err error) {
 		}
 	}
 	// Leave a clean newline on the primary screen after alt-screen exit.
-	fmt.Fprintln(r.out)
+	_, _ = fmt.Fprintln(r.out)
 }

@@ -67,9 +67,9 @@ func EnsureAiken(opts Options, toolsDir string) (AikenInfo, error) {
 	}
 	th := opts.theme()
 	if err == nil && !info.OK {
-		fmt.Fprint(opts.out(), th.Warn(fmt.Sprintf("aiken %s is below required minimum %s (found %s)", info.Version, MinAikenVersion, info.Path)))
+		_, _ = fmt.Fprint(opts.out(), th.Warn(fmt.Sprintf("aiken %s is below required minimum %s (found %s)", info.Version, MinAikenVersion, info.Path)))
 	} else {
-		fmt.Fprint(opts.out(), th.Warn(fmt.Sprintf("aiken >= %s is required for system prepare", MinAikenVersion)))
+		_, _ = fmt.Fprint(opts.out(), th.Warn(fmt.Sprintf("aiken >= %s is required for system prepare", MinAikenVersion)))
 	}
 	printAikenGuide(opts)
 	if opts.SkipInstall {
@@ -104,7 +104,7 @@ func installAiken(opts Options) error {
 	cmd.Stdout = opts.out()
 	cmd.Stderr = opts.errOut()
 	if err := cmd.Run(); err != nil {
-		fmt.Fprint(opts.out(), opts.theme().Warn("Installer failed; try: cargo install aiken"))
+		_, _ = fmt.Fprint(opts.out(), opts.theme().Warn("Installer failed; try: cargo install aiken"))
 		return fmt.Errorf("aiken install: %w", err)
 	}
 	return nil
@@ -123,7 +123,7 @@ func printAikenGuide(opts Options) {
 		)
 	}
 	lines = append(lines, "Fallback: cargo install aiken")
-	fmt.Fprint(opts.out(), opts.theme().Guide("Self-serve: install Aiken >= "+MinAikenVersion, lines...))
+	_, _ = fmt.Fprint(opts.out(), opts.theme().Guide("Self-serve: install Aiken >= "+MinAikenVersion, lines...))
 }
 
 func aikenBinName() string {

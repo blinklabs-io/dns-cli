@@ -95,7 +95,7 @@ func (r *CLIRunner) convertFromBlueprintFile(ctx context.Context, workdir, bluep
 	if err != nil {
 		return nil, err
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 	src := blueprint
 	if !filepath.IsAbs(src) {
 		src = filepath.Join(workdir, blueprint)

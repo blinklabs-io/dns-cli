@@ -440,7 +440,7 @@ func (t *Theme) WaitPanel(info WaitInfo) string {
 	if state == "" {
 		state = "waiting"
 	}
-	stateStyled := state
+	var stateStyled string
 	switch state {
 	case "confirmed":
 		stateStyled = t.render(t.ok(), state)
@@ -482,7 +482,7 @@ func (t *Theme) WaitLine(info WaitInfo) string {
 	if state == "" {
 		state = "waiting"
 	}
-	stateStyled := state
+	var stateStyled string
 	switch state {
 	case "confirmed":
 		stateStyled = t.render(t.ok(), state)

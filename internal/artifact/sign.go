@@ -6,7 +6,6 @@ import (
 
 	"github.com/blinklabs-io/dns-cli/internal/wallet"
 	"github.com/blinklabs-io/gouroboros/cbor"
-	"github.com/blinklabs-io/gouroboros/ledger/common"
 	"github.com/blinklabs-io/gouroboros/ledger/conway"
 	"golang.org/x/crypto/blake2b"
 )
@@ -91,15 +90,5 @@ func SignWithWallet(envelopePath, manifestPath, outPath string, w wallet.Signer,
 		Description: env.Description + " (signed)",
 		CBORHex:     hex.EncodeToString(out),
 	}
-	_ = common.Blake2b256{} // keep import stable for future hash checks
 	return WriteEnvelope(outPath, outEnv)
-}
-
-func blake2b256(b []byte) []byte {
-	h, err := blake2b.New256(nil)
-	if err != nil {
-		panic(err)
-	}
-	h.Write(b)
-	return h.Sum(nil)
 }
