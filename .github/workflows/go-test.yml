@@ -16,7 +16,7 @@ jobs:
       build-packages: ./cmd/dns-cli
       check-mod-tidy: true
       forbidden-go-imports: github.com/Salvionied/apollo([^/]|$)
-      go-versions: '["1.26.x"]'
+      go-versions: '["1.26.x","1.27.x"]'
       platforms: '["ubuntu-latest","windows-latest"]'
       run-build: true
       run-race-test: true
