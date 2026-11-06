@@ -3,6 +3,7 @@ package demo
 import (
 	"fmt"
 	"io"
+	"runtime"
 	"strings"
 
 	"github.com/blinklabs-io/dns-cli/internal/report"
@@ -116,11 +117,9 @@ func (g guide) Done(rep CompletionReport) {
 }
 
 func quotePath(p string) string {
-	if p == "" {
-		return `""`
+	// PowerShell and POSIX shells escape apostrophes differently inside single quotes.
+	if runtime.GOOS == "windows" {
+		return "'" + strings.ReplaceAll(p, "'", "''") + "'"
 	}
-	if strings.ContainsAny(p, " \t\"") {
-		return `"` + p + `"`
-	}
-	return p
+	return "'" + strings.ReplaceAll(p, "'", `'"'"'`) + "'"
 }
