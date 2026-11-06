@@ -2,11 +2,23 @@ package demo
 
 import (
 	"bytes"
+	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/blinklabs-io/dns-cli/internal/report"
 )
+
+func TestQuotePathPreservesShellMetacharacters(t *testing.T) {
+	path := "/tmp/it's $HOME/$(touch marker)/config.json"
+	want := `'/tmp/it'"'"'s $HOME/$(touch marker)/config.json'`
+	if runtime.GOOS == "windows" {
+		want = `'/tmp/it''s $HOME/$(touch marker)/config.json'`
+	}
+	if got := quotePath(path); got != want {
+		t.Fatalf("quotePath(%q) = %q, want %q", path, got, want)
+	}
+}
 
 func TestGuideStepDistinctFromLogStyle(t *testing.T) {
 	var buf bytes.Buffer

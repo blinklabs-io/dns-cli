@@ -92,9 +92,9 @@ func (b *StatusBox) Tick(p WaitProgress) {
 	}
 	// Non-TTY: periodic newline so CI/demo pipes still show progress.
 	if p.Poll == 1 || p.Poll%b.explorerEvery == 0 {
-		fmt.Fprintln(b.w, th.WaitLine(waitInfoFromProgress(p, false, nil)))
+		_, _ = fmt.Fprintln(b.w, th.WaitLine(waitInfoFromProgress(p, false, nil)))
 		if p.ExplorerURL != "" {
-			fmt.Fprint(b.w, th.Kv("explorer", p.ExplorerURL))
+			_, _ = fmt.Fprint(b.w, th.Kv("explorer", p.ExplorerURL))
 		}
 	}
 }
@@ -108,9 +108,9 @@ func (b *StatusBox) Done(p WaitProgress, err error) {
 	if b.interactive {
 		b.clearLocked()
 	}
-	fmt.Fprintln(b.w, th.WaitLine(waitInfoFromProgress(p, true, err)))
+	_, _ = fmt.Fprintln(b.w, th.WaitLine(waitInfoFromProgress(p, true, err)))
 	if p.ExplorerURL != "" {
-		fmt.Fprint(b.w, th.Kv("explorer", p.ExplorerURL))
+		_, _ = fmt.Fprint(b.w, th.Kv("explorer", p.ExplorerURL))
 	}
 	b.lastLines = 0
 }
@@ -120,7 +120,7 @@ func (b *StatusBox) redrawLocked(th *report.Theme, p WaitProgress, done bool, er
 	lines := strings.Split(strings.TrimRight(panel, "\n"), "\n")
 	b.clearLocked()
 	for _, line := range lines {
-		fmt.Fprintln(b.w, line)
+		_, _ = fmt.Fprintln(b.w, line)
 	}
 	b.lastLines = len(lines)
 }
@@ -131,7 +131,7 @@ func (b *StatusBox) clearLocked() {
 	}
 	// Move cursor up and clear each previous status line.
 	for i := 0; i < b.lastLines; i++ {
-		fmt.Fprint(b.w, "\x1b[1A\x1b[2K")
+		_, _ = fmt.Fprint(b.w, "\x1b[1A\x1b[2K")
 	}
 	b.lastLines = 0
 }
@@ -176,10 +176,6 @@ func waitInfoFromProgress(p WaitProgress, done bool, err error) report.WaitInfo 
 func formatWaitBox(p WaitProgress, done bool, err error) []string {
 	panel := report.New(false).WaitPanel(waitInfoFromProgress(p, done, err))
 	return strings.Split(strings.TrimRight(panel, "\n"), "\n")
-}
-
-func formatWaitLine(p WaitProgress, done bool, err error) string {
-	return report.New(false).WaitLine(waitInfoFromProgress(p, done, err))
 }
 
 func remainingString(deadline time.Time) string {

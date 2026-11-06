@@ -3,6 +3,7 @@ package demo
 import (
 	"fmt"
 	"io"
+	"runtime"
 	"strings"
 
 	"github.com/blinklabs-io/dns-cli/internal/report"
@@ -25,12 +26,12 @@ func (r *Runner) theme() *report.Theme {
 
 // Step announces a major demo phase with a short explanation and optional CLI hints.
 func (g guide) Step(title, what string, cliLines ...string) {
-	fmt.Fprint(g.out, g.th.Step(title, what, cliLines...))
+	_, _ = fmt.Fprint(g.out, g.th.Step(title, what, cliLines...))
 }
 
 // Note prints a short DEMO note (skip/resume/hint) without a full step banner.
 func (g guide) Note(msg string) {
-	fmt.Fprint(g.out, g.th.Note(msg))
+	_, _ = fmt.Fprint(g.out, g.th.Note(msg))
 }
 
 // CompletionReport is the final demo summary with every confirmed tx + explorer link.
@@ -112,15 +113,13 @@ func (g guide) Done(rep CompletionReport) {
 		meta = append(meta, report.KV{Key: "Run ID", Value: rep.RunID})
 	}
 
-	fmt.Fprint(g.out, g.th.Completion(title, meta, txBlock.String(), paths.String(), next.String()))
+	_, _ = fmt.Fprint(g.out, g.th.Completion(title, meta, txBlock.String(), paths.String(), next.String()))
 }
 
 func quotePath(p string) string {
-	if p == "" {
-		return `""`
+	// PowerShell and POSIX shells escape apostrophes differently inside single quotes.
+	if runtime.GOOS == "windows" {
+		return "'" + strings.ReplaceAll(p, "'", "''") + "'"
 	}
-	if strings.ContainsAny(p, " \t\"") {
-		return `"` + p + `"`
-	}
-	return p
+	return "'" + strings.ReplaceAll(p, "'", `'"'"'`) + "'"
 }

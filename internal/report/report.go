@@ -227,14 +227,8 @@ func (t *Theme) Step(title, what string, cliLines ...string) string {
 		b.WriteString(t.render(t.dim(), "  Equivalent CLI:"))
 		b.WriteByte('\n')
 		for _, line := range cliLines {
-			for i, part := range wrapCLI(line, 76) {
-				prefix := "    "
-				if i > 0 {
-					prefix = "      "
-				}
-				b.WriteString(t.render(t.brand(), prefix+part))
-				b.WriteByte('\n')
-			}
+			b.WriteString(t.render(t.brand(), "    "+line))
+			b.WriteByte('\n')
 		}
 	}
 	b.WriteString(t.render(t.dim(), "────────────────────────────────────────────"))
@@ -440,7 +434,7 @@ func (t *Theme) WaitPanel(info WaitInfo) string {
 	if state == "" {
 		state = "waiting"
 	}
-	stateStyled := state
+	var stateStyled string
 	switch state {
 	case "confirmed":
 		stateStyled = t.render(t.ok(), state)
@@ -482,7 +476,7 @@ func (t *Theme) WaitLine(info WaitInfo) string {
 	if state == "" {
 		state = "waiting"
 	}
-	stateStyled := state
+	var stateStyled string
 	switch state {
 	case "confirmed":
 		stateStyled = t.render(t.ok(), state)
@@ -568,33 +562,6 @@ func wrapWords(s string, width int) []string {
 	}
 	if cur.Len() > 0 {
 		lines = append(lines, cur.String())
-	}
-	return lines
-}
-
-// wrapCLI wraps long CLI command lines on whitespace when possible.
-func wrapCLI(s string, width int) []string {
-	s = strings.TrimSpace(s)
-	if s == "" {
-		return nil
-	}
-	if width < 24 {
-		width = 24
-	}
-	if len(s) <= width {
-		return []string{s}
-	}
-	var lines []string
-	for len(s) > width {
-		cut := strings.LastIndex(s[:width], " ")
-		if cut < width/3 {
-			cut = width
-		}
-		lines = append(lines, strings.TrimSpace(s[:cut]))
-		s = strings.TrimSpace(s[cut:])
-	}
-	if s != "" {
-		lines = append(lines, s)
 	}
 	return lines
 }

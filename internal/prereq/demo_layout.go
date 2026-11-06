@@ -53,7 +53,7 @@ func EnsureDemoLayout(opts Options) error {
 		return nil
 	}
 
-	fmt.Fprint(opts.out(), opts.theme().Panel("Demo assets incomplete", append([]report.KV{
+	_, _ = fmt.Fprint(opts.out(), opts.theme().Panel("Demo assets incomplete", append([]report.KV{
 		{Key: "root", Value: abs},
 	}, missingRows(missing)...)))
 
@@ -84,7 +84,7 @@ func EnsureDemoLayout(opts Options) error {
 		printDemoGuide(opts)
 		return fmt.Errorf("demo assets still missing after repair: %s", strings.Join(still, ", "))
 	}
-	fmt.Fprintln(opts.out(), opts.theme().Dim("Demo layout ready."))
+	_, _ = fmt.Fprintln(opts.out(), opts.theme().Dim("Demo layout ready."))
 	return nil
 }
 
@@ -119,7 +119,7 @@ func writeMissingConfigFiles(demoRoot string) error {
 }
 
 func printDemoGuide(opts Options) {
-	fmt.Fprint(opts.out(), opts.theme().Guide(
+	_, _ = fmt.Fprint(opts.out(), opts.theme().Guide(
 		"Self-serve: restore the dns-cli demo tree",
 		"1. Use a full dns-cli checkout that includes demo/",
 		"2. demo/fixtures/contracts/plutus.json is a tracked repo file — "+

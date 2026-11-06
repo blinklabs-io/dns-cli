@@ -328,7 +328,7 @@ func LoadStakeKeyHash(path string) ([]byte, error) {
 		return nil, fmt.Errorf("stake key bytes: %w", err)
 	}
 	// Payment/stake vkeys are 32-byte ed25519 public keys (or 64-byte extended).
-	pub := keyBytes
+	var pub []byte
 	switch len(keyBytes) {
 	case 32:
 		pub = keyBytes

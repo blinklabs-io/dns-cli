@@ -89,7 +89,7 @@ func (b *blockfrostProvider) fetchTxUtxos(ctx context.Context, txHex string) ([]
 	if err != nil {
 		return nil, 0, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	body, err := io.ReadAll(io.LimitReader(res.Body, 4<<20))
 	if err != nil {
 		return nil, res.StatusCode, err
