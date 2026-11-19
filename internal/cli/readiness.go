@@ -26,7 +26,7 @@ func loadReadyEffective(cmd *cobra.Command, g *GlobalFlags) (*config.Effective, 
 	}
 	r, err := provider.CheckReadiness(ctx, eff)
 	color := !g.NoColor && os.Getenv("NO_COLOR") == ""
-	fmt.Fprint(cmd.ErrOrStderr(), formatReadinessHuman(r, color))
+	_, _ = fmt.Fprint(cmd.ErrOrStderr(), formatReadinessHuman(r, color))
 	if err != nil {
 		if provider.IsConfigError(err) {
 			return nil, WrapExit(ExitConfig, err)

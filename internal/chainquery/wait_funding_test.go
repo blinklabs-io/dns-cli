@@ -2,6 +2,7 @@ package chainquery
 
 import (
 	"context"
+	"encoding/hex"
 	"strings"
 	"testing"
 	"time"
@@ -32,8 +33,8 @@ func TestBlakeFromHex(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(h) != 32 {
-		t.Fatalf("len=%d", len(h))
+	if got := hex.EncodeToString(h[:]); got != hex32 {
+		t.Fatalf("decoded hash = %s, want %s", got, hex32)
 	}
 	if _, err := blakeFromHex("abcd"); err == nil {
 		t.Fatal("expected error")

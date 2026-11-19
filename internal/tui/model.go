@@ -512,7 +512,7 @@ func (m model) renderWorkbench() string {
 		return b.String()
 	}
 	if m.form != nil {
-		b.WriteString(fmt.Sprintf("Action: %s\n\n", m.activeAction))
+		fmt.Fprintf(&b, "Action: %s\n\n", m.activeAction)
 		if m.busy {
 			b.WriteString(styleDim.Render("running…") + "\n\n")
 		}
@@ -528,8 +528,8 @@ func (m model) renderWorkbench() string {
 		b.WriteString(styleDim.Render("enter to load · or open wallet.create / proof.generate / system.prepare|bind without config"))
 		return b.String()
 	}
-	b.WriteString(fmt.Sprintf("Config: %s\n", m.configPath))
-	b.WriteString(fmt.Sprintf("Selected: %s\n\n", selectedActionID(m.nav)))
+	fmt.Fprintf(&b, "Config: %s\n", m.configPath)
+	fmt.Fprintf(&b, "Selected: %s\n\n", selectedActionID(m.nav))
 	if m.busy {
 		b.WriteString(styleDim.Render("running…") + "\n\n")
 	}

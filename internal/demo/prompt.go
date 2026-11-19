@@ -40,11 +40,11 @@ func NewPrompter(in io.Reader, out io.Writer, assumeYes bool, color bool) Prompt
 
 func (p *stdPrompter) ConfirmYes(prompt string) bool {
 	if p.assumeYes {
-		fmt.Fprint(p.out, p.th.PromptCursor(prompt+" [y/N]: "))
-		fmt.Fprintln(p.out, "y (assume-yes)")
+		_, _ = fmt.Fprint(p.out, p.th.PromptCursor(prompt+" [y/N]: "))
+		_, _ = fmt.Fprintln(p.out, "y (assume-yes)")
 		return true
 	}
-	fmt.Fprint(p.out, p.th.PromptCursor(prompt+" [y/N]: "))
+	_, _ = fmt.Fprint(p.out, p.th.PromptCursor(prompt+" [y/N]: "))
 	line, _ := p.in.ReadString('\n')
 	line = strings.TrimSpace(line)
 	return strings.EqualFold(line, "y") || strings.EqualFold(line, "yes")
@@ -52,11 +52,11 @@ func (p *stdPrompter) ConfirmYes(prompt string) bool {
 
 func (p *stdPrompter) ConfirmDefault(prompt string) bool {
 	if p.assumeYes {
-		fmt.Fprint(p.out, p.th.PromptCursor(prompt+" [Y/n]: "))
-		fmt.Fprintln(p.out, "Y (assume-yes)")
+		_, _ = fmt.Fprint(p.out, p.th.PromptCursor(prompt+" [Y/n]: "))
+		_, _ = fmt.Fprintln(p.out, "Y (assume-yes)")
 		return true
 	}
-	fmt.Fprint(p.out, p.th.PromptCursor(prompt+" [Y/n]: "))
+	_, _ = fmt.Fprint(p.out, p.th.PromptCursor(prompt+" [Y/n]: "))
 	line, _ := p.in.ReadString('\n')
 	line = strings.TrimSpace(line)
 	if line == "" {
@@ -66,7 +66,7 @@ func (p *stdPrompter) ConfirmDefault(prompt string) bool {
 }
 
 func (p *stdPrompter) ConfirmProceed(prompt string) bool {
-	fmt.Fprint(p.out, p.th.PromptCursor(prompt+" [y/N]: "))
+	_, _ = fmt.Fprint(p.out, p.th.PromptCursor(prompt+" [y/N]: "))
 	line, _ := p.in.ReadString('\n')
 	line = strings.TrimSpace(line)
 	return strings.EqualFold(line, "y") || strings.EqualFold(line, "yes")
@@ -75,11 +75,11 @@ func (p *stdPrompter) ConfirmProceed(prompt string) bool {
 func (p *stdPrompter) AskString(prompt, def string) string {
 	label := fmt.Sprintf("%s [%s]: ", prompt, def)
 	if p.assumeYes {
-		fmt.Fprint(p.out, p.th.PromptCursor(label))
-		fmt.Fprintf(p.out, "%s (assume-yes)\n", def)
+		_, _ = fmt.Fprint(p.out, p.th.PromptCursor(label))
+		_, _ = fmt.Fprintf(p.out, "%s (assume-yes)\n", def)
 		return def
 	}
-	fmt.Fprint(p.out, p.th.PromptCursor(label))
+	_, _ = fmt.Fprint(p.out, p.th.PromptCursor(label))
 	line, _ := p.in.ReadString('\n')
 	line = strings.TrimSpace(line)
 	if line == "" {
@@ -94,14 +94,14 @@ func (p *stdPrompter) AskChoice(prompt, def string, allowed []string) string {
 	}
 	if p.assumeYes {
 		pick := resolveChoiceDefault(def, allowed)
-		fmt.Fprint(p.out, p.th.PromptCursor(fmt.Sprintf("%s [%s]: ", prompt, pick)))
-		fmt.Fprintf(p.out, "%s (assume-yes)\n", pick)
+		_, _ = fmt.Fprint(p.out, p.th.PromptCursor(fmt.Sprintf("%s [%s]: ", prompt, pick)))
+		_, _ = fmt.Fprintf(p.out, "%s (assume-yes)\n", pick)
 		return pick
 	}
 
 	defaultIndex := choiceDefaultIndex(def, allowed)
-	fmt.Fprint(p.out, p.th.ChoiceMenu(prompt, def, allowed))
-	fmt.Fprint(p.out, p.th.PromptCursor(fmt.Sprintf("Enter number [%d]: ", defaultIndex)))
+	_, _ = fmt.Fprint(p.out, p.th.ChoiceMenu(prompt, def, allowed))
+	_, _ = fmt.Fprint(p.out, p.th.PromptCursor(fmt.Sprintf("Enter number [%d]: ", defaultIndex)))
 	line, _ := p.in.ReadString('\n')
 	line = strings.TrimSpace(line)
 	if line == "" {
@@ -115,7 +115,7 @@ func (p *stdPrompter) AskChoice(prompt, def string, allowed []string) string {
 			return opt
 		}
 	}
-	fmt.Fprint(p.out, p.th.Warn(fmt.Sprintf("Invalid choice %q; keeping default %q.", line, allowed[defaultIndex-1])))
+	_, _ = fmt.Fprint(p.out, p.th.Warn(fmt.Sprintf("Invalid choice %q; keeping default %q.", line, allowed[defaultIndex-1])))
 	return allowed[defaultIndex-1]
 }
 
@@ -135,7 +135,7 @@ func resolveChoiceDefault(def string, allowed []string) string {
 // ReadSecret reads a credential line from in.
 // Prefer a *bufio.Reader (or the demo Prompter's reader) so shared stdin is not double-buffered.
 func ReadSecret(in io.Reader, out io.Writer, prompt string) (string, error) {
-	fmt.Fprint(mustWriter(out), report.New(false).PromptCursor(prompt+": "))
+	_, _ = fmt.Fprint(mustWriter(out), report.New(false).PromptCursor(prompt+": "))
 	br, ok := in.(*bufio.Reader)
 	if !ok {
 		br = bufio.NewReader(mustReader(in))

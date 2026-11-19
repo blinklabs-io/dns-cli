@@ -47,7 +47,7 @@ func (r *Runner) checkProviderReadiness(cfgPath string) error {
 		return err
 	}
 	ready, err := provider.CheckReadiness(r.ctx, eff)
-	fmt.Fprint(r.stdout, formatProviderReadiness(ready, !r.opts.NoColor))
+	_, _ = fmt.Fprint(r.stdout, formatProviderReadiness(ready, !r.opts.NoColor))
 	return err
 }
 

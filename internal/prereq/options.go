@@ -48,7 +48,7 @@ func (o Options) theme() *report.Theme {
 
 func (o Options) askYes(prompt string) bool {
 	if o.AssumeYes {
-		fmt.Fprintf(o.out(), "%s [y/N]: y (assume-yes)\n", prompt)
+		_, _ = fmt.Fprintf(o.out(), "%s [y/N]: y (assume-yes)\n", prompt)
 		return true
 	}
 	if o.ConfirmYes != nil {

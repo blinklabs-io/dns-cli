@@ -123,15 +123,10 @@ func TestCompletionLayout(t *testing.T) {
 	}
 }
 
-func TestWrapCLI(t *testing.T) {
-	long := "dns-cli owner mint-sld --config /very/long/path/to/config.json --tld alice --sld app --out /another/long/path"
-	parts := wrapCLI(long, 40)
-	if len(parts) < 2 {
-		t.Fatalf("expected wrap, got %#v", parts)
-	}
-	for _, p := range parts {
-		if len(p) > 40 {
-			t.Fatalf("part too long (%d): %q", len(p), p)
-		}
+func TestStepPreservesCLICommand(t *testing.T) {
+	command := "dns-cli owner mint-sld --config '/very/long path/to/config.json' --tld alice --sld app --out '/another/long path'"
+	out := New(false).Step("Mint SLD", "", command)
+	if !strings.Contains(out, "    "+command+"\n") {
+		t.Fatalf("CLI command changed by rendering: %q", out)
 	}
 }

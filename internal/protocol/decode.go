@@ -146,12 +146,12 @@ func decodeOptionInt(pd data.PlutusData) (*int64, error) {
 	switch c.Tag {
 	case 1:
 		if len(c.Fields) != 0 {
-			return nil, fmt.Errorf("None must have no fields")
+			return nil, fmt.Errorf("none must have no fields")
 		}
 		return nil, nil
 	case 0:
 		if len(c.Fields) != 1 {
-			return nil, fmt.Errorf("Some must have one field")
+			return nil, fmt.Errorf("some must have one field")
 		}
 		v, err := expectInt(c.Fields[0])
 		if err != nil {
