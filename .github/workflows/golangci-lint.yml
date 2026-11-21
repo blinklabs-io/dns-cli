@@ -1,0 +1,14 @@
+name: golangci-lint
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    uses: blinklabs-io/actions/.github/workflows/reuseable-golangci-lint.yml@main
