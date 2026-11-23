@@ -14,11 +14,15 @@ jobs:
     uses: blinklabs-io/actions/.github/workflows/reuseable-go-test.yml@main
     with:
       build-packages: ./cmd/dns-cli
+      check-format: true
       check-mod-tidy: true
       forbidden-go-imports: github.com/Salvionied/apollo([^/]|$)
       go-versions: '["1.26.x","1.27.x"]'
+      golangci-go-version: 1.26.x
+      golangci-platform: ubuntu-26.04
       platforms: '["ubuntu-26.04","windows-latest"]'
       run-build: true
+      run-golangci-lint: true
       run-race-test: true
       run-vet: true
       verify-modules: true
